@@ -238,7 +238,7 @@ body {
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  transition: transform var(--transition), opacity var(--transition);
+  transition: transform var(--transition), opacity var(--transition), width var(--transition), min-width var(--transition);
   z-index: 90;
 }
 
@@ -249,8 +249,19 @@ body {
   padding: 20px 16px 12px;
 }
 
-.sidebar-close-btn {
-  display: none;
+.sidebar-collapse-btn {
+  flex-shrink: 0;
+}
+
+@media (min-width: 769px) {
+  .sidebar.collapsed {
+    width: 0;
+    min-width: 0;
+    overflow: hidden;
+    border-right: none;
+    opacity: 0;
+    pointer-events: none;
+  }
 }
 
 .logo {
@@ -1517,9 +1528,6 @@ body {
     transform: translateX(0);
   }
 
-  .sidebar-close-btn {
-    display: flex;
-  }
 
   .main {
     padding-top: var(--header-height);

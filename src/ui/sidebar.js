@@ -7,7 +7,8 @@ export class SidebarUI {
     this.chatSearchInput = document.getElementById('chat-search');
     this.sidebar = document.getElementById('sidebar');
     this.sidebarOverlay = document.getElementById('sidebar-overlay');
-    this.sidebarClose = document.getElementById('sidebar-close');
+    this.sidebarCollapse = document.getElementById('sidebar-collapse');
+    this.sidebarExpand = document.getElementById('sidebar-expand');
 
     this.init();
   }
@@ -21,8 +22,15 @@ export class SidebarUI {
     this.chatSearchInput.addEventListener('input', () => this.render());
 
     this.sidebarOverlay.addEventListener('click', () => this.closeMobileSidebar());
-    if (this.sidebarClose) {
-      this.sidebarClose.addEventListener('click', () => this.closeMobileSidebar());
+    if (this.sidebarCollapse) {
+      this.sidebarCollapse.addEventListener('click', () => this.collapseSidebar());
+    }
+    if (this.sidebarExpand) {
+      this.sidebarExpand.addEventListener('click', () => this.expandSidebar());
+    }
+
+    if (localStorage.getItem('sidebar-collapsed') === 'true') {
+      this.setCollapsed(true);
     }
 
     // Subscribe to state updates
@@ -42,6 +50,34 @@ export class SidebarUI {
   closeMobileSidebar() {
     this.sidebar.classList.remove('open');
     this.sidebarOverlay.classList.remove('visible');
+  }
+
+  isMobile() {
+    return window.matchMedia('(max-width: 768px)').matches;
+  }
+
+  collapseSidebar() {
+    if (this.isMobile()) {
+      this.closeMobileSidebar();
+    } else {
+      this.setCollapsed(true);
+    }
+  }
+
+  expandSidebar() {
+    if (this.isMobile()) {
+      this.openMobileSidebar();
+    } else {
+      this.setCollapsed(false);
+    }
+  }
+
+  setCollapsed(collapsed) {
+    this.sidebar.classList.toggle('collapsed', collapsed);
+    if (this.sidebarExpand) {
+      this.sidebarExpand.hidden = !collapsed;
+    }
+    localStorage.setItem('sidebar-collapsed', collapsed);
   }
 
   render() {

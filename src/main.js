@@ -28,7 +28,7 @@ class App {
     const sidebarToggle = document.getElementById('sidebar-toggle');
     if (sidebarToggle) {
       sidebarToggle.addEventListener('click', () => {
-        this.sidebarUI.openMobileSidebar();
+        this.sidebarUI.expandSidebar();
       });
     }
 
