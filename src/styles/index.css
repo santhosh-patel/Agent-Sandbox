@@ -803,7 +803,7 @@ body {
   width: var(--settings-width);
   min-width: var(--settings-width);
   height: 100dvh;
-  background: var(--bg-secondary);
+  background: var(--sidebar-bg);
   border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -820,7 +820,7 @@ body {
   gap: 12px;
   padding: 20px 20px 16px;
   border-bottom: 1px solid var(--border);
-  background: var(--bg-elevated);
+  background: var(--sidebar-bg);
   flex-shrink: 0;
 }
 

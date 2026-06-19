@@ -1092,7 +1092,7 @@
 
 /* ---- Settings panel ---- */
 .settings-panel {
-  background: var(--bg-secondary);
+  background: var(--sidebar-bg);
 }
 
 /* ---- Panel collapse controls ---- */
