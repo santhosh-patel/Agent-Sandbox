@@ -15,7 +15,6 @@ export class SidebarUI {
     this.edgeToggle = document.getElementById('sidebar-edge-toggle');
     this.collapseBtn = document.getElementById('sidebar-collapse-btn');
     this.filterTabs = document.getElementById('sidebar-filters');
-    this.foldersEl = document.getElementById('sidebar-folders');
 
     this.init();
   }
@@ -37,8 +36,6 @@ export class SidebarUI {
         if (!this.isMobile()) this.setCollapsed(true);
       });
     }
-
-    document.getElementById('new-folder-btn')?.addEventListener('click', () => this.createFolder());
 
     this.filterTabs?.querySelectorAll('[data-filter]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -63,64 +60,9 @@ export class SidebarUI {
     state.on('message-added', () => this.render());
     state.on('chats-imported', () => this.render());
     state.on('data-cleared', () => this.render());
-    state.on('folders-changed', () => this.render());
     state.on('sidebar-filter-changed', () => this.render());
 
-    this.renderFolders();
     this.render();
-  }
-
-  async createFolder() {
-    const name = await showPrompt({ title: 'New folder', placeholder: 'Folder name', confirmText: 'Create' });
-    if (name?.trim()) {
-      state.createFolder(name.trim());
-      this.render();
-    }
-  }
-
-  renderFolders() {
-    if (!this.foldersEl) return;
-    const folders = state.folders;
-    if (!folders.length) {
-      this.foldersEl.innerHTML = '';
-      return;
-    }
-    this.foldersEl.innerHTML = folders.map(f => `
-      <button type="button" class="folder-chip ${state.sidebarFilter === f.id ? 'active' : ''}" data-folder="${f.id}">
-        <span>${this.escapeHtml(f.name)}</span>
-        <span class="folder-chip-actions">
-          <button type="button" class="folder-rename-btn" data-id="${f.id}" aria-label="Rename">✎</button>
-          <button type="button" class="folder-delete-btn" data-id="${f.id}" aria-label="Delete">×</button>
-        </span>
-      </button>
-    `).join('');
-
-    this.foldersEl.querySelectorAll('.folder-chip').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        if (e.target.closest('.folder-rename-btn') || e.target.closest('.folder-delete-btn')) return;
-        state.setSidebarFilter(btn.dataset.folder);
-        this.filterTabs?.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
-        this.render();
-      });
-    });
-
-    this.foldersEl.querySelectorAll('.folder-rename-btn').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const folder = state.folders.find(f => f.id === btn.dataset.id);
-        if (!folder) return;
-        const name = await showPrompt({ title: 'Rename folder', defaultValue: folder.name });
-        if (name?.trim()) state.renameFolder(folder.id, name.trim());
-      });
-    });
-
-    this.foldersEl.querySelectorAll('.folder-delete-btn').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const ok = await showConfirm({ title: 'Delete folder', message: 'Chats will be moved out of this folder.', confirmText: 'Delete', destructive: true });
-        if (ok) state.deleteFolder(btn.dataset.id);
-      });
-    });
   }
 
   openMobileSidebar() {
@@ -172,7 +114,6 @@ export class SidebarUI {
   }
 
   render() {
-    this.renderFolders();
     const activeChatId = state.activeChat;
     const query = this.chatSearchInput.value.toLowerCase().trim();
     const filter = state.sidebarFilter;

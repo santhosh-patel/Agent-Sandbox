@@ -1291,63 +1291,6 @@
   padding: 4px 10px;
 }
 
-.sidebar-folders {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0 10px 8px;
-  padding: 6px;
-  background: var(--glass-surface);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--glass-shadow-tab);
-}
-
-.folder-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  font-size: 0.72rem;
-  font-weight: 500;
-  border: 1px solid var(--glass-history-border);
-  border-radius: var(--radius-sm);
-  background: var(--glass-history-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  color: var(--text-secondary);
-  cursor: pointer;
-  box-shadow: var(--glass-shadow-tab);
-  transition: background var(--transition), border-color var(--transition), color var(--transition), box-shadow var(--transition);
-}
-
-.folder-chip:hover {
-  background: var(--glass-surface-strong);
-  border-color: var(--glass-border);
-}
-
-.folder-chip.active {
-  background: var(--glass-history-active);
-  border-color: var(--accent-secondary);
-  color: var(--accent);
-  box-shadow: var(--shadow-sm), 0 0 0 1px var(--accent-soft), var(--glass-inset);
-}
-
-.folder-chip-actions button {
-  border: none;
-  background: none;
-  cursor: pointer;
-  padding: 0 2px;
-  font-size: 0.7rem;
-  color: var(--text-tertiary);
-  opacity: 0.6;
-  transition: opacity var(--transition);
-}
-
-.folder-chip-actions button:hover { opacity: 1; }
-
 /* ---- Chat item states ---- */
 .chat-item.pinned .chat-item-text { font-weight: 600; }
 .chat-pin-icon { margin-right: 4px; font-size: 0.7rem; }
