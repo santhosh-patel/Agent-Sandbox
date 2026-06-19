@@ -6,6 +6,7 @@ import { SettingsUI } from './ui/settings.js';
 import { ShortcutsUI } from './ui/shortcuts.js';
 import { createProvider, estimateCost } from './providers/registry.js';
 import { generateFollowUpQueries, heuristicFollowUps } from './followups.js';
+import { iconHtml } from './ui/icons.js';
 
 class App {
   constructor() {
@@ -46,6 +47,34 @@ class App {
       this.sidebarUI.toggleSidebar();
     });
 
+    document.getElementById('topnav-settings-btn')?.addEventListener('click', () => {
+      this.settingsUI.togglePanel();
+    });
+    document.getElementById('sidebar-settings-btn')?.addEventListener('click', () => {
+      this.settingsUI.expandPanel();
+    });
+    document.getElementById('topnav-status-btn')?.addEventListener('click', () => {
+      this.settingsUI.expandPanel();
+    });
+    document.getElementById('input-settings-btn')?.addEventListener('click', () => {
+      this.settingsUI.expandPanel();
+    });
+    document.getElementById('topnav-help-btn')?.addEventListener('click', () => {
+      this.shortcutsUI.togglePanel();
+    });
+
+    document.querySelectorAll('.provider-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const provider = btn.dataset.provider;
+        const select = document.getElementById('provider-select');
+        if (provider && select) {
+          select.value = provider;
+          select.dispatchEvent(new Event('change'));
+        }
+        this.settingsUI.expandPanel();
+      });
+    });
+
     this.applyTheme(state.settings.theme || 'light');
     document.getElementById('theme-toggle-btn')?.addEventListener('click', () => this.toggleTheme());
 
@@ -75,6 +104,13 @@ class App {
 
     const label = document.getElementById('theme-label');
     if (label) label.textContent = activeTheme === 'dark' ? 'Dark mode' : 'Light mode';
+
+    const themeIcon = document.getElementById('theme-icon');
+    if (themeIcon) {
+      const iconName = activeTheme === 'dark' ? 'moon' : 'sun';
+      themeIcon.outerHTML = iconHtml(iconName, { className: 'icon icon-theme' })
+        .replace('<svg', '<svg id="theme-icon"');
+    }
   }
 
   async handleSend(prompt) {

@@ -139,7 +139,7 @@ export class SidebarUI {
         item.setAttribute('data-id', chat.id);
 
         const msgCount = chat.messages.length;
-        const meta = `${settings.model || 'No model'} · ${msgCount} msg${msgCount !== 1 ? 's' : ''}`;
+        const meta = `${settings.model || 'No model'}, ${msgCount} msg${msgCount !== 1 ? 's' : ''}`;
         const snippet = this.getSearchSnippet(chat, query);
 
         item.innerHTML = `

@@ -4,6 +4,7 @@ import { PARAMETER_PRESETS, SYSTEM_PROMPT_PRESETS } from '../data/presets.js';
 import { getModelHint } from '../data/model-hints.js';
 import { showConfirm } from './modal.js';
 import { isMobile, isTablet, onViewportChange, closeMobileSidebar } from './breakpoints.js';
+import { iconHtml } from './icons.js';
 
 export class SettingsUI {
   constructor() {
@@ -363,7 +364,13 @@ export class SettingsUI {
 
   showStatus(text, type) {
     this.keyStatus.className = `key-status ${type}`;
-    this.keyStatus.textContent = text;
+    if (type === 'success') {
+      this.keyStatus.innerHTML = `${iconHtml('check', { size: 14, className: 'icon icon-status' })}<span>${text}</span>`;
+    } else if (type === 'error') {
+      this.keyStatus.innerHTML = `${iconHtml('x', { size: 14, className: 'icon icon-status' })}<span>${text}</span>`;
+    } else {
+      this.keyStatus.textContent = text;
+    }
   }
 
   async testConnection() {
@@ -378,13 +385,13 @@ export class SettingsUI {
       const adapter = createProvider(providerName, key, state.settings.corsProxyUrl);
       const res = await adapter.validateKey();
       if (res.valid) {
-        this.showStatus('✓ Key verified', 'success');
+        this.showStatus('Key verified', 'success');
         this.fetchModels(true);
       } else {
-        this.showStatus(`✗ ${res.message}`, 'error');
+        this.showStatus(res.message, 'error');
       }
     } catch (e) {
-      this.showStatus(`✗ ${e.message}`, 'error');
+      this.showStatus(e.message, 'error');
     }
   }
 
@@ -484,8 +491,8 @@ export class SettingsUI {
     const day = usage.daily[today] || { requests: 0, tokens: 0, cost: 0 };
 
     this.usageStats.innerHTML = `
-      <div class="usage-row"><span>Today</span><span>${day.requests} reqs · ${day.tokens} tokens · $${day.cost.toFixed(4)}</span></div>
-      <div class="usage-row"><span>All time</span><span>${usage.total.requests} reqs · ${usage.total.tokens} tokens · $${usage.total.cost.toFixed(4)}</span></div>
+      <div class="usage-row"><span>Today</span><span>${day.requests} reqs, ${day.tokens} tokens, $${day.cost.toFixed(4)}</span></div>
+      <div class="usage-row"><span>All time</span><span>${usage.total.requests} reqs, ${usage.total.tokens} tokens, $${usage.total.cost.toFixed(4)}</span></div>
     `;
   }
 }

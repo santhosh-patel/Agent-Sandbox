@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>AI Playground</title>
   <meta name="description" content="Test any LLM with your own API keys. Client-side only." />
-  <meta name="theme-color" content="#f7f3eb" />
+  <meta name="theme-color" content="#f4f7f6" />
   <link rel="icon" type="image/png" href="/icon.png" />
   <link rel="apple-touch-icon" href="/icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/src/styles/index.css" />
+  <link rel="stylesheet" href="/src/styles/sorin-theme.css" />
 </head>
 <body>
   <div class="bg-gradient" id="bg-gradient">
@@ -30,7 +31,7 @@
         <img src="/icon.png" alt="" class="app-icon" width="24" height="24" />
         <button type="button" class="mobile-status-bar" id="mobile-status-bar" aria-label="Open settings">
         <span id="mobile-provider">No provider</span>
-        <span class="mobile-status-dot">·</span>
+        <span class="meta-sep" aria-hidden="true"></span>
         <span id="mobile-model">Select model</span>
         </button>
       </div>
@@ -40,74 +41,137 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="app-brand">
-          <img src="/icon.png" alt="" class="app-icon" width="28" height="28" />
+          <img src="/icon.png" alt="" class="app-icon" width="32" height="32" />
           <span class="logo-text">Playground</span>
         </div>
       </div>
 
-      <button type="button" class="btn btn-new-chat" id="new-chat-btn">New chat</button>
+      <button type="button" class="btn btn-new-chat" id="new-chat-btn">
+        <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        New Chat
+      </button>
 
+      <div class="sidebar-section-label">Menu</div>
+      <div class="sidebar-menu">
+        <button type="button" class="sidebar-menu-item" id="sidebar-settings-btn">
+          <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
+        </button>
+        <button type="button" class="sidebar-menu-item" id="theme-toggle-btn">
+          <svg class="icon icon-theme" id="theme-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+          <span id="theme-label">Light mode</span>
+        </button>
+        <button type="button" class="sidebar-menu-item" id="reset-layout-btn">
+          <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+          Reset layout
+        </button>
+      </div>
+
+      <div class="sidebar-section-label">History</div>
       <div class="sidebar-search">
-        <input type="text" id="chat-search" placeholder="Search…" />
+        <input type="text" id="chat-search" placeholder="Search chats…" />
       </div>
 
       <div class="chat-list" id="chat-list"></div>
 
       <div class="sidebar-footer">
-        <button type="button" class="btn-sidebar" id="theme-toggle-btn">
-          <span id="theme-label">Light mode</span>
-        </button>
-        <button type="button" class="btn-sidebar" id="reset-layout-btn">Reset layout</button>
+        <div class="sidebar-user">
+          <img src="/icon.png" alt="" class="sidebar-user-avatar" width="36" height="36" />
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name">Local session</div>
+            <div class="sidebar-user-meta">Keys stored on device</div>
+          </div>
+        </div>
       </div>
     </aside>
 
-    <main class="main" id="main">
-      <div class="chat-header" id="chat-header">
-        <div class="chat-header-left">
-          <button type="button" class="chat-title-btn" id="chat-title-btn" title="Rename">
-            <span id="chat-title">New chat</span>
+    <div class="app-shell">
+      <header class="topnav" id="topnav">
+        <nav class="topnav-nav" aria-label="Main">
+          <button type="button" class="topnav-pill topnav-pill--active">AI Playground</button>
+          <button type="button" class="topnav-pill" id="topnav-settings-btn">Settings</button>
+          <button type="button" class="topnav-pill" id="topnav-help-btn">Help</button>
+        </nav>
+        <div class="topnav-right">
+          <button type="button" class="status-pill" id="topnav-status-btn" aria-label="Open settings">
+            <img src="/icon.png" alt="" class="status-pill-icon" width="24" height="24" />
+            <span class="status-pill-text" id="topnav-status-text">Configure model</span>
           </button>
-          <span class="header-meta" id="header-provider">No provider</span>
-          <span class="header-separator">·</span>
-          <span class="header-model" id="header-model">Select model</span>
-          <span class="session-cost" id="session-cost" hidden></span>
         </div>
-      </div>
+      </header>
 
-      <div class="messages" id="messages">
-        <div class="welcome" id="welcome">
-          <img src="/icon.png" alt="" class="app-icon app-icon--welcome" width="56" height="56" />
-          <h1 class="welcome-title"><em>AI Playground</em></h1>
-          <p class="welcome-subtitle">Test models instantly with your API keys. Private, client-side, no signup.</p>
-
-          <div class="setup-card" id="setup-card" hidden>
-            <h2>Get started</h2>
-            <ol class="setup-steps">
-              <li>Choose a provider</li>
-              <li>Add your API key</li>
-              <li>Pick a model and send a message</li>
-            </ol>
-            <button type="button" class="btn btn-primary" id="setup-open-settings">Open settings</button>
-            <p class="setup-hint">OpenRouter works in-browser with one key.</p>
+      <main class="main" id="main">
+        <div class="main-canvas" id="main-canvas">
+          <div class="chat-header" id="chat-header" hidden>
+            <div class="chat-header-left">
+              <button type="button" class="chat-title-btn" id="chat-title-btn" title="Rename">
+                <span id="chat-title">New chat</span>
+              </button>
+              <span class="header-meta" id="header-provider">No provider</span>
+              <span class="meta-sep" aria-hidden="true"></span>
+              <span class="header-model" id="header-model">Select model</span>
+              <span class="session-cost" id="session-cost" hidden></span>
+            </div>
           </div>
 
-          <div class="quick-actions" id="quick-actions"></div>
-        </div>
-      </div>
+          <div class="messages" id="messages">
+            <div class="welcome" id="welcome">
+              <img src="/icon.png" alt="" class="welcome-hero-icon" width="72" height="72" />
+              <h1 class="welcome-title">Hey, I'm <span class="welcome-highlight">Playground</span>. How can I help you today?</h1>
+              <p class="welcome-subtitle">Test any LLM with your API keys. Private, client-side, no signup.</p>
 
-      <div class="input-area" id="input-area">
-        <div class="cost-estimate" id="cost-estimate" hidden></div>
-        <div class="input-container">
-          <textarea id="message-input" placeholder="Message…" rows="1" autocomplete="off"></textarea>
-          <div class="input-actions">
-            <span class="char-count" id="char-count"></span>
-            <button type="button" class="btn-send" id="send-btn" disabled>Send</button>
-            <button type="button" class="btn-stop" id="stop-btn" style="display:none">Stop</button>
+              <div class="setup-card" id="setup-card" hidden>
+                <h2>Get started</h2>
+                <ol class="setup-steps">
+                  <li>Choose a provider</li>
+                  <li>Add your API key</li>
+                  <li>Pick a model and send a message</li>
+                </ol>
+                <button type="button" class="btn btn-primary" id="setup-open-settings">Open settings</button>
+                <p class="setup-hint">OpenRouter works in-browser with one key.</p>
+              </div>
+
+              <div class="quick-actions" id="quick-actions"></div>
+            </div>
+          </div>
+
+          <div class="input-area" id="input-area">
+            <div class="cost-estimate" id="cost-estimate" hidden></div>
+            <div class="input-container">
+              <textarea id="message-input" placeholder="Ask anything, test models, compare responses…" rows="1" autocomplete="off"></textarea>
+              <div class="input-actions">
+                <div class="input-tools">
+                  <button type="button" class="input-tool-pill" id="input-settings-btn">
+                    <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
+                    Auto
+                  </button>
+                  <span class="char-count" id="char-count"></span>
+                </div>
+                <div class="input-send-group">
+                  <button type="button" class="btn-send" id="send-btn" disabled>
+                    <span>Send</span>
+                    <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+                  </button>
+                  <button type="button" class="btn-stop" id="stop-btn" style="display:none">Stop</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <p class="input-hint">Enter to send · Shift+Enter for new line</p>
-      </div>
-    </main>
+
+        <footer class="providers-footer" id="providers-footer">
+          <span class="providers-label">Providers</span>
+          <div class="providers-chips" id="providers-chips">
+            <button type="button" class="provider-chip" data-provider="openrouter">OpenRouter</button>
+            <button type="button" class="provider-chip" data-provider="openai">OpenAI</button>
+            <button type="button" class="provider-chip" data-provider="anthropic">Anthropic</button>
+            <button type="button" class="provider-chip" data-provider="gemini">Gemini</button>
+            <button type="button" class="provider-chip" data-provider="groq">Groq</button>
+            <button type="button" class="provider-chip" data-provider="deepseek">DeepSeek</button>
+          </div>
+        </footer>
+      </main>
+    </div>
 
     <aside class="settings-panel" id="settings-panel">
       <div class="settings-header">
@@ -291,8 +355,12 @@
     <div class="overlay" id="overlay"></div>
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
-    <button type="button" class="edge-toggle edge-toggle-left" id="sidebar-edge-toggle" aria-label="Toggle chats" aria-expanded="true">‹</button>
-    <button type="button" class="edge-toggle edge-toggle-right" id="settings-edge-toggle" aria-label="Toggle settings" aria-expanded="true">›</button>
+    <button type="button" class="edge-toggle edge-toggle-left" id="sidebar-edge-toggle" aria-label="Toggle chats" aria-expanded="true">
+      <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <button type="button" class="edge-toggle edge-toggle-right" id="settings-edge-toggle" aria-label="Toggle settings" aria-expanded="true">
+      <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
   </div>
 
   <script type="module" src="/src/main.js"></script>

@@ -222,6 +222,11 @@ body {
   display: block;
 }
 
+.icon {
+  flex-shrink: 0;
+  display: block;
+}
+
 .app-icon--welcome {
   width: 56px;
   height: 56px;
@@ -501,8 +506,8 @@ body {
   padding: 24px var(--content-padding);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 12px;
+  align-items: stretch;
+  gap: 16px;
   scroll-behavior: smooth;
   min-height: 0;
 }
@@ -642,55 +647,70 @@ body {
 .compare-group,
 .typing-indicator-wrap {
   display: flex;
-  gap: 12px;
-  width: 100%;
-  max-width: 768px;
-  margin: 0 auto;
+  gap: 0;
+  width: auto;
+  max-width: min(78%, 640px);
+  margin: 0;
   animation: fadeInUp 0.35s ease-out;
-  padding: 4px 0;
+  padding: 0;
+  align-self: flex-start;
+}
+
+.message.user {
+  align-self: flex-end;
 }
 
 .compare-group {
   flex-direction: column;
   gap: 8px;
+  align-self: center;
+  max-width: 100%;
+  width: 100%;
 }
 
 .message-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  min-width: 72px;
-  padding-top: 14px;
-  flex-shrink: 0;
+  display: none;
 }
-
-.message.user .message-label { color: var(--text-secondary); }
 
 .message-body {
   flex: 1;
   min-width: 0;
+  width: 100%;
+}
+
+.message.user .message-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.message.assistant .message-body,
+.typing-indicator-wrap .message-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .message-content {
-  padding: 14px 16px;
+  padding: 12px 16px;
   border-radius: var(--radius-md);
   line-height: 1.7;
   font-size: 0.9375rem;
+  max-width: 100%;
 }
 
 .message.user .message-content {
-  background: transparent;
-  border: none;
-  padding-left: 0;
-  padding-right: 0;
+  border-radius: 18px 18px 4px 18px;
 }
 
-.message.assistant .message-content {
-  background: var(--message-assistant-bg);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
+.message.assistant .message-content,
+.typing-indicator-wrap .message-content {
+  border-radius: 18px 18px 18px 4px;
+}
+
+.message.user .message-meta,
+.message.user .message-actions {
+  justify-content: flex-end;
 }
 
 /* Thinking block */
@@ -813,8 +833,8 @@ body {
 /* ---- Input Area ---- */
 .input-area {
   padding: 16px var(--content-padding) 20px;
-  background: var(--bg-elevated);
-  border-top: 1px solid var(--border);
+  background: transparent;
+  border-top: none;
   flex-shrink: 0;
 }
 
@@ -1783,14 +1803,7 @@ body.settings-collapsed .edge-toggle-right svg {
   .message,
   .compare-group,
   .typing-indicator-wrap {
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .message-label {
-    min-width: 0;
-    padding-top: 0;
-    font-size: 0.6875rem;
+    max-width: min(88%, 100%);
   }
 
   .message-content {
@@ -2598,9 +2611,14 @@ kbd {
 
 /* Cursor blink for streaming */
 .streaming-cursor::after {
-  content: '▌';
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--accent);
   animation: blink 0.8s step-end infinite;
-  color: var(--accent);
 }
 
 @keyframes blink {

@@ -18,6 +18,7 @@ export class ChatUI {
     this.mobileProvider = document.getElementById('mobile-provider');
     this.mobileModel = document.getElementById('mobile-model');
     this.mobileStatusBar = document.getElementById('mobile-status-bar');
+    this.topnavStatusText = document.getElementById('topnav-status-text');
     this.srAnnouncer = document.getElementById('sr-announcer');
 
     this.onRegenerate = onRegenerate;
@@ -100,11 +101,15 @@ export class ChatUI {
 
       if (this.mobileProvider) this.mobileProvider.textContent = providerInfo.name;
       if (this.mobileModel) this.mobileModel.textContent = settings.model || 'Select model';
+      if (this.topnavStatusText) {
+        this.topnavStatusText.textContent = `${providerInfo.name}, ${settings.model || 'Select model'}`;
+      }
     } else {
       this.headerProviderName.textContent = 'No provider';
       this.headerModel.textContent = 'Select model';
       if (this.mobileProvider) this.mobileProvider.textContent = 'No provider';
       if (this.mobileModel) this.mobileModel.textContent = 'Select model';
+      if (this.topnavStatusText) this.topnavStatusText.textContent = 'Configure model';
     }
 
     const cost = chat ? state.getSessionCost(chat.id) : 0;
@@ -249,7 +254,6 @@ export class ChatUI {
     el.className = `message ${msg.role}${msg.isError ? ' error' : ''}`;
     el.setAttribute('data-index', index);
 
-    const avatar = msg.role === 'user' ? 'U' : 'AI';
     const isAssistant = msg.role === 'assistant';
 
     let thinkingHtml = '';
@@ -291,7 +295,6 @@ export class ChatUI {
     `;
 
     el.innerHTML = `
-      <div class="message-label">${msg.role === 'user' ? 'You' : 'Assistant'}</div>
       <div class="message-body">
         <div class="message-content">
           ${thinkingHtml}
@@ -369,7 +372,6 @@ export class ChatUI {
     const wrap = document.createElement('div');
     wrap.className = 'typing-indicator-wrap message assistant';
     wrap.innerHTML = `
-      <div class="message-label">Assistant</div>
       <div class="message-body">
         <div class="message-content typing-bubble">
           <span class="typing-text">Thinking…</span>

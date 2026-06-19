@@ -34,7 +34,7 @@ export class InputUI {
       this.textarea.placeholder = 'Configure API key in settings to start…';
       this.textarea.disabled = false;
     } else {
-      this.textarea.placeholder = 'Send a message…';
+      this.textarea.placeholder = 'Ask anything, test models, compare responses…';
     }
   }
 

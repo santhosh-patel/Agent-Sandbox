@@ -1,3 +1,5 @@
+import { modKeyLabel } from './icons.js';
+
 export class ShortcutsUI {
   constructor(handlers) {
     this.handlers = handlers;
@@ -78,6 +80,7 @@ export class ShortcutsUI {
 
     this.panel = document.createElement('div');
     this.panel.className = 'shortcuts-panel visible';
+    const mod = modKeyLabel();
     this.panel.innerHTML = `
       <div class="shortcuts-content">
         <div class="shortcuts-header">
@@ -86,10 +89,10 @@ export class ShortcutsUI {
         </div>
         <div class="shortcuts-list">
           <div class="shortcut-row"><kbd>/</kbd><span>Focus message input</span></div>
-          <div class="shortcut-row"><kbd>⌘</kbd><kbd>K</kbd><span>Search chats</span></div>
-          <div class="shortcut-row"><kbd>⌘</kbd><kbd>,</kbd><span>Toggle settings</span></div>
-          <div class="shortcut-row"><kbd>⌘</kbd><kbd>Shift</kbd><kbd>N</kbd><span>New chat</span></div>
-          <div class="shortcut-row"><kbd>⌘</kbd><kbd>Enter</kbd><span>Send message</span></div>
+          <div class="shortcut-row"><kbd>${mod}</kbd><kbd>K</kbd><span>Search chats</span></div>
+          <div class="shortcut-row"><kbd>${mod}</kbd><kbd>,</kbd><span>Toggle settings</span></div>
+          <div class="shortcut-row"><kbd>${mod}</kbd><kbd>Shift</kbd><kbd>N</kbd><span>New chat</span></div>
+          <div class="shortcut-row"><kbd>${mod}</kbd><kbd>Enter</kbd><span>Send message</span></div>
           <div class="shortcut-row"><kbd>Enter</kbd><span>Send message</span></div>
           <div class="shortcut-row"><kbd>Shift</kbd><kbd>Enter</kbd><span>New line</span></div>
           <div class="shortcut-row"><kbd>Esc</kbd><span>Close panel / stop</span></div>
