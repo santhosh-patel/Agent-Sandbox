@@ -44,7 +44,7 @@ class App {
       this.sidebarUI.toggleSidebar();
     });
 
-    this.applyTheme(state.settings.theme || 'dark');
+    this.applyTheme(state.settings.theme || 'light');
     document.getElementById('theme-toggle-btn')?.addEventListener('click', () => this.toggleTheme());
 
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {

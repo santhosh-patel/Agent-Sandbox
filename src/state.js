@@ -15,7 +15,7 @@ const defaultSettings = {
   systemPrompt: '',
   reasoningMode: false,
   reasoningEffort: 'medium',
-  theme: 'dark',
+  theme: 'light',
   corsProxyUrl: '',
   compareMode: false,
   compareModels: [],
