@@ -23,8 +23,12 @@ function truncateToTokenLimit(text, tokenLimit) {
 
 export function buildApiHistory(messages, tokenLimit = API_HISTORY_TOKEN_LIMIT) {
   const eligible = messages
-    .filter(m => !m.compareId && String(m.content || '').trim())
-    .map(m => ({ role: m.role, content: m.content }));
+    .filter(m => !m.compareId && (String(m.content || '').trim() || m.images?.length))
+    .map(m => ({
+      role: m.role,
+      content: m.content || '',
+      ...(m.images?.length ? { images: m.images } : {}),
+    }));
 
   const selected = [];
   let totalTokens = 0;

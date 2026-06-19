@@ -4,10 +4,15 @@ import { ChatUI } from './ui/chat.js';
 import { InputUI } from './ui/input.js';
 import { SettingsUI } from './ui/settings.js';
 import { ShortcutsUI } from './ui/shortcuts.js';
+import { PromptLibraryUI } from './ui/prompt-library.js';
+import { AttachmentManager } from './ui/attachments.js';
 import { createProvider, estimateCost } from './providers/registry.js';
 import { generateFollowUpQueries, heuristicFollowUps } from './followups.js';
 import { buildApiHistory } from './chat-history.js';
 import { iconHtml } from './ui/icons.js';
+import { showToast } from './ui/toast.js';
+import { setMarkdownTheme } from './ui/markdown.js';
+import { registerPWA } from './pwa.js';
 
 class App {
   constructor() {
@@ -18,6 +23,8 @@ class App {
     this.inputUI = null;
     this.settingsUI = null;
     this.shortcutsUI = null;
+    this.promptLibraryUI = null;
+    this.attachments = null;
     this.lastPrompt = '';
   }
 
@@ -28,12 +35,22 @@ class App {
       () => this.handleRegenerate(),
       () => this.handleRetry(),
       () => this.settingsUI.expandPanel(),
-      (prompt) => this.handleSend(prompt),
+      (prompt) => this.handleFollowUpSend(prompt),
+      (compareId, model) => this.handlePickCompare(compareId, model),
     );
     this.inputUI = new InputUI(
-      (prompt) => this.handleSend(prompt),
+      (prompt, images) => this.handleSend(prompt, images),
       () => this.handleStop()
     );
+
+    this.attachments = new AttachmentManager();
+    this.inputUI.setAttachmentGetter(() => this.attachments.images);
+    const observer = new MutationObserver(() => this.inputUI.refreshSendState());
+    if (this.attachments.previewEl) observer.observe(this.attachments.previewEl, { childList: true, attributes: true, attributeFilter: ['hidden'] });
+
+    this.promptLibraryUI = new PromptLibraryUI((prompt) => {
+      this.inputUI.setPrompt(prompt);
+    });
 
     this.shortcutsUI = new ShortcutsUI({
       focusInput: () => this.inputUI.focus(),
@@ -64,6 +81,26 @@ class App {
       this.shortcutsUI.togglePanel();
     });
 
+    this.bindProviderChips();
+    this.bindThemePicker();
+
+    this.applyTheme(state.settings.theme || 'light');
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+      if (state.settings.theme === 'system') {
+        this.applyTheme('system');
+      }
+    });
+
+    state.on('settings-changed', (settings) => {
+      if (settings.theme) this.applyTheme(settings.theme);
+      if (settings.provider) this.updateProviderChips();
+    });
+
+    this.updateProviderChips();
+    registerPWA();
+  }
+
+  bindProviderChips() {
     document.querySelectorAll('.provider-chip').forEach(btn => {
       btn.addEventListener('click', () => {
         const provider = btn.dataset.provider;
@@ -75,25 +112,30 @@ class App {
         this.settingsUI.expandPanel();
       });
     });
+  }
 
-    this.applyTheme(state.settings.theme || 'light');
-    document.getElementById('theme-toggle-btn')?.addEventListener('click', () => this.toggleTheme());
-
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-      if (state.settings.theme === 'system') {
-        this.applyTheme(e.matches ? 'dark' : 'light');
-      }
-    });
-
-    state.on('settings-changed', (settings) => {
-      if (settings.theme) this.applyTheme(settings.theme);
+  updateProviderChips() {
+    const current = state.settings.provider;
+    document.querySelectorAll('.provider-chip').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.provider === current);
     });
   }
 
-  toggleTheme() {
-    const next = state.settings.theme === 'dark' ? 'light' : 'dark';
-    state.updateSettings({ theme: next });
-    this.applyTheme(next);
+  bindThemePicker() {
+    document.querySelectorAll('[data-theme-choice]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const theme = btn.dataset.themeChoice;
+        state.updateSettings({ theme });
+        this.applyTheme(theme);
+        document.querySelectorAll('[data-theme-choice]').forEach(b => {
+          b.classList.toggle('active', b.dataset.themeChoice === theme);
+        });
+      });
+    });
+    const theme = state.settings.theme || 'light';
+    document.querySelectorAll('[data-theme-choice]').forEach(b => {
+      b.classList.toggle('active', b.dataset.themeChoice === theme);
+    });
   }
 
   applyTheme(theme) {
@@ -102,9 +144,12 @@ class App {
       activeTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
     document.documentElement.setAttribute('data-theme', activeTheme);
+    setMarkdownTheme(activeTheme);
 
     const label = document.getElementById('theme-label');
-    if (label) label.textContent = activeTheme === 'dark' ? 'Dark mode' : 'Light mode';
+    if (label) {
+      label.textContent = theme === 'system' ? 'System theme' : (activeTheme === 'dark' ? 'Dark mode' : 'Light mode');
+    }
 
     const themeIcon = document.getElementById('theme-icon');
     if (themeIcon) {
@@ -114,23 +159,42 @@ class App {
     }
   }
 
-  async handleSend(prompt) {
+  handleFollowUpSend(prompt) {
+    this.inputUI.setPrompt(prompt);
+    this.inputUI.triggerSend();
+  }
+
+  handlePickCompare(compareId, model) {
+    const chat = state.getActiveChat();
+    if (!chat) return;
+    state.pickCompareResponse(chat.id, compareId, model);
+    if (state.settings.model !== model) {
+      state.updateSettings({ model });
+    }
+    showToast(`Continuing with ${model.split('/').pop()}`);
+    this.chatUI.render({ animate: false });
+  }
+
+  async handleSend(prompt, images = []) {
     if (this.abortController || this.abortControllers.length > 0) return;
 
+    const attachedImages = images.length ? images : this.attachments.consume();
     this.lastPrompt = prompt;
     const activeChat = state.getActiveChat();
     if (!activeChat) return;
 
     if (!state.isConfigured()) {
-      this.showToast('Configure provider and API key in settings.', true);
+      showToast('Configure provider and API key in settings.', true);
       this.settingsUI.expandPanel();
       return;
     }
 
+    if (!prompt.trim() && !attachedImages.length) return;
+
     const settings = state.settings;
     const key = state.getApiKey(settings.provider);
     if (!key && settings.provider !== 'openrouter') {
-      this.showToast('Add your API key in settings.', true);
+      showToast('Add your API key in settings.', true);
       this.settingsUI.expandPanel();
       return;
     }
@@ -138,8 +202,10 @@ class App {
     state.addMessage(activeChat.id, {
       role: 'user',
       content: prompt,
+      images: attachedImages.length ? attachedImages : undefined,
       createdAt: Date.now(),
     });
+    this.attachments.clear();
     state.clearFollowUpSuggestions(activeChat.id);
 
     if (settings.compareMode && settings.compareModels?.length > 0) {
@@ -302,12 +368,12 @@ class App {
       for await (const chunk of stream) {
         if (chunk.type === 'text') {
           fullText += chunk.content;
-          state.updateLastAssistantMessage(chatId, fullText, { thinking: fullThinking });
+          state.updateLastAssistantMessage(chatId, fullText, { thinking: fullThinking, skipSave: true });
           const msg = state.getActiveChat()?.messages[assistantIndex];
           if (msg) this.chatUI.updateMessageAt(assistantIndex, msg);
         } else if (chunk.type === 'thinking') {
           fullThinking += chunk.content;
-          state.updateLastAssistantMessage(chatId, fullText, { thinking: fullThinking });
+          state.updateLastAssistantMessage(chatId, fullText, { thinking: fullThinking, skipSave: true });
           const msg = state.getActiveChat()?.messages[assistantIndex];
           if (msg) this.chatUI.updateMessageAt(assistantIndex, msg);
         } else if (chunk.type === 'usage') {
@@ -338,9 +404,12 @@ class App {
           thinking: fullThinking,
         });
         state.recordUsage(settings.provider, promptTokens + completionTokens, cost || 0);
+      } else {
+        state.updateLastAssistantMessage(chatId, fullText, { thinking: fullThinking });
       }
 
       if (lastMsg) lastMsg.isStreaming = false;
+      state.flushSave();
       const finalMsg = state.getActiveChat()?.messages[assistantIndex];
       if (finalMsg) this.chatUI.updateMessageAt(assistantIndex, finalMsg);
       this.chatUI.announce('Response complete');
@@ -354,12 +423,13 @@ class App {
       }
     } catch (e) {
       if (e.name === 'AbortError') {
-        this.showToast('Generation stopped.');
+        showToast('Generation stopped.');
       } else {
         state.updateLastAssistantMessage(chatId, e.message, { isError: true });
       }
       const msg = activeChat.messages[assistantIndex];
       if (msg) msg.isStreaming = false;
+      state.flushSave();
       if (msg) this.chatUI.updateMessageAt(assistantIndex, msg);
     } finally {
       this.inputUI.setLoading(false);
@@ -399,18 +469,6 @@ class App {
         state.setFollowUpSuggestions(chatId, heuristicFollowUps(userQuestion));
       }
     }
-  }
-
-  showToast(message, isError = false) {
-    const toast = document.createElement('div');
-    toast.className = 'toast visible';
-    if (isError) toast.style.borderColor = 'var(--error)';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => {
-      toast.classList.remove('visible');
-      setTimeout(() => toast.remove(), 300);
-    }, 3000);
   }
 }
 

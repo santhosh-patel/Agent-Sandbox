@@ -1,5 +1,6 @@
 import { state } from '../state.js';
 import { estimateCost } from '../providers/registry.js';
+import { PROVIDERS } from '../providers/registry.js';
 
 export class InputUI {
   constructor(onSend, onStop) {
@@ -8,11 +9,17 @@ export class InputUI {
     this.stopBtn = document.getElementById('stop-btn');
     this.charCount = document.getElementById('char-count');
     this.costEstimate = document.getElementById('cost-estimate');
+    this.modelPill = document.getElementById('input-model-pill');
 
     this.onSend = onSend;
     this.onStop = onStop;
+    this.getAttachments = null;
 
     this.init();
+  }
+
+  setAttachmentGetter(fn) {
+    this.getAttachments = fn;
   }
 
   init() {
@@ -24,9 +31,27 @@ export class InputUI {
       if (this.onStop) this.onStop();
     });
 
-    state.on('settings-changed', () => this.updatePlaceholder());
+    state.on('settings-changed', () => {
+      this.updatePlaceholder();
+      this.updateModelPill();
+    });
     this.updatePlaceholder();
+    this.updateModelPill();
     this.handleInput();
+  }
+
+  updateModelPill() {
+    if (!this.modelPill) return;
+    const s = state.settings;
+    const provider = PROVIDERS[s.provider];
+    if (provider && s.model) {
+      const short = s.model.split('/').pop().split('-').slice(0, 2).join('-');
+      this.modelPill.textContent = short.length > 18 ? short.slice(0, 16) + '…' : short;
+      this.modelPill.title = `${provider.name} · ${s.model}`;
+    } else {
+      this.modelPill.textContent = 'No model';
+      this.modelPill.title = 'Open settings to choose a model';
+    }
   }
 
   updatePlaceholder() {
@@ -34,7 +59,7 @@ export class InputUI {
       this.textarea.placeholder = 'Configure API key in settings to start…';
       this.textarea.disabled = false;
     } else {
-      this.textarea.placeholder = 'Ask anything, test models, compare responses…';
+      this.textarea.placeholder = 'Ask anything, paste images, test models…';
     }
   }
 
@@ -43,8 +68,9 @@ export class InputUI {
     this.textarea.style.height = `${Math.min(this.textarea.scrollHeight, 200)}px`;
 
     const val = this.textarea.value.trim();
+    const hasAttachments = this.getAttachments?.()?.length > 0;
     const configured = state.isConfigured();
-    this.sendBtn.disabled = !val || !configured;
+    this.sendBtn.disabled = (!val && !hasAttachments) || !configured;
 
     if (this.textarea.value.length > 500) {
       this.charCount.textContent = `${this.textarea.value.length} chars`;
@@ -53,6 +79,10 @@ export class InputUI {
     }
 
     this.updateCostEstimate();
+  }
+
+  refreshSendState() {
+    this.handleInput();
   }
 
   updateCostEstimate() {
@@ -85,8 +115,9 @@ export class InputUI {
 
   triggerSend() {
     const val = this.textarea.value.trim();
-    if (!val || this.sendBtn.disabled) return;
-    if (this.onSend) this.onSend(val);
+    const images = this.getAttachments?.() || [];
+    if ((!val && !images.length) || this.sendBtn.disabled) return;
+    if (this.onSend) this.onSend(val, images);
     this.textarea.value = '';
     this.handleInput();
   }

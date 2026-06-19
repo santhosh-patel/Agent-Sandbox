@@ -3,9 +3,13 @@ import { renderMarkdown } from './markdown.js';
 import { PROVIDERS } from '../providers/registry.js';
 import { QUICK_ACTIONS } from '../data/templates.js';
 import { messageAvatarHtml } from './icons.js';
+import { showPrompt } from './modal.js';
+import { showToast } from './toast.js';
+import { downloadMarkdown, copyShareLink, downloadShareHtml } from '../export.js';
+import { renderWelcomePrompts } from './prompt-library.js';
 
 export class ChatUI {
-  constructor(onRegenerate, onRetry, onOpenSettings, onFollowUp) {
+  constructor(onRegenerate, onRetry, onOpenSettings, onFollowUp, onPickCompare) {
     this.messagesContainer = document.getElementById('messages');
     this.welcomeContainer = document.getElementById('welcome');
     this.setupCard = document.getElementById('setup-card');
@@ -26,18 +30,52 @@ export class ChatUI {
     this.onRetry = onRetry;
     this.onOpenSettings = onOpenSettings;
     this.onFollowUp = onFollowUp;
+    this.onPickCompare = onPickCompare;
     this.userNearBottom = true;
     this.stickToBottom = true;
+    this.scrollBtn = null;
 
     this.init();
   }
 
   init() {
+    this.scrollBtn = document.getElementById('scroll-bottom-btn');
+    this.scrollBtn?.addEventListener('click', () => {
+      this.stickToBottom = true;
+      this.scrollToBottom(true);
+    });
+
+    document.getElementById('export-md-btn')?.addEventListener('click', () => {
+      const chat = state.getActiveChat();
+      if (chat?.messages.length) {
+        downloadMarkdown(chat);
+        showToast('Markdown exported');
+      }
+    });
+
+    document.getElementById('export-share-btn')?.addEventListener('click', () => {
+      const chat = state.getActiveChat();
+      if (!chat?.messages.length) return;
+      const result = copyShareLink(chat);
+      if (result.copied) showToast('Share link copied');
+      else if (result.downloaded) showToast('Chat too large for link — HTML downloaded');
+    });
+
+    document.getElementById('export-html-btn')?.addEventListener('click', () => {
+      const chat = state.getActiveChat();
+      if (chat?.messages.length) {
+        downloadShareHtml(chat);
+        showToast('HTML export downloaded');
+      }
+    });
     this.messagesContainer.addEventListener('scroll', () => {
       const { scrollTop, scrollHeight, clientHeight } = this.messagesContainer;
       const nearBottom = scrollHeight - scrollTop - clientHeight < 120;
       this.userNearBottom = nearBottom;
       if (!nearBottom) this.stickToBottom = false;
+      if (this.scrollBtn) {
+        this.scrollBtn.classList.toggle('visible', !nearBottom && scrollHeight > clientHeight + 200);
+      }
     });
 
     this.chatTitleBtn?.addEventListener('click', () => this.renameChat());
@@ -60,6 +98,8 @@ export class ChatUI {
     state.on('messages-truncated', () => this.render({ animate: false }));
     state.on('settings-changed', () => this.updateHeader());
     state.on('follow-ups-updated', () => this.handleFollowUpsUpdated());
+    state.on('compare-picked', () => this.render({ animate: false }));
+    state.on('prompt-library-changed', () => this.renderQuickActions());
 
     this.render();
   }
@@ -112,14 +152,16 @@ export class ChatUI {
           return;
         }
         const prompt = btn.getAttribute('data-prompt');
-        const input = document.getElementById('message-input');
-        if (input) {
-          input.value = prompt;
-          input.dispatchEvent(new Event('input'));
-          const sendBtn = document.getElementById('send-btn');
-          if (sendBtn && !sendBtn.disabled) sendBtn.click();
-        }
+        if (this.onFollowUp) this.onFollowUp(prompt);
       });
+    });
+
+    renderWelcomePrompts(this.quickActionsEl, (prompt) => {
+      if (!state.isConfigured()) {
+        if (this.onOpenSettings) this.onOpenSettings();
+        return;
+      }
+      if (this.onFollowUp) this.onFollowUp(prompt);
     });
   }
 
@@ -164,8 +206,8 @@ export class ChatUI {
   async renameChat() {
     const chat = state.getActiveChat();
     if (!chat) return;
-    const title = prompt('Chat title:', chat.title);
-    if (title) state.renameChat(chat.id, title);
+    const title = await showPrompt({ title: 'Rename chat', defaultValue: chat.title });
+    if (title?.trim()) state.renameChat(chat.id, title.trim());
   }
 
   announce(text) {
@@ -259,8 +301,14 @@ export class ChatUI {
         if (meta) {
           meta.innerHTML = `
             ${msg.latency ? `<span>${msg.latency}s</span>` : ''}
-            ${msg.cost ? `<span>$${msg.cost.toFixed(5)}</span>` : ''}
+            ${msg.cost != null ? `<span>$${msg.cost.toFixed(5)}</span>` : ''}
           `;
+        }
+        const useBtn = col.querySelector('.compare-use-btn');
+        if (useBtn && !msg.isStreaming && !msg.isError) {
+          useBtn.style.display = '';
+        } else if (useBtn) {
+          useBtn.style.display = 'none';
         }
         break;
       }
@@ -345,12 +393,12 @@ export class ChatUI {
 
   bindMessageActions(el, msg, index) {
     el.querySelector('.copy-msg-btn')?.addEventListener('click', () => {
-      navigator.clipboard.writeText(msg.content);
+      navigator.clipboard.writeText(msg.content).then(() => showToast('Copied to clipboard'));
     });
 
-    el.querySelector('.edit-msg-btn')?.addEventListener('click', () => {
-      const newContent = prompt('Edit message:', msg.content);
-      if (newContent && newContent.trim()) {
+    el.querySelector('.edit-msg-btn')?.addEventListener('click', async () => {
+      const newContent = await showPrompt({ title: 'Edit message', defaultValue: msg.content, multiline: true, confirmText: 'Save & regenerate' });
+      if (newContent?.trim()) {
         const chat = state.getActiveChat();
         state.editUserMessage(chat.id, index, newContent.trim());
         if (this.onRegenerate) this.onRegenerate();
@@ -414,8 +462,24 @@ export class ChatUI {
   createCompareGroup(messages) {
     const wrap = document.createElement('div');
     wrap.className = 'compare-group';
-    wrap.setAttribute('data-compare-id', messages[0]?.compareId || '');
-    wrap.innerHTML = `<div class="compare-group-label">Model comparison</div><div class="compare-columns"></div>`;
+    const compareId = messages[0]?.compareId || '';
+    wrap.setAttribute('data-compare-id', compareId);
+
+    const summaryParts = messages.map(m => {
+      const parts = [];
+      if (m.latency) parts.push(`${m.latency}s`);
+      if (m.cost != null) parts.push(`$${m.cost.toFixed(5)}`);
+      if (m.tokens?.total_tokens) parts.push(`${m.tokens.total_tokens} tok`);
+      return `<span class="compare-summary-item"><strong>${this.escapeHtml(m.compareModel || m.model || 'Model')}</strong>: ${parts.join(' · ') || '—'}</span>`;
+    });
+
+    wrap.innerHTML = `
+      <div class="compare-group-header">
+        <div class="compare-group-label">Model comparison</div>
+        <div class="compare-summary">${summaryParts.join('')}</div>
+      </div>
+      <div class="compare-columns"></div>
+    `;
     const cols = wrap.querySelector('.compare-columns');
 
     messages.forEach((msg) => {
@@ -423,15 +487,35 @@ export class ChatUI {
       col.className = 'compare-column';
       const modelName = msg.compareModel || msg.model || 'Model';
       col.innerHTML = `
-        <div class="compare-column-header">${this.escapeHtml(modelName)}</div>
+        <div class="compare-column-header">
+          <button type="button" class="compare-collapse-btn" aria-expanded="true" aria-label="Toggle column">▼</button>
+          <span>${this.escapeHtml(modelName)}</span>
+        </div>
         <div class="compare-column-body">
           ${msg.isError ? this.renderError(msg.content) : (msg.isStreaming ? this.renderStreaming(msg.content) : renderMarkdown(msg.content))}
         </div>
-        <div class="compare-column-meta">
-          ${msg.latency ? `<span>${msg.latency}s</span>` : ''}
-          ${msg.cost ? `<span>$${msg.cost.toFixed(5)}</span>` : ''}
+        <div class="compare-column-footer">
+          <div class="compare-column-meta">
+            ${msg.latency ? `<span>${msg.latency}s</span>` : ''}
+            ${msg.cost != null ? `<span>$${msg.cost.toFixed(5)}</span>` : ''}
+          </div>
+          ${!msg.isStreaming && !msg.isError ? `<button type="button" class="btn btn-ghost btn-sm compare-use-btn" data-model="${this.escapeAttr(modelName)}">Use this response</button>` : ''}
         </div>
       `;
+
+      col.querySelector('.compare-collapse-btn')?.addEventListener('click', (e) => {
+        const btn = e.currentTarget;
+        const expanded = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!expanded));
+        btn.textContent = expanded ? '▶' : '▼';
+        col.querySelector('.compare-column-body')?.classList.toggle('collapsed', expanded);
+        col.querySelector('.compare-column-footer')?.classList.toggle('collapsed', expanded);
+      });
+
+      col.querySelector('.compare-use-btn')?.addEventListener('click', () => {
+        if (this.onPickCompare) this.onPickCompare(compareId, modelName);
+      });
+
       cols.appendChild(col);
     });
 
@@ -466,6 +550,10 @@ export class ChatUI {
       contentHtml = renderMarkdown(msg.content);
     }
 
+    const imagesHtml = msg.images?.length
+      ? `<div class="message-images">${msg.images.map(img => `<img src="${img.dataUrl}" alt="Attached image" class="message-image" loading="lazy" />`).join('')}</div>`
+      : '';
+
     const actionsHtml = `
       <div class="message-actions">
         <button type="button" class="msg-action-btn copy-msg-btn">Copy</button>
@@ -480,6 +568,7 @@ export class ChatUI {
       <div class="message-body">
         <div class="message-content">
           ${thinkingHtml}
+          ${imagesHtml}
           <div class="markdown-body">${contentHtml}</div>
         </div>
         ${metaHtml}

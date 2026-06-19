@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { showConfirm } from './modal.js';
+import { showConfirm, showPrompt } from './modal.js';
 import { isMobile, onViewportChange, closeSettingsPanel } from './breakpoints.js';
 
 export class SidebarUI {
@@ -10,6 +10,8 @@ export class SidebarUI {
     this.sidebar = document.getElementById('sidebar');
     this.sidebarOverlay = document.getElementById('sidebar-overlay');
     this.edgeToggle = document.getElementById('sidebar-edge-toggle');
+    this.filterTabs = document.getElementById('sidebar-filters');
+    this.foldersEl = document.getElementById('sidebar-folders');
 
     this.init();
   }
@@ -27,6 +29,16 @@ export class SidebarUI {
       this.edgeToggle.addEventListener('click', () => this.toggleSidebar());
     }
 
+    document.getElementById('new-folder-btn')?.addEventListener('click', () => this.createFolder());
+
+    this.filterTabs?.querySelectorAll('[data-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.setSidebarFilter(btn.dataset.filter);
+        this.filterTabs.querySelectorAll('[data-filter]').forEach(b => b.classList.toggle('active', b === btn));
+        this.render();
+      });
+    });
+
     const collapsed = localStorage.getItem('sidebar-collapsed') === 'true';
     this.setCollapsed(collapsed);
 
@@ -38,11 +50,68 @@ export class SidebarUI {
     state.on('chat-deleted', () => this.render());
     state.on('chat-switched', () => this.render());
     state.on('chat-renamed', () => this.render());
+    state.on('chat-updated', () => this.render());
     state.on('message-added', () => this.render());
     state.on('chats-imported', () => this.render());
     state.on('data-cleared', () => this.render());
+    state.on('folders-changed', () => this.render());
+    state.on('sidebar-filter-changed', () => this.render());
 
+    this.renderFolders();
     this.render();
+  }
+
+  async createFolder() {
+    const name = await showPrompt({ title: 'New folder', placeholder: 'Folder name', confirmText: 'Create' });
+    if (name?.trim()) {
+      state.createFolder(name.trim());
+      this.render();
+    }
+  }
+
+  renderFolders() {
+    if (!this.foldersEl) return;
+    const folders = state.folders;
+    if (!folders.length) {
+      this.foldersEl.innerHTML = '';
+      return;
+    }
+    this.foldersEl.innerHTML = folders.map(f => `
+      <button type="button" class="folder-chip ${state.sidebarFilter === f.id ? 'active' : ''}" data-folder="${f.id}">
+        <span>${this.escapeHtml(f.name)}</span>
+        <span class="folder-chip-actions">
+          <button type="button" class="folder-rename-btn" data-id="${f.id}" aria-label="Rename">✎</button>
+          <button type="button" class="folder-delete-btn" data-id="${f.id}" aria-label="Delete">×</button>
+        </span>
+      </button>
+    `).join('');
+
+    this.foldersEl.querySelectorAll('.folder-chip').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        if (e.target.closest('.folder-rename-btn') || e.target.closest('.folder-delete-btn')) return;
+        state.setSidebarFilter(btn.dataset.folder);
+        this.filterTabs?.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+        this.render();
+      });
+    });
+
+    this.foldersEl.querySelectorAll('.folder-rename-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const folder = state.folders.find(f => f.id === btn.dataset.id);
+        if (!folder) return;
+        const name = await showPrompt({ title: 'Rename folder', defaultValue: folder.name });
+        if (name?.trim()) state.renameFolder(folder.id, name.trim());
+      });
+    });
+
+    this.foldersEl.querySelectorAll('.folder-delete-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const ok = await showConfirm({ title: 'Delete folder', message: 'Chats will be moved out of this folder.', confirmText: 'Delete', destructive: true });
+        if (ok) state.deleteFolder(btn.dataset.id);
+      });
+    });
   }
 
   openMobileSidebar() {
@@ -87,25 +156,38 @@ export class SidebarUI {
   }
 
   render() {
+    this.renderFolders();
     const activeChatId = state.activeChat;
     const query = this.chatSearchInput.value.toLowerCase().trim();
-    const chats = state.getChatList();
-    const settings = state.settings;
+    const filter = state.sidebarFilter;
+    let chats = state.getChatList({ includeArchived: filter === 'archived' });
+
+    if (filter === 'pinned') chats = chats.filter(c => c.pinned);
+    else if (filter === 'archived') chats = chats.filter(c => c.archived);
+    else if (filter !== 'all') chats = chats.filter(c => c.folderId === filter);
 
     this.chatListContainer.innerHTML = '';
 
     const filteredChats = chats.filter(chat => {
       if (!query) return true;
       return chat.title.toLowerCase().includes(query) ||
-        chat.messages.some(m => m.content.toLowerCase().includes(query));
+        chat.messages.some(m => m.content?.toLowerCase().includes(query));
     });
 
     if (filteredChats.length === 0) {
+      const emptyMsg = query
+        ? 'No chats match your search'
+        : filter === 'pinned' ? 'No pinned chats'
+        : filter === 'archived' ? 'No archived chats'
+        : filter !== 'all' ? 'This folder is empty'
+        : 'No chats yet — start a conversation!';
       this.chatListContainer.innerHTML = `
         <div class="empty-state">
-          <p>No chats found</p>
+          <p>${emptyMsg}</p>
+          ${!query && filter === 'all' ? '<button type="button" class="btn btn-primary btn-sm empty-new-chat">New chat</button>' : ''}
         </div>
       `;
+      this.chatListContainer.querySelector('.empty-new-chat')?.addEventListener('click', () => state.createNewChat());
       return;
     }
 
@@ -119,23 +201,27 @@ export class SidebarUI {
 
       group.chats.forEach(chat => {
         const item = document.createElement('div');
-        item.className = `chat-item ${chat.id === activeChatId ? 'active' : ''}`;
+        item.className = `chat-item ${chat.id === activeChatId ? 'active' : ''}${chat.pinned ? ' pinned' : ''}`;
         item.setAttribute('data-id', chat.id);
 
         const msgCount = chat.messages.length;
-        const meta = `${settings.model || 'No model'}, ${msgCount} msg${msgCount !== 1 ? 's' : ''}`;
+        const meta = `${state.settings.model || 'No model'}, ${msgCount} msg${msgCount !== 1 ? 's' : ''}`;
         const snippet = this.getSearchSnippet(chat, query);
+        const pinIcon = chat.pinned ? '<span class="chat-pin-icon" aria-hidden="true">📌</span>' : '';
 
         item.innerHTML = `
           <div class="chat-item-content">
-            <span class="chat-item-text">${this.highlightMatch(this.escapeHtml(chat.title), query)}</span>
+            <span class="chat-item-text">${pinIcon}${this.highlightMatch(this.escapeHtml(chat.title), query)}</span>
             <span class="chat-item-meta">${snippet || meta}</span>
           </div>
-          <button type="button" class="chat-item-delete" aria-label="Delete">Delete</button>
+          <div class="chat-item-actions">
+            <button type="button" class="chat-item-menu-btn" aria-label="Chat options">⋯</button>
+            <button type="button" class="chat-item-delete" aria-label="Delete">Delete</button>
+          </div>
         `;
 
         item.addEventListener('click', (e) => {
-          if (e.target.closest('.chat-item-delete')) return;
+          if (e.target.closest('.chat-item-delete') || e.target.closest('.chat-item-menu-btn')) return;
           state.setActiveChat(chat.id);
           this.closeMobileSidebar();
         });
@@ -151,7 +237,59 @@ export class SidebarUI {
           if (ok) state.deleteChat(chat.id);
         });
 
+        item.querySelector('.chat-item-menu-btn')?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.showChatMenu(chat, e.currentTarget);
+        });
+
         this.chatListContainer.appendChild(item);
+      });
+    });
+  }
+
+  async showChatMenu(chat, anchor) {
+    const existing = document.querySelector('.chat-context-menu');
+    existing?.remove();
+
+    const menu = document.createElement('div');
+    menu.className = 'chat-context-menu';
+    const folderOptions = state.folders.map(f =>
+      `<button type="button" data-action="folder" data-folder="${f.id}">${this.escapeHtml(f.name)}</button>`
+    ).join('');
+
+    menu.innerHTML = `
+      <button type="button" data-action="pin">${chat.pinned ? 'Unpin' : 'Pin'}</button>
+      <button type="button" data-action="archive">${chat.archived ? 'Unarchive' : 'Archive'}</button>
+      <button type="button" data-action="duplicate">Duplicate</button>
+      <button type="button" data-action="rename">Rename</button>
+      ${state.folders.length ? `<div class="chat-menu-divider"></div><div class="chat-menu-label">Move to folder</div>${folderOptions}` : ''}
+      ${state.folders.length ? `<button type="button" data-action="folder" data-folder="">No folder</button>` : ''}
+    `;
+
+    document.body.appendChild(menu);
+    const rect = anchor.getBoundingClientRect();
+    menu.style.top = `${rect.bottom + 4}px`;
+    menu.style.left = `${Math.min(rect.left, window.innerWidth - 180)}px`;
+
+    const close = () => menu.remove();
+    setTimeout(() => document.addEventListener('click', close, { once: true }), 0);
+
+    menu.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const action = btn.dataset.action;
+        if (action === 'pin') state.pinChat(chat.id, !chat.pinned);
+        else if (action === 'archive') {
+          state.archiveChat(chat.id, !chat.archived);
+          if (!chat.archived) state.setSidebarFilter('archived');
+        }
+        else if (action === 'duplicate') state.duplicateChat(chat.id);
+        else if (action === 'rename') {
+          const title = await showPrompt({ title: 'Rename chat', defaultValue: chat.title });
+          if (title?.trim()) state.renameChat(chat.id, title.trim());
+        }
+        else if (action === 'folder') state.moveChatToFolder(chat.id, btn.dataset.folder);
+        close();
       });
     });
   }
@@ -178,7 +316,7 @@ export class SidebarUI {
 
   getSearchSnippet(chat, query) {
     if (!query) return '';
-    const match = chat.messages.find(m => m.content.toLowerCase().includes(query));
+    const match = chat.messages.find(m => m.content?.toLowerCase().includes(query));
     if (!match) return '';
     const idx = match.content.toLowerCase().indexOf(query);
     const start = Math.max(0, idx - 20);
@@ -199,4 +337,9 @@ export class SidebarUI {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
   }
+}
+
+export function closeMobileSidebar() {
+  document.getElementById('sidebar')?.classList.remove('open');
+  document.getElementById('sidebar-overlay')?.classList.remove('visible');
 }

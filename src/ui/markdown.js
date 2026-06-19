@@ -1,19 +1,35 @@
 import { marked } from 'marked';
 import hljs from 'highlight.js';
-// We'll import a standard style from highlight.js
-import 'highlight.js/styles/github-dark.css';
 
-// Configure marked with highlight.js
+let currentTheme = 'light';
+
+export function setMarkdownTheme(theme) {
+  currentTheme = theme === 'dark' ? 'dark' : 'light';
+  updateHighlightStylesheet();
+}
+
+function updateHighlightStylesheet() {
+  let link = document.getElementById('hljs-theme');
+  if (!link) {
+    link = document.createElement('link');
+    link.id = 'hljs-theme';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+  }
+  link.href = currentTheme === 'dark'
+    ? 'https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github-dark.min.css'
+    : 'https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github.min.css';
+}
+
+updateHighlightStylesheet();
+
 const renderer = new marked.Renderer();
 
-// Custom code block renderer to add Copy button and Language badge
-renderer.code = function(code, infostring, escaped) {
+renderer.code = function(code, infostring) {
   const lang = (infostring || '').match(/\S*/)[0] || 'text';
   const highlighted = lang && hljs.getLanguage(lang)
     ? hljs.highlight(code, { language: lang }).value
     : escapeHtml(code);
-
-  const escapedCode = escapeHtml(code);
 
   return `
     <div class="code-block-wrapper">
@@ -27,11 +43,11 @@ renderer.code = function(code, infostring, escaped) {
 };
 
 marked.setOptions({
-  renderer: renderer,
+  renderer,
   gfm: true,
   breaks: true,
   headerIds: false,
-  mangle: false
+  mangle: false,
 });
 
 function escapeHtml(text) {
@@ -43,7 +59,6 @@ function escapeHtml(text) {
     .replace(/'/g, '&#039;');
 }
 
-// Global copy helper for buttons within marked-generated html
 window.copyCodeBlock = function(button) {
   const code = decodeURIComponent(button.getAttribute('data-code'));
   navigator.clipboard.writeText(code).then(() => {
@@ -54,9 +69,7 @@ window.copyCodeBlock = function(button) {
       button.textContent = original;
       button.style.color = '';
     }, 2000);
-  }).catch(err => {
-    console.error('Failed to copy text: ', err);
-  });
+  }).catch(err => console.error('Failed to copy:', err));
 };
 
 export function renderMarkdown(text) {

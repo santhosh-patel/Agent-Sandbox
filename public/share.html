@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shared Chat</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 0 auto; padding: 24px; line-height: 1.6; color: #111; background: #f8f9fa; }
+    h1 { font-size: 1.5rem; margin-bottom: 4px; }
+    .meta { color: #666; font-size: 0.85rem; margin-bottom: 24px; }
+    .msg { margin-bottom: 20px; padding: 16px; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb; }
+    .msg.user { background: #ecfdf5; border-color: #a7f3d0; }
+    .msg-role { font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; margin-bottom: 8px; }
+    .msg img { max-width: 100%; border-radius: 8px; margin: 8px 0; }
+    .msg pre { background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 8px; overflow-x: auto; }
+    .msg code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+    .msg pre code { background: none; padding: 0; }
+    .footer { margin-top: 32px; text-align: center; color: #9ca3af; font-size: 0.8rem; }
+    .error { color: #b54a4a; text-align: center; padding: 48px; }
+  </style>
+</head>
+<body>
+  <div id="content"><p class="error">Loading shared chat…</p></div>
+  <script>
+    function escapeHtml(text) {
+      return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    function renderMessage(msg) {
+      const role = msg.role === 'user' ? 'You' : 'Assistant';
+      let imgs = (msg.images || []).map(img => `<img src="${img.dataUrl}" alt="Image" />`).join('');
+      const content = escapeHtml(msg.content || '').replace(/\n/g, '<br>');
+      return `<div class="msg ${msg.role}"><div class="msg-role">${role}${msg.model ? ' · ' + escapeHtml(msg.model) : ''}</div>${imgs}<div>${content}</div></div>`;
+    }
+    try {
+      const hash = location.hash.slice(1);
+      if (!hash) throw new Error('No chat data in link');
+      const data = JSON.parse(decodeURIComponent(escape(atob(hash))));
+      document.title = (data.title || 'Shared Chat') + ' · AI Playground';
+      document.getElementById('content').innerHTML = `
+        <h1>${escapeHtml(data.title || 'Shared Chat')}</h1>
+        <p class="meta">Read-only · Exported ${new Date(data.exportedAt).toLocaleString()}</p>
+        ${(data.messages || []).map(renderMessage).join('')}
+        <p class="footer">Shared from AI Playground</p>
+      `;
+    } catch (e) {
+      document.getElementById('content').innerHTML = `<p class="error">Could not load shared chat. The link may be invalid or truncated.</p>`;
+    }
+  </script>
+</body>
+</html>

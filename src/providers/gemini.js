@@ -4,6 +4,8 @@
 
 import { BaseProvider } from './base.js';
 
+import { formatMessagesForGemini } from './message-format.js';
+
 export class GeminiProvider extends BaseProvider {
   constructor(config = {}) {
     super({ ...config, baseUrl: config.baseUrl || 'https://generativelanguage.googleapis.com/v1beta' });
@@ -53,15 +55,7 @@ export class GeminiProvider extends BaseProvider {
   }
 
   buildRequestBody(messages, settings) {
-    const contents = [];
-
-    // Convert messages to Gemini format
-    for (const msg of messages) {
-      contents.push({
-        role: msg.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: msg.content }],
-      });
-    }
+    const contents = formatMessagesForGemini(messages);
 
     const body = {
       contents,

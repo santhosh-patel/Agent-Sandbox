@@ -4,6 +4,8 @@
 
 import { BaseProvider } from './base.js';
 
+import { formatMessagesForOpenAI } from './message-format.js';
+
 export class OpenAIProvider extends BaseProvider {
   constructor(config = {}) {
     super({ ...config, baseUrl: config.baseUrl || 'https://api.openai.com/v1' });
@@ -66,7 +68,7 @@ export class OpenAIProvider extends BaseProvider {
       body.messages.push({ role: 'system', content: settings.systemPrompt });
     }
 
-    body.messages.push(...messages);
+    body.messages.push(...formatMessagesForOpenAI(messages));
 
     // o-series models use reasoning_effort, not temperature
     const isReasoningModel = /^(o1|o3|o4)/.test(settings.model);

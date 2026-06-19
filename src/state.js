@@ -38,7 +38,14 @@ function createChat(title = 'New Chat') {
     totalCost: 0,
     followUpSuggestions: [],
     followUpsLoading: false,
+    pinned: false,
+    archived: false,
+    folderId: '',
   };
+}
+
+function createFolder(name = 'New Folder') {
+  return { id: createId(), name, createdAt: Date.now() };
 }
 
 class StateManager {
@@ -57,12 +64,21 @@ class StateManager {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
+        const chats = parsed.chats || {};
+        Object.values(chats).forEach(chat => {
+          if (chat.pinned === undefined) chat.pinned = false;
+          if (chat.archived === undefined) chat.archived = false;
+          if (chat.folderId === undefined) chat.folderId = '';
+        });
         return {
           activeChat: parsed.activeChat || '',
-          chats: parsed.chats || {},
+          chats,
           settings: { ...defaultSettings, ...parsed.settings },
           apiKeys: parsed.apiKeys || {},
           usage: parsed.usage || { daily: {}, total: { requests: 0, tokens: 0, cost: 0 } },
+          folders: parsed.folders || [],
+          promptLibrary: parsed.promptLibrary || [],
+          sidebarFilter: parsed.sidebarFilter || 'all',
         };
       }
     } catch (e) {
@@ -74,6 +90,9 @@ class StateManager {
       settings: { ...defaultSettings },
       apiKeys: {},
       usage: { daily: {}, total: { requests: 0, tokens: 0, cost: 0 } },
+      folders: [],
+      promptLibrary: [],
+      sidebarFilter: 'all',
     };
   }
 
@@ -83,6 +102,10 @@ class StateManager {
     } catch (e) {
       console.warn('Failed to save state:', e);
     }
+  }
+
+  flushSave() {
+    this._saveState();
   }
 
   _emit(event, data) {
@@ -105,14 +128,124 @@ class StateManager {
   get activeChat() { return this._state.activeChat; }
   get apiKeys() { return this._state.apiKeys; }
   get usage() { return this._state.usage; }
+  get folders() { return this._state.folders; }
+  get promptLibrary() { return this._state.promptLibrary; }
+  get sidebarFilter() { return this._state.sidebarFilter; }
 
   getActiveChat() {
     return this._state.chats[this._state.activeChat] || null;
   }
 
-  getChatList() {
+  getChatList({ includeArchived = false } = {}) {
     return Object.values(this._state.chats)
-      .sort((a, b) => b.updatedAt - a.updatedAt);
+      .filter(c => includeArchived || !c.archived)
+      .sort((a, b) => {
+        if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+        return b.updatedAt - a.updatedAt;
+      });
+  }
+
+  setSidebarFilter(filter) {
+    this._state.sidebarFilter = filter;
+    this._saveState();
+    this._emit('sidebar-filter-changed', filter);
+  }
+
+  pinChat(chatId, pinned = true) {
+    const chat = this._state.chats[chatId];
+    if (!chat) return;
+    chat.pinned = pinned;
+    chat.updatedAt = Date.now();
+    this._saveState();
+    this._emit('chat-updated', chatId);
+  }
+
+  archiveChat(chatId, archived = true) {
+    const chat = this._state.chats[chatId];
+    if (!chat) return;
+    chat.archived = archived;
+    if (archived) chat.pinned = false;
+    chat.updatedAt = Date.now();
+    this._saveState();
+    this._emit('chat-updated', chatId);
+  }
+
+  moveChatToFolder(chatId, folderId) {
+    const chat = this._state.chats[chatId];
+    if (!chat) return;
+    chat.folderId = folderId || '';
+    chat.updatedAt = Date.now();
+    this._saveState();
+    this._emit('chat-updated', chatId);
+  }
+
+  createFolder(name) {
+    const folder = createFolder(name.trim() || 'New Folder');
+    this._state.folders.push(folder);
+    this._saveState();
+    this._emit('folders-changed');
+    return folder;
+  }
+
+  renameFolder(folderId, name) {
+    const folder = this._state.folders.find(f => f.id === folderId);
+    if (!folder || !name.trim()) return;
+    folder.name = name.trim();
+    this._saveState();
+    this._emit('folders-changed');
+  }
+
+  deleteFolder(folderId) {
+    this._state.folders = this._state.folders.filter(f => f.id !== folderId);
+    Object.values(this._state.chats).forEach(c => {
+      if (c.folderId === folderId) c.folderId = '';
+    });
+    this._saveState();
+    this._emit('folders-changed');
+    this._emit('chat-updated');
+  }
+
+  addPrompt({ label, prompt, tags = [] }) {
+    const entry = { id: createId(), label: label.trim(), prompt: prompt.trim(), tags, createdAt: Date.now() };
+    this._state.promptLibrary.unshift(entry);
+    this._saveState();
+    this._emit('prompt-library-changed');
+    return entry;
+  }
+
+  removePrompt(promptId) {
+    this._state.promptLibrary = this._state.promptLibrary.filter(p => p.id !== promptId);
+    this._saveState();
+    this._emit('prompt-library-changed');
+  }
+
+  updatePrompt(promptId, partial) {
+    const entry = this._state.promptLibrary.find(p => p.id === promptId);
+    if (!entry) return;
+    Object.assign(entry, partial);
+    this._saveState();
+    this._emit('prompt-library-changed');
+  }
+
+  pickCompareResponse(chatId, compareId, model) {
+    const chat = this._state.chats[chatId];
+    if (!chat) return;
+    const picked = chat.messages.find(m => m.compareId === compareId && m.compareModel === model);
+    if (!picked) return;
+    chat.messages = chat.messages.filter(m => m.compareId !== compareId);
+    chat.messages.push({
+      role: 'assistant',
+      content: picked.content,
+      model: picked.compareModel || picked.model,
+      thinking: picked.thinking,
+      tokens: picked.tokens,
+      cost: picked.cost,
+      latency: picked.latency,
+      createdAt: Date.now(),
+    });
+    chat.updatedAt = Date.now();
+    this._saveState();
+    this._emit('compare-picked', { chatId, model });
   }
 
   isConfigured() {
@@ -261,7 +394,7 @@ class StateManager {
       if (meta.isError) lastMsg.isError = meta.isError;
       if (meta.model) lastMsg.model = meta.model;
       chat.updatedAt = Date.now();
-      this._saveState();
+      if (!meta.skipSave) this._saveState();
     }
   }
 
@@ -400,6 +533,9 @@ class StateManager {
     this._state.apiKeys = {};
     this._state.usage = { daily: {}, total: { requests: 0, tokens: 0, cost: 0 } };
     this._state.settings = { ...defaultSettings };
+    this._state.folders = [];
+    this._state.promptLibrary = [];
+    this._state.sidebarFilter = 'all';
     const chat = createChat();
     this._state.chats[chat.id] = chat;
     this._state.activeChat = chat.id;

@@ -4,6 +4,8 @@
 
 import { BaseProvider } from './base.js';
 
+import { formatMessagesForAnthropic } from './message-format.js';
+
 export class AnthropicProvider extends BaseProvider {
   constructor(config = {}) {
     super({ ...config, baseUrl: config.baseUrl || 'https://api.anthropic.com' });
@@ -65,10 +67,7 @@ export class AnthropicProvider extends BaseProvider {
       model: settings.model,
       max_tokens: settings.maxTokens || 4096,
       stream: true,
-      messages: messages.map(m => ({
-        role: m.role,
-        content: m.content,
-      })),
+      messages: formatMessagesForAnthropic(messages),
     };
 
     if (settings.systemPrompt) {
