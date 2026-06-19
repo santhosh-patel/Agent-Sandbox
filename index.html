@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>AI Playground</title>
   <meta name="description" content="Test any LLM with your own API keys. Client-side only." />
-  <meta name="theme-color" content="#f4f7f6" />
+  <meta name="theme-color" content="#faf6ed" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" type="image/png" href="/icon.png" />
   <link rel="apple-touch-icon" href="/icon.png" />
@@ -116,11 +116,6 @@
               <span class="meta-sep" aria-hidden="true"></span>
               <span class="header-model" id="header-model">Select model</span>
               <span class="session-cost" id="session-cost" hidden></span>
-            </div>
-            <div class="chat-header-actions">
-              <button type="button" class="btn-text btn-sm" id="export-md-btn" title="Export Markdown">MD</button>
-              <button type="button" class="btn-text btn-sm" id="export-share-btn" title="Copy share link">Share</button>
-              <button type="button" class="btn-text btn-sm" id="export-html-btn" title="Download HTML">HTML</button>
             </div>
           </div>
 
@@ -266,6 +261,7 @@
                 </label>
               </div>
               <div id="compare-models-row" class="compare-models-row" hidden>
+                <p class="settings-hint" id="compare-models-hint">Select up to 3 models to compare</p>
                 <div class="compare-model-checks" id="compare-model-checks"></div>
               </div>
             </div>
@@ -370,15 +366,31 @@
     <div class="overlay" id="overlay"></div>
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
-    <aside class="prompt-library-panel" id="prompt-library-panel">
+    <div class="prompt-library-backdrop" id="prompt-library-backdrop" hidden aria-hidden="true"></div>
+
+    <aside class="prompt-library-panel" id="prompt-library-panel" aria-label="Prompt library" aria-hidden="true">
       <div class="prompt-library-header">
-        <h2>Prompt library</h2>
-        <div class="prompt-library-header-actions">
-          <button type="button" class="btn btn-primary btn-sm" id="prompt-library-add">Add</button>
-          <button type="button" class="btn-text" id="prompt-library-close">Close</button>
+        <div class="prompt-library-header-text">
+          <h2>Prompt library</h2>
+          <p class="prompt-library-subtitle" id="prompt-library-count">Save and reuse your best prompts</p>
         </div>
+        <button type="button" class="btn-icon prompt-library-close-btn" id="prompt-library-close" aria-label="Close prompt library">×</button>
       </div>
+
+      <div class="prompt-library-toolbar">
+        <div class="prompt-library-search">
+          <input type="search" id="prompt-library-search" placeholder="Search prompts…" autocomplete="off" />
+        </div>
+        <button type="button" class="btn btn-primary prompt-library-add-btn" id="prompt-library-add">
+          + New prompt
+        </button>
+      </div>
+
       <div class="prompt-library-list" id="prompt-library-list"></div>
+
+      <div class="prompt-library-footer">
+        <span>Tip: use <strong>Save</strong> in the input bar to store the current message</span>
+      </div>
     </aside>
 
     <div class="pwa-install-banner" id="pwa-install-banner" hidden>

@@ -43,5 +43,6 @@ function showInstallBanner() {
 }
 
 function hideInstallBanner() {
-  document.getElementById('pwa-install-banner')?.setAttribute('hidden', '');
+  const banner = document.getElementById('pwa-install-banner');
+  if (banner) banner.hidden = true;
 }

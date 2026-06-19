@@ -4,8 +4,8 @@
   "description": "Test any LLM with your own API keys. Client-side only.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f4f7f6",
-  "theme_color": "#0d9488",
+  "background_color": "#faf6ed",
+  "theme_color": "#6aab68",
   "orientation": "any",
   "icons": [
     {

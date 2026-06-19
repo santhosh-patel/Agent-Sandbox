@@ -5,7 +5,6 @@ import { QUICK_ACTIONS } from '../data/templates.js';
 import { messageAvatarHtml } from './icons.js';
 import { showPrompt } from './modal.js';
 import { showToast } from './toast.js';
-import { downloadMarkdown, copyShareLink, downloadShareHtml } from '../export.js';
 import { renderWelcomePrompts } from './prompt-library.js';
 
 export class ChatUI {
@@ -45,29 +44,6 @@ export class ChatUI {
       this.scrollToBottom(true);
     });
 
-    document.getElementById('export-md-btn')?.addEventListener('click', () => {
-      const chat = state.getActiveChat();
-      if (chat?.messages.length) {
-        downloadMarkdown(chat);
-        showToast('Markdown exported');
-      }
-    });
-
-    document.getElementById('export-share-btn')?.addEventListener('click', () => {
-      const chat = state.getActiveChat();
-      if (!chat?.messages.length) return;
-      const result = copyShareLink(chat);
-      if (result.copied) showToast('Share link copied');
-      else if (result.downloaded) showToast('Chat too large for link — HTML downloaded');
-    });
-
-    document.getElementById('export-html-btn')?.addEventListener('click', () => {
-      const chat = state.getActiveChat();
-      if (chat?.messages.length) {
-        downloadShareHtml(chat);
-        showToast('HTML export downloaded');
-      }
-    });
     this.messagesContainer.addEventListener('scroll', () => {
       const { scrollTop, scrollHeight, clientHeight } = this.messagesContainer;
       const nearBottom = scrollHeight - scrollTop - clientHeight < 120;
@@ -289,29 +265,27 @@ export class ChatUI {
 
     const columns = group.querySelectorAll('.compare-column');
     for (const col of columns) {
-      const header = col.querySelector('.compare-column-header');
-      if (header?.textContent === model || header?.textContent === msg.compareModel) {
-        const body = col.querySelector('.compare-column-body');
-        if (body) {
-          body.innerHTML = msg.isError
-            ? this.renderError(msg.content)
-            : (msg.isStreaming ? this.renderStreaming(msg.content) : renderMarkdown(msg.content));
-        }
-        const meta = col.querySelector('.compare-column-meta');
-        if (meta) {
-          meta.innerHTML = `
-            ${msg.latency ? `<span>${msg.latency}s</span>` : ''}
-            ${msg.cost != null ? `<span>$${msg.cost.toFixed(5)}</span>` : ''}
-          `;
-        }
-        const useBtn = col.querySelector('.compare-use-btn');
-        if (useBtn && !msg.isStreaming && !msg.isError) {
-          useBtn.style.display = '';
-        } else if (useBtn) {
-          useBtn.style.display = 'none';
-        }
-        break;
+      if (col.dataset.model !== model && col.dataset.model !== msg.compareModel) continue;
+      const body = col.querySelector('.compare-column-body');
+      if (body) {
+        body.innerHTML = msg.isError
+          ? this.renderError(msg.content)
+          : (msg.isStreaming ? this.renderStreaming(msg.content) : renderMarkdown(msg.content));
       }
+      const meta = col.querySelector('.compare-column-meta');
+      if (meta) {
+        meta.innerHTML = `
+          ${msg.latency ? `<span>${msg.latency}s</span>` : ''}
+          ${msg.cost != null ? `<span>$${msg.cost.toFixed(5)}</span>` : ''}
+        `;
+      }
+      const useBtn = col.querySelector('.compare-use-btn');
+      if (useBtn && !msg.isStreaming && !msg.isError) {
+        useBtn.style.display = '';
+      } else if (useBtn) {
+        useBtn.style.display = 'none';
+      }
+      break;
     }
     this.scrollToBottom(true);
   }
@@ -486,19 +460,23 @@ export class ChatUI {
       const col = document.createElement('div');
       col.className = 'compare-column';
       const modelName = msg.compareModel || msg.model || 'Model';
+      col.dataset.model = modelName;
       col.innerHTML = `
         <div class="compare-column-header">
-          <button type="button" class="compare-collapse-btn" aria-expanded="true" aria-label="Toggle column">▼</button>
-          <span>${this.escapeHtml(modelName)}</span>
+          <div class="compare-column-title">
+            <span class="compare-column-model">${this.escapeHtml(modelName)}</span>
+            <div class="compare-column-meta">
+              ${msg.latency ? `<span>${msg.latency}s</span>` : ''}
+              ${msg.cost != null ? `<span>$${msg.cost.toFixed(5)}</span>` : ''}
+              ${msg.tokens?.total_tokens ? `<span>${msg.tokens.total_tokens} tok</span>` : ''}
+            </div>
+          </div>
+          <button type="button" class="compare-collapse-btn" aria-expanded="true" aria-label="Toggle response">▼</button>
         </div>
         <div class="compare-column-body">
           ${msg.isError ? this.renderError(msg.content) : (msg.isStreaming ? this.renderStreaming(msg.content) : renderMarkdown(msg.content))}
         </div>
         <div class="compare-column-footer">
-          <div class="compare-column-meta">
-            ${msg.latency ? `<span>${msg.latency}s</span>` : ''}
-            ${msg.cost != null ? `<span>$${msg.cost.toFixed(5)}</span>` : ''}
-          </div>
           ${!msg.isStreaming && !msg.isError ? `<button type="button" class="btn btn-ghost btn-sm compare-use-btn" data-model="${this.escapeAttr(modelName)}">Use this response</button>` : ''}
         </div>
       `;

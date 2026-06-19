@@ -3,8 +3,11 @@ import { PROVIDERS, createProvider } from '../providers/registry.js';
 import { PARAMETER_PRESETS, SYSTEM_PROMPT_PRESETS } from '../data/presets.js';
 import { getModelHint } from '../data/model-hints.js';
 import { showConfirm } from './modal.js';
+import { showToast } from './toast.js';
 import { isMobile, isTablet, onViewportChange, closeMobileSidebar } from './breakpoints.js';
 import { iconHtml } from './icons.js';
+
+const MAX_COMPARE_MODELS = 3;
 
 export class SettingsUI {
   constructor() {
@@ -31,6 +34,8 @@ export class SettingsUI {
     this.compareModeToggle = document.getElementById('compare-mode-toggle');
     this.compareModelsRow = document.getElementById('compare-models-row');
     this.compareModelChecks = document.getElementById('compare-model-checks');
+    this.compareModelsHint = document.getElementById('compare-models-hint');
+    this.lastModelList = [];
     this.presetButtons = document.getElementById('preset-buttons');
     this.systemPromptPresets = document.getElementById('system-prompt-presets');
     this.systemPrompt = document.getElementById('system-prompt');
@@ -457,29 +462,45 @@ export class SettingsUI {
     }
 
     this.modelHint.textContent = getModelHint(this.modelSelect.value);
+    this.lastModelList = models;
     this.renderCompareModelChecks(models);
   }
 
-  renderCompareModelChecks(models) {
+  renderCompareModelChecks(models = this.lastModelList) {
     if (!this.compareModelChecks) return;
-    const selected = state.settings.compareModels || [];
-    this.compareModelChecks.innerHTML = models.slice(0, 12).map(m => `
-      <label class="compare-check">
-        <input type="checkbox" value="${m.id}" ${selected.includes(m.id) ? 'checked' : ''} />
+    const selected = (state.settings.compareModels || []).slice(0, MAX_COMPARE_MODELS);
+    if (selected.length !== (state.settings.compareModels || []).length) {
+      state.updateSettings({ compareModels: selected });
+    }
+
+    this.compareModelChecks.innerHTML = models.slice(0, 12).map(m => {
+      const isChecked = selected.includes(m.id);
+      const atLimit = selected.length >= MAX_COMPARE_MODELS && !isChecked;
+      return `
+      <label class="compare-check${atLimit ? ' compare-check--disabled' : ''}">
+        <input type="checkbox" value="${m.id}" ${isChecked ? 'checked' : ''} ${atLimit ? 'disabled' : ''} />
         <span>${m.name}</span>
       </label>
-    `).join('');
+    `;
+    }).join('');
+
+    if (this.compareModelsHint) {
+      this.compareModelsHint.textContent = selected.length
+        ? `${selected.length} of ${MAX_COMPARE_MODELS} models selected`
+        : `Select up to ${MAX_COMPARE_MODELS} models to compare`;
+    }
 
     this.compareModelChecks.querySelectorAll('input').forEach(input => {
       input.addEventListener('change', () => {
         const checked = Array.from(this.compareModelChecks.querySelectorAll('input:checked'))
-          .map(el => el.value)
-          .slice(0, 3);
-        if (input.checked && checked.length > 3) {
+          .map(el => el.value);
+        if (checked.length > MAX_COMPARE_MODELS) {
           input.checked = false;
+          showToast(`You can compare up to ${MAX_COMPARE_MODELS} models`, { isError: true });
           return;
         }
         state.updateSettings({ compareModels: checked });
+        this.renderCompareModelChecks(models);
       });
     });
   }

@@ -1,6 +1,9 @@
 import { state } from '../state.js';
 import { showConfirm, showPrompt } from './modal.js';
 import { isMobile, onViewportChange, closeSettingsPanel } from './breakpoints.js';
+import { downloadMarkdown, copyShareLink, downloadShareHtml } from '../export.js';
+import { showToast } from './toast.js';
+import { PROVIDERS } from '../providers/registry.js';
 
 export class SidebarUI {
   constructor() {
@@ -257,19 +260,36 @@ export class SidebarUI {
       `<button type="button" data-action="folder" data-folder="${f.id}">${this.escapeHtml(f.name)}</button>`
     ).join('');
 
+    const meta = this.getChatMenuMeta(chat);
+    const metaLine = [meta.provider, meta.model, meta.cost].filter(Boolean).join(' · ');
+    const hasMessages = chat.messages.length > 0;
+    const exportSection = hasMessages ? `
+      <div class="chat-menu-divider"></div>
+      <div class="chat-menu-label">Export</div>
+      <button type="button" data-action="export-md">Export Markdown</button>
+      <button type="button" data-action="export-share">Copy share link</button>
+      <button type="button" data-action="export-html">Download HTML</button>
+    ` : '';
+
     menu.innerHTML = `
+      <div class="chat-menu-header">
+        <div class="chat-menu-title">${this.escapeHtml(chat.title)}</div>
+        ${metaLine ? `<div class="chat-menu-meta">${this.escapeHtml(metaLine)}</div>` : ''}
+      </div>
+      <div class="chat-menu-divider"></div>
       <button type="button" data-action="pin">${chat.pinned ? 'Unpin' : 'Pin'}</button>
       <button type="button" data-action="archive">${chat.archived ? 'Unarchive' : 'Archive'}</button>
       <button type="button" data-action="duplicate">Duplicate</button>
       <button type="button" data-action="rename">Rename</button>
       ${state.folders.length ? `<div class="chat-menu-divider"></div><div class="chat-menu-label">Move to folder</div>${folderOptions}` : ''}
       ${state.folders.length ? `<button type="button" data-action="folder" data-folder="">No folder</button>` : ''}
+      ${exportSection}
     `;
 
     document.body.appendChild(menu);
     const rect = anchor.getBoundingClientRect();
     menu.style.top = `${rect.bottom + 4}px`;
-    menu.style.left = `${Math.min(rect.left, window.innerWidth - 180)}px`;
+    menu.style.left = `${Math.min(rect.left, window.innerWidth - Math.max(menu.offsetWidth, 220))}px`;
 
     const close = () => menu.remove();
     setTimeout(() => document.addEventListener('click', close, { once: true }), 0);
@@ -289,9 +309,35 @@ export class SidebarUI {
           if (title?.trim()) state.renameChat(chat.id, title.trim());
         }
         else if (action === 'folder') state.moveChatToFolder(chat.id, btn.dataset.folder);
+        else if (action === 'export-md') {
+          downloadMarkdown(chat);
+          showToast('Markdown exported');
+        }
+        else if (action === 'export-share') {
+          const result = copyShareLink(chat);
+          if (result.copied) showToast('Share link copied');
+          else if (result.downloaded) showToast('Chat too large for link — HTML downloaded');
+        }
+        else if (action === 'export-html') {
+          downloadShareHtml(chat);
+          showToast('HTML export downloaded');
+        }
         close();
       });
     });
+  }
+
+  getChatMenuMeta(chat) {
+    const costTotal = state.getSessionCost(chat.id);
+    const cost = costTotal > 0 ? `$${costTotal.toFixed(4)}` : '';
+    const lastModel = [...chat.messages].reverse().find(m => m.model)?.model;
+    const isActive = chat.id === state.activeChat;
+    const settings = state.settings;
+    const provider = isActive && settings.provider
+      ? (PROVIDERS[settings.provider]?.name || settings.provider)
+      : '';
+    const model = lastModel || (isActive ? settings.model : '') || '';
+    return { provider, model, cost };
   }
 
   groupChatsByDate(chats) {
