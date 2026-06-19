@@ -5,18 +5,109 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shared Chat</title>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 0 auto; padding: 24px; line-height: 1.6; color: #111; background: #f8f9fa; }
+    :root {
+      --bg-primary: #f4f7f6;
+      --bg-elevated: #ffffff;
+      --accent: #0d9488;
+      --accent-soft: rgba(45, 212, 191, 0.14);
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --text-tertiary: #9ca3af;
+      --border: rgba(17, 24, 39, 0.08);
+      --error: #dc2626;
+      --code-bg: #eef3f2;
+      --pre-bg: #151a18;
+      --pre-text: #e8e4dc;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #0f1412;
+        --bg-elevated: #1e2623;
+        --accent: #2dd4bf;
+        --accent-soft: rgba(94, 234, 212, 0.12);
+        --text-primary: #f3f4f6;
+        --text-secondary: #9ca3af;
+        --text-tertiary: #6b7280;
+        --border: rgba(255, 255, 255, 0.08);
+        --error: #f87171;
+        --code-bg: #1a211e;
+        --pre-bg: #0f1412;
+        --pre-text: #e8e4dc;
+      }
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      background: var(--bg-primary);
+    }
+
     h1 { font-size: 1.5rem; margin-bottom: 4px; }
-    .meta { color: #666; font-size: 0.85rem; margin-bottom: 24px; }
-    .msg { margin-bottom: 20px; padding: 16px; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb; }
-    .msg.user { background: #ecfdf5; border-color: #a7f3d0; }
-    .msg-role { font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; margin-bottom: 8px; }
+
+    .meta {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      margin-bottom: 24px;
+    }
+
+    .msg {
+      margin-bottom: 20px;
+      padding: 16px;
+      border-radius: 14px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+    }
+
+    .msg.user {
+      background: var(--accent-soft);
+      border-color: rgba(45, 212, 191, 0.35);
+    }
+
+    .msg-role {
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-tertiary);
+      margin-bottom: 8px;
+    }
+
     .msg img { max-width: 100%; border-radius: 8px; margin: 8px 0; }
-    .msg pre { background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 8px; overflow-x: auto; }
-    .msg code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+
+    .msg pre {
+      background: var(--pre-bg);
+      color: var(--pre-text);
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+
+    .msg code {
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+
     .msg pre code { background: none; padding: 0; }
-    .footer { margin-top: 32px; text-align: center; color: #9ca3af; font-size: 0.8rem; }
-    .error { color: #b54a4a; text-align: center; padding: 48px; }
+
+    .footer {
+      margin-top: 32px;
+      text-align: center;
+      color: var(--text-tertiary);
+      font-size: 0.8rem;
+    }
+
+    .error {
+      color: var(--error);
+      text-align: center;
+      padding: 48px;
+    }
   </style>
 </head>
 <body>

@@ -1,7 +1,6 @@
 export function showToast(message, { isError = false, duration = 2500 } = {}) {
   const toast = document.createElement('div');
-  toast.className = 'toast visible';
-  if (isError) toast.style.borderColor = 'var(--error)';
+  toast.className = `toast visible${isError ? ' toast--error' : ''}`;
   toast.textContent = message;
   document.body.appendChild(toast);
   setTimeout(() => {
