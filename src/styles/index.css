@@ -62,10 +62,6 @@ body {
   background: var(--bg-primary);
 }
 
-.bg-orb {
-  display: none;
-}
-
 /* ---- App Layout ---- */
 #app {
   position: relative;
@@ -1157,7 +1153,7 @@ body {
 }
 
 .toggle-switch input:checked + .toggle-slider {
-  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+  background: var(--accent);
 }
 
 .toggle-switch input:checked + .toggle-slider::before {
@@ -1229,7 +1225,7 @@ body {
   border-radius: 50%;
   background: var(--accent);
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(106, 171, 104, 0.28);
+  box-shadow: var(--shadow-sm);
   transition: transform var(--transition);
 }
 
@@ -1244,7 +1240,7 @@ body {
   background: var(--accent);
   cursor: pointer;
   border: none;
-  box-shadow: 0 2px 6px rgba(106, 171, 104, 0.28);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ---- Buttons ---- */
@@ -1828,10 +1824,6 @@ body.settings-collapsed .edge-toggle-right svg {
   border: 0;
 }
 
-body.has-messages .bg-gradient {
-  opacity: 1;
-}
-
 .mobile-status-bar {
   flex: 1;
   display: flex;
@@ -2329,7 +2321,6 @@ kbd {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  .bg-orb { animation: none !important; }
 }
 
 /* ---- Highlight.js theme integration ---- */
