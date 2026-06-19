@@ -6,6 +6,8 @@
   <title>AI Playground</title>
   <meta name="description" content="Test any LLM with your own API keys. Client-side only." />
   <meta name="theme-color" content="#f7f3eb" />
+  <link rel="icon" type="image/png" href="/icon.png" />
+  <link rel="apple-touch-icon" href="/icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -24,17 +26,23 @@
   <div id="app">
     <header class="mobile-header">
       <button type="button" class="btn-text" id="sidebar-toggle">Chats</button>
-      <button type="button" class="mobile-status-bar" id="mobile-status-bar" aria-label="Open settings">
+      <div class="mobile-header-center">
+        <img src="/icon.png" alt="" class="app-icon" width="24" height="24" />
+        <button type="button" class="mobile-status-bar" id="mobile-status-bar" aria-label="Open settings">
         <span id="mobile-provider">No provider</span>
         <span class="mobile-status-dot">·</span>
         <span id="mobile-model">Select model</span>
-      </button>
+        </button>
+      </div>
       <button type="button" class="btn-text" id="settings-toggle-mobile">Settings</button>
     </header>
 
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <span class="logo-text">Playground</span>
+        <div class="app-brand">
+          <img src="/icon.png" alt="" class="app-icon" width="28" height="28" />
+          <span class="logo-text">Playground</span>
+        </div>
       </div>
 
       <button type="button" class="btn btn-new-chat" id="new-chat-btn">New chat</button>
@@ -68,6 +76,7 @@
 
       <div class="messages" id="messages">
         <div class="welcome" id="welcome">
+          <img src="/icon.png" alt="" class="app-icon app-icon--welcome" width="56" height="56" />
           <h1 class="welcome-title"><em>AI Playground</em></h1>
           <p class="welcome-subtitle">Test models instantly with your API keys. Private, client-side, no signup.</p>
 

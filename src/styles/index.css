@@ -193,6 +193,41 @@ body {
   color: var(--text-primary);
 }
 
+.mobile-header-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mobile-header-center .mobile-status-bar {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.app-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  display: block;
+}
+
+.app-icon--welcome {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 20px;
+}
+
 /* ---- Sidebar ---- */
 .sidebar {
   width: var(--sidebar-width);
@@ -549,8 +584,8 @@ body {
 .follow-up-wrap {
   width: 100%;
   max-width: 768px;
-  margin: 8px auto 0;
-  padding: 4px 0 12px;
+  margin: 12px auto 0;
+  padding: 4px 0 16px;
 }
 
 .follow-up-label {
@@ -588,7 +623,6 @@ body {
   color: var(--text-secondary);
   line-height: 1.35;
   white-space: normal;
-  box-shadow: none;
   transition: background var(--transition), color var(--transition), border-color var(--transition);
 }
 
