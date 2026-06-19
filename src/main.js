@@ -197,8 +197,8 @@ class App {
       });
     });
 
-    this.chatUI.removeTypingIndicator();
-    this.chatUI.render();
+    this.chatUI.beginAssistantResponse();
+    this.chatUI.render({ animate: false });
 
     this.abortControllers = models.map(() => new AbortController());
 
@@ -208,7 +208,8 @@ class App {
       await Promise.all(tasks);
     } finally {
       this.inputUI.setLoading(false);
-      this.chatUI.render();
+      this.chatUI.render({ animate: false });
+      this.chatUI.scrollToBottom(true);
       this.abortControllers = [];
     }
   }
@@ -231,7 +232,8 @@ class App {
         if (chunk.type === 'text') {
           fullText += chunk.content;
           state.updateCompareMessage(chatId, compareId, model, fullText, { thinking: fullThinking, isStreaming: true });
-          this.chatUI.render();
+          const msg = state.getActiveChat()?.messages.find(m => m.compareId === compareId && m.compareModel === model);
+          if (msg) this.chatUI.updateCompareMessage(compareId, model, msg);
         } else if (chunk.type === 'thinking') {
           fullThinking += chunk.content;
           state.updateCompareMessage(chatId, compareId, model, fullText, { thinking: fullThinking, isStreaming: true });
@@ -288,8 +290,8 @@ class App {
       createdAt: Date.now(),
     });
 
-    this.chatUI.removeTypingIndicator();
-    this.chatUI.render();
+    this.chatUI.beginAssistantResponse();
+    const assistantIndex = state.getActiveChat().messages.length - 1;
 
     let fullText = '';
     let fullThinking = '';
@@ -302,11 +304,13 @@ class App {
         if (chunk.type === 'text') {
           fullText += chunk.content;
           state.updateLastAssistantMessage(chatId, fullText, { thinking: fullThinking });
-          this.chatUI.render();
+          const msg = state.getActiveChat()?.messages[assistantIndex];
+          if (msg) this.chatUI.updateMessageAt(assistantIndex, msg);
         } else if (chunk.type === 'thinking') {
           fullThinking += chunk.content;
           state.updateLastAssistantMessage(chatId, fullText, { thinking: fullThinking });
-          this.chatUI.render();
+          const msg = state.getActiveChat()?.messages[assistantIndex];
+          if (msg) this.chatUI.updateMessageAt(assistantIndex, msg);
         } else if (chunk.type === 'usage') {
           const latency = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
           const cost = estimateCost(settings.model, chunk.usage.prompt_tokens, chunk.usage.completion_tokens);
@@ -338,6 +342,8 @@ class App {
       }
 
       if (lastMsg) lastMsg.isStreaming = false;
+      const finalMsg = state.getActiveChat()?.messages[assistantIndex];
+      if (finalMsg) this.chatUI.updateMessageAt(assistantIndex, finalMsg);
       this.chatUI.announce('Response complete');
 
       const lastAssistant = activeChat.messages[activeChat.messages.length - 1];
@@ -353,11 +359,12 @@ class App {
       } else {
         state.updateLastAssistantMessage(chatId, e.message, { isError: true });
       }
-      const msg = activeChat.messages[activeChat.messages.length - 1];
+      const msg = activeChat.messages[assistantIndex];
       if (msg) msg.isStreaming = false;
+      if (msg) this.chatUI.updateMessageAt(assistantIndex, msg);
     } finally {
       this.inputUI.setLoading(false);
-      this.chatUI.render();
+      this.chatUI.scrollToBottom(true);
       this.abortController = null;
     }
   }

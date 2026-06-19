@@ -27,6 +27,7 @@ export class ChatUI {
     this.onOpenSettings = onOpenSettings;
     this.onFollowUp = onFollowUp;
     this.userNearBottom = true;
+    this.stickToBottom = true;
 
     this.init();
   }
@@ -34,7 +35,9 @@ export class ChatUI {
   init() {
     this.messagesContainer.addEventListener('scroll', () => {
       const { scrollTop, scrollHeight, clientHeight } = this.messagesContainer;
-      this.userNearBottom = scrollHeight - scrollTop - clientHeight < 120;
+      const nearBottom = scrollHeight - scrollTop - clientHeight < 120;
+      this.userNearBottom = nearBottom;
+      if (!nearBottom) this.stickToBottom = false;
     });
 
     this.chatTitleBtn?.addEventListener('click', () => this.renameChat());
@@ -52,13 +55,46 @@ export class ChatUI {
     state.on('chat-switched', () => this.render());
     state.on('chat-cleared', () => this.render());
     state.on('chat-renamed', () => this.updateHeader());
-    state.on('message-added', () => this.render());
-    state.on('message-edited', () => this.render());
-    state.on('messages-truncated', () => this.render());
+    state.on('message-added', ({ chatId }) => this.handleMessageAdded(chatId));
+    state.on('message-edited', () => this.render({ animate: false }));
+    state.on('messages-truncated', () => this.render({ animate: false }));
     state.on('settings-changed', () => this.updateHeader());
-    state.on('follow-ups-updated', () => this.render());
+    state.on('follow-ups-updated', () => this.handleFollowUpsUpdated());
 
     this.render();
+  }
+
+  handleMessageAdded(chatId) {
+    const chat = state.getActiveChat();
+    if (!chat || chat.id !== chatId) return;
+
+    this.stickToBottom = true;
+    const domMessages = this.messagesContainer.querySelectorAll('.message:not(.typing-indicator-wrap)');
+    const index = chat.messages.length - 1;
+    const msg = chat.messages[index];
+
+    if (domMessages.length === index && msg && !msg.compareId) {
+      this.setupCard.hidden = true;
+      if (chat.messages.length === 0) {
+        this.welcomeContainer.style.display = 'flex';
+      } else {
+        this.welcomeContainer.style.display = 'none';
+        this.messagesContainer.appendChild(this.createMessageElement(msg, index, true));
+      }
+      this.updateHeader();
+      this.scrollToBottom(true);
+      return;
+    }
+
+    this.render({ animate: false });
+    this.scrollToBottom(true);
+  }
+
+  handleFollowUpsUpdated() {
+    const chat = state.getActiveChat();
+    if (!chat) return;
+    this.renderFollowUps(chat);
+    this.scrollToBottom(true);
   }
 
   renderQuickActions() {
@@ -138,7 +174,12 @@ export class ChatUI {
     }
   }
 
-  render() {
+  beginAssistantResponse() {
+    this.stickToBottom = true;
+    this.removeTypingIndicator();
+  }
+
+  render({ animate = false } = {}) {
     this.updateHeader();
     const activeChat = state.getActiveChat();
     const configured = state.isConfigured();
@@ -172,16 +213,162 @@ export class ChatUI {
           group.push(activeChat.messages[i]);
           i++;
         }
-        this.messagesContainer.appendChild(this.createCompareGroup(group));
+        const groupEl = this.createCompareGroup(group);
+        if (animate) groupEl.classList.add('message-enter');
+        this.messagesContainer.appendChild(groupEl);
       } else {
-        this.messagesContainer.appendChild(this.createMessageElement(msg, i));
+        this.messagesContainer.appendChild(this.createMessageElement(msg, i, animate));
         i++;
       }
     }
 
     this.renderFollowUps(activeChat);
-
     this.scrollToBottom();
+  }
+
+  updateMessageAt(index, msg) {
+    const el = this.messagesContainer.querySelector(`.message[data-index="${index}"]`);
+    if (!el) {
+      this.render({ animate: false });
+      this.scrollToBottom(true);
+      return;
+    }
+    this.patchMessageElement(el, msg, index);
+    this.scrollToBottom(true);
+  }
+
+  updateCompareMessage(compareId, model, msg) {
+    const group = this.messagesContainer.querySelector(`.compare-group[data-compare-id="${compareId}"]`);
+    if (!group) {
+      this.render({ animate: false });
+      this.scrollToBottom(true);
+      return;
+    }
+
+    const columns = group.querySelectorAll('.compare-column');
+    for (const col of columns) {
+      const header = col.querySelector('.compare-column-header');
+      if (header?.textContent === model || header?.textContent === msg.compareModel) {
+        const body = col.querySelector('.compare-column-body');
+        if (body) {
+          body.innerHTML = msg.isError
+            ? this.renderError(msg.content)
+            : (msg.isStreaming ? this.renderStreaming(msg.content) : renderMarkdown(msg.content));
+        }
+        const meta = col.querySelector('.compare-column-meta');
+        if (meta) {
+          meta.innerHTML = `
+            ${msg.latency ? `<span>${msg.latency}s</span>` : ''}
+            ${msg.cost ? `<span>$${msg.cost.toFixed(5)}</span>` : ''}
+          `;
+        }
+        break;
+      }
+    }
+    this.scrollToBottom(true);
+  }
+
+  patchMessageElement(el, msg, index) {
+    const isAssistant = msg.role === 'assistant';
+    const contentEl = el.querySelector('.message-content');
+    if (!contentEl) return;
+
+    let thinkingBlock = contentEl.querySelector('.thinking-block');
+    if (isAssistant && msg.thinking) {
+      if (!thinkingBlock) {
+        contentEl.insertAdjacentHTML('afterbegin', `
+          <div class="thinking-block">
+            <button type="button" class="thinking-header" aria-expanded="true">Reasoning</button>
+            <div class="thinking-content">${this.escapeHtml(msg.thinking)}</div>
+          </div>
+        `);
+        this.bindThinkingToggle(contentEl.querySelector('.thinking-header'));
+      } else {
+        const thinkingContent = thinkingBlock.querySelector('.thinking-content');
+        if (thinkingContent) thinkingContent.textContent = msg.thinking;
+      }
+    } else if (thinkingBlock) {
+      thinkingBlock.remove();
+    }
+
+    const markdownBody = contentEl.querySelector('.markdown-body');
+    if (markdownBody) {
+      if (msg.isError) {
+        markdownBody.innerHTML = this.renderError(msg.content);
+        this.bindErrorActions(el, index);
+      } else if (msg.isStreaming) {
+        markdownBody.innerHTML = this.renderStreaming(msg.content);
+      } else {
+        markdownBody.innerHTML = renderMarkdown(msg.content);
+      }
+    }
+
+    const body = el.querySelector('.message-body');
+    if (!body) return;
+
+    const metaHtml = this.buildMetaHtml(msg);
+    const existingMeta = body.querySelector('.message-meta');
+    if (metaHtml) {
+      if (existingMeta) existingMeta.outerHTML = metaHtml;
+      else body.insertAdjacentHTML('beforeend', metaHtml);
+    } else if (existingMeta) {
+      existingMeta.remove();
+    }
+  }
+
+  buildMetaHtml(msg) {
+    if (msg.role !== 'assistant' || !(msg.latency || msg.tokens || msg.cost)) return '';
+    const parts = [];
+    if (msg.latency) parts.push(`<span class="meta-item">${msg.latency}s</span>`);
+    if (msg.tokens) parts.push(`<span class="meta-item">${msg.tokens.total_tokens || msg.tokens} tokens</span>`);
+    if (msg.cost != null) parts.push(`<span class="meta-item">$${msg.cost.toFixed(5)}</span>`);
+    if (msg.model) parts.push(`<span class="meta-item">${this.escapeHtml(msg.model)}</span>`);
+    if (!parts.length) return '';
+    return `<div class="message-meta">${parts.join('')}</div>`;
+  }
+
+  bindThinkingToggle(thinkingBtn) {
+    if (!thinkingBtn) return;
+    thinkingBtn.addEventListener('click', () => {
+      const expanded = thinkingBtn.getAttribute('aria-expanded') === 'true';
+      thinkingBtn.setAttribute('aria-expanded', String(!expanded));
+      thinkingBtn.classList.toggle('collapsed', expanded);
+      thinkingBtn.nextElementSibling?.classList.toggle('hidden', expanded);
+    });
+  }
+
+  bindErrorActions(el, index) {
+    el.querySelector('.error-retry-btn')?.addEventListener('click', () => {
+      if (this.onRetry) this.onRetry();
+    });
+  }
+
+  bindMessageActions(el, msg, index) {
+    el.querySelector('.copy-msg-btn')?.addEventListener('click', () => {
+      navigator.clipboard.writeText(msg.content);
+    });
+
+    el.querySelector('.edit-msg-btn')?.addEventListener('click', () => {
+      const newContent = prompt('Edit message:', msg.content);
+      if (newContent && newContent.trim()) {
+        const chat = state.getActiveChat();
+        state.editUserMessage(chat.id, index, newContent.trim());
+        if (this.onRegenerate) this.onRegenerate();
+      }
+    });
+
+    el.querySelector('.regen-msg-btn')?.addEventListener('click', () => {
+      const chat = state.getActiveChat();
+      if (!chat) return;
+      if (index < chat.messages.length - 1) {
+        state.truncateMessagesAfter(chat.id, index - 1);
+      } else {
+        state.removeLastMessage(chat.id);
+      }
+      if (this.onRegenerate) this.onRegenerate();
+    });
+
+    this.bindErrorActions(el, index);
   }
 
   renderFollowUps(chat) {
@@ -227,10 +414,11 @@ export class ChatUI {
   createCompareGroup(messages) {
     const wrap = document.createElement('div');
     wrap.className = 'compare-group';
+    wrap.setAttribute('data-compare-id', messages[0]?.compareId || '');
     wrap.innerHTML = `<div class="compare-group-label">Model comparison</div><div class="compare-columns"></div>`;
     const cols = wrap.querySelector('.compare-columns');
 
-    messages.forEach((msg, idx) => {
+    messages.forEach((msg) => {
       const col = document.createElement('div');
       col.className = 'compare-column';
       const modelName = msg.compareModel || msg.model || 'Model';
@@ -250,9 +438,9 @@ export class ChatUI {
     return wrap;
   }
 
-  createMessageElement(msg, index) {
+  createMessageElement(msg, index, animate = false) {
     const el = document.createElement('div');
-    el.className = `message ${msg.role}${msg.isError ? ' error' : ''}`;
+    el.className = `message ${msg.role}${msg.isError ? ' error' : ''}${animate ? ' message-enter' : ''}`;
     el.setAttribute('data-index', index);
 
     const isAssistant = msg.role === 'assistant';
@@ -267,15 +455,7 @@ export class ChatUI {
       `;
     }
 
-    let metaHtml = '';
-    if (isAssistant && (msg.latency || msg.tokens || msg.cost)) {
-      const parts = [];
-      if (msg.latency) parts.push(`<span class="meta-item">${msg.latency}s</span>`);
-      if (msg.tokens) parts.push(`<span class="meta-item">${msg.tokens.total_tokens || msg.tokens} tokens</span>`);
-      if (msg.cost != null) parts.push(`<span class="meta-item">$${msg.cost.toFixed(5)}</span>`);
-      if (msg.model) parts.push(`<span class="meta-item">${this.escapeHtml(msg.model)}</span>`);
-      if (parts.length) metaHtml = `<div class="message-meta">${parts.join('')}</div>`;
-    }
+    const metaHtml = this.buildMetaHtml(msg);
 
     let contentHtml;
     if (msg.isError) {
@@ -307,43 +487,8 @@ export class ChatUI {
       </div>
     `;
 
-    const thinkingBtn = el.querySelector('.thinking-header');
-    if (thinkingBtn) {
-      thinkingBtn.addEventListener('click', () => {
-        const expanded = thinkingBtn.getAttribute('aria-expanded') === 'true';
-        thinkingBtn.setAttribute('aria-expanded', String(!expanded));
-        thinkingBtn.classList.toggle('collapsed', expanded);
-        thinkingBtn.nextElementSibling?.classList.toggle('hidden', expanded);
-      });
-    }
-
-    el.querySelector('.copy-msg-btn')?.addEventListener('click', () => {
-      navigator.clipboard.writeText(msg.content);
-    });
-
-    el.querySelector('.edit-msg-btn')?.addEventListener('click', () => {
-      const newContent = prompt('Edit message:', msg.content);
-      if (newContent && newContent.trim()) {
-        const chat = state.getActiveChat();
-        state.editUserMessage(chat.id, index, newContent.trim());
-        if (this.onRegenerate) this.onRegenerate();
-      }
-    });
-
-    el.querySelector('.regen-msg-btn')?.addEventListener('click', () => {
-      const chat = state.getActiveChat();
-      if (!chat) return;
-      if (index < chat.messages.length - 1) {
-        state.truncateMessagesAfter(chat.id, index - 1);
-      } else {
-        state.removeLastMessage(chat.id);
-      }
-      if (this.onRegenerate) this.onRegenerate();
-    });
-
-    el.querySelector('.error-retry-btn')?.addEventListener('click', () => {
-      if (this.onRetry) this.onRetry();
-    });
+    this.bindThinkingToggle(el.querySelector('.thinking-header'));
+    this.bindMessageActions(el, msg, index);
 
     return el;
   }
@@ -372,7 +517,7 @@ export class ChatUI {
     this.announce('Assistant is responding…');
 
     const wrap = document.createElement('div');
-    wrap.className = 'typing-indicator-wrap message assistant';
+    wrap.className = 'typing-indicator-wrap message assistant message-enter';
     wrap.innerHTML = `
       ${messageAvatarHtml('assistant')}
       <div class="message-body">
@@ -390,8 +535,13 @@ export class ChatUI {
   }
 
   scrollToBottom(force = false) {
-    if (force || this.userNearBottom) {
-      this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+    if (force || this.stickToBottom || this.userNearBottom) {
+      requestAnimationFrame(() => {
+        this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+        requestAnimationFrame(() => {
+          this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+        });
+      });
     }
   }
 

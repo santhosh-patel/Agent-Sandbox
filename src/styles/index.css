@@ -657,9 +657,14 @@ body {
   width: auto;
   max-width: min(82%, 680px);
   margin: 0;
-  animation: fadeInUp 0.35s ease-out;
   padding: 0;
   align-self: flex-start;
+}
+
+.message.message-enter,
+.compare-group.message-enter,
+.typing-indicator-wrap.message-enter {
+  animation: fadeInUp 0.35s ease-out;
 }
 
 .message.user,
