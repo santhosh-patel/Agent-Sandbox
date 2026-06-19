@@ -245,12 +245,7 @@ body {
 .sidebar-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 20px 16px 12px;
-}
-
-.sidebar-collapse-btn {
-  flex-shrink: 0;
 }
 
 @media (min-width: 769px) {
@@ -896,8 +891,8 @@ body {
 
 /* ---- Settings Panel ---- */
 .settings-panel {
-  width: 0;
-  min-width: 0;
+  width: var(--settings-width);
+  min-width: var(--settings-width);
   height: 100vh;
   background: var(--bg-glass-strong);
   backdrop-filter: var(--blur);
@@ -906,19 +901,22 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: width var(--transition), min-width var(--transition);
+  transition: width var(--transition), min-width var(--transition), opacity var(--transition), transform var(--transition);
   z-index: 80;
 }
 
-.settings-panel.open {
-  width: var(--settings-width);
-  min-width: var(--settings-width);
+@media (min-width: 901px) {
+  .settings-panel.collapsed {
+    width: 0;
+    min-width: 0;
+    overflow: hidden;
+    border-left: none;
+    opacity: 0;
+    pointer-events: none;
+  }
 }
 
 .settings-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   padding: 20px 16px 12px;
   border-bottom: 1px solid var(--border);
 }
@@ -1331,6 +1329,64 @@ body {
   pointer-events: auto;
 }
 
+/* ---- Panel edge toggles ---- */
+.edge-toggle {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 100;
+  width: 20px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border);
+  background: var(--bg-glass-strong);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: left var(--transition), right var(--transition), color var(--transition), background var(--transition);
+}
+
+.edge-toggle:hover {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+
+.edge-toggle svg {
+  transition: transform var(--transition);
+}
+
+.edge-toggle-left {
+  left: var(--sidebar-width);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border-left: none;
+}
+
+.edge-toggle-right {
+  right: var(--settings-width);
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  border-right: none;
+}
+
+body.sidebar-collapsed .edge-toggle-left {
+  left: 0;
+}
+
+body.sidebar-collapsed .edge-toggle-left svg {
+  transform: rotate(180deg);
+}
+
+body.settings-collapsed .edge-toggle-right {
+  right: 0;
+}
+
+body.settings-collapsed .edge-toggle-right svg {
+  transform: rotate(180deg);
+}
+
 /* ---- Markdown Content ---- */
 .message-content h1,
 .message-content h2,
@@ -1500,19 +1556,27 @@ body {
 
 /* ---- Responsive ---- */
 @media (max-width: 900px) {
-  .settings-panel.open {
+  .settings-panel {
     position: fixed;
     right: 0;
     top: 0;
     z-index: 85;
-    width: var(--settings-width);
-    min-width: var(--settings-width);
+    transform: translateX(100%);
+    box-shadow: var(--shadow-xl);
+  }
+
+  .settings-panel:not(.collapsed) {
+    transform: translateX(0);
   }
 }
 
 @media (max-width: 768px) {
   .mobile-header {
     display: flex;
+  }
+
+  .edge-toggle {
+    display: none;
   }
 
   .sidebar {
@@ -1537,7 +1601,7 @@ body {
     display: none;
   }
 
-  .settings-panel.open {
+  .settings-panel:not(.collapsed) {
     width: 100%;
     min-width: 100%;
   }

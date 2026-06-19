@@ -7,8 +7,7 @@ export class SidebarUI {
     this.chatSearchInput = document.getElementById('chat-search');
     this.sidebar = document.getElementById('sidebar');
     this.sidebarOverlay = document.getElementById('sidebar-overlay');
-    this.sidebarCollapse = document.getElementById('sidebar-collapse');
-    this.sidebarExpand = document.getElementById('sidebar-expand');
+    this.edgeToggle = document.getElementById('sidebar-edge-toggle');
 
     this.init();
   }
@@ -22,22 +21,18 @@ export class SidebarUI {
     this.chatSearchInput.addEventListener('input', () => this.render());
 
     this.sidebarOverlay.addEventListener('click', () => this.closeMobileSidebar());
-    if (this.sidebarCollapse) {
-      this.sidebarCollapse.addEventListener('click', () => this.collapseSidebar());
-    }
-    if (this.sidebarExpand) {
-      this.sidebarExpand.addEventListener('click', () => this.expandSidebar());
+    if (this.edgeToggle) {
+      this.edgeToggle.addEventListener('click', () => this.toggleSidebar());
     }
 
-    if (localStorage.getItem('sidebar-collapsed') === 'true') {
-      this.setCollapsed(true);
-    }
+    const collapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+    this.setCollapsed(collapsed);
 
     // Subscribe to state updates
     state.on('chat-created', () => this.render());
     state.on('chat-deleted', () => this.render());
     state.on('chat-switched', () => this.render());
-    state.on('message-added', () => this.render()); // To update dynamic title or order
+    state.on('message-added', () => this.render());
 
     this.render();
   }
@@ -56,11 +51,15 @@ export class SidebarUI {
     return window.matchMedia('(max-width: 768px)').matches;
   }
 
-  collapseSidebar() {
+  toggleSidebar() {
     if (this.isMobile()) {
-      this.closeMobileSidebar();
+      if (this.sidebar.classList.contains('open')) {
+        this.closeMobileSidebar();
+      } else {
+        this.openMobileSidebar();
+      }
     } else {
-      this.setCollapsed(true);
+      this.setCollapsed(!this.sidebar.classList.contains('collapsed'));
     }
   }
 
@@ -74,9 +73,7 @@ export class SidebarUI {
 
   setCollapsed(collapsed) {
     this.sidebar.classList.toggle('collapsed', collapsed);
-    if (this.sidebarExpand) {
-      this.sidebarExpand.hidden = !collapsed;
-    }
+    document.body.classList.toggle('sidebar-collapsed', collapsed);
     localStorage.setItem('sidebar-collapsed', collapsed);
   }
 
@@ -120,7 +117,6 @@ export class SidebarUI {
       `;
 
       item.addEventListener('click', (e) => {
-        // Prevent click if clicking delete button
         if (e.target.closest('.chat-item-delete')) return;
         state.setActiveChat(chat.id);
         this.closeMobileSidebar();

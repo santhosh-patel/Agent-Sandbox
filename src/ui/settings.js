@@ -5,11 +5,8 @@ export class SettingsUI {
   constructor() {
     this.panel = document.getElementById('settings-panel');
     this.overlay = document.getElementById('overlay');
-    this.closeBtn = document.getElementById('settings-close');
-    this.toggleBtns = [
-      document.getElementById('settings-toggle'),
-      document.getElementById('settings-toggle-mobile')
-    ];
+    this.edgeToggle = document.getElementById('settings-edge-toggle');
+    this.mobileToggle = document.getElementById('settings-toggle-mobile');
 
     // Form inputs
     this.providerSelect = document.getElementById('provider-select');
@@ -44,12 +41,13 @@ export class SettingsUI {
   }
 
   init() {
-    // Connect panel open/close
-    this.toggleBtns.forEach(btn => {
-      if (btn) btn.addEventListener('click', () => this.openPanel());
-    });
-    this.closeBtn.addEventListener('click', () => this.closePanel());
-    this.overlay.addEventListener('click', () => this.closePanel());
+    if (this.mobileToggle) {
+      this.mobileToggle.addEventListener('click', () => this.togglePanel());
+    }
+    if (this.edgeToggle) {
+      this.edgeToggle.addEventListener('click', () => this.togglePanel());
+    }
+    this.overlay.addEventListener('click', () => this.collapsePanel());
 
     // Bind event handlers
     this.providerSelect.addEventListener('change', () => this.handleProviderChange());
@@ -97,16 +95,43 @@ export class SettingsUI {
 
     // Load initial values from state
     this.loadStateValues();
+
+    const stored = localStorage.getItem('settings-collapsed');
+    const collapsed = stored !== null ? stored === 'true' : this.isMobile();
+    this.setCollapsed(collapsed);
+  }
+
+  isMobile() {
+    return window.matchMedia('(max-width: 900px)').matches;
   }
 
   openPanel() {
-    this.panel.classList.add('open');
-    this.overlay.classList.add('visible');
+    this.expandPanel();
   }
 
   closePanel() {
-    this.panel.classList.remove('open');
-    this.overlay.classList.remove('visible');
+    this.collapsePanel();
+  }
+
+  expandPanel() {
+    this.setCollapsed(false);
+  }
+
+  collapsePanel() {
+    this.setCollapsed(true);
+  }
+
+  togglePanel() {
+    this.setCollapsed(!this.panel.classList.contains('collapsed'));
+  }
+
+  setCollapsed(collapsed) {
+    this.panel.classList.toggle('collapsed', collapsed);
+    document.body.classList.toggle('settings-collapsed', collapsed);
+    if (this.overlay) {
+      this.overlay.classList.toggle('visible', !collapsed && this.isMobile());
+    }
+    localStorage.setItem('settings-collapsed', collapsed);
   }
 
   bindSlider(slider, valueDisplay, settingKey) {
