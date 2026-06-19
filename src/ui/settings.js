@@ -41,6 +41,7 @@ export class SettingsUI {
     this.compareModelsHint = document.getElementById('compare-models-hint');
     this.profileSelect = document.getElementById('profile-select');
     this.systemPrompt = document.getElementById('system-prompt');
+    this.assistantNameInput = document.getElementById('assistant-name-input');
     this.lastModelList = [];
     this.modelSearchQuery = '';
 
@@ -108,6 +109,10 @@ export class SettingsUI {
 
     this.systemPrompt.addEventListener('input', () => {
       state.updateSettings({ systemPrompt: this.systemPrompt.value });
+    });
+
+    this.assistantNameInput?.addEventListener('input', () => {
+      state.updateSettings({ assistantName: this.assistantNameInput.value });
     });
 
     this.bindDataButtons();
@@ -232,6 +237,9 @@ export class SettingsUI {
     this.systemPrompt.value = settings.systemPrompt || '';
     if (this.profileSelect) {
       this.profileSelect.value = settings.responseProfile || 'balanced';
+    }
+    if (this.assistantNameInput) {
+      this.assistantNameInput.value = settings.assistantName ?? 'Maya';
     }
     this.compareModeToggle.checked = !!settings.compareMode;
     this.compareModelsRow.hidden = !settings.compareMode;

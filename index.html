@@ -122,7 +122,7 @@
           <div class="messages" id="messages">
             <div class="welcome" id="welcome">
               <img src="/icon.png" alt="" class="welcome-hero-icon" width="72" height="72" />
-              <h1 class="welcome-title">Hey, I'm <span class="welcome-highlight">Playground</span>. How can I help you today?</h1>
+              <h1 class="welcome-title">Hey, I'm <span class="welcome-highlight" id="welcome-assistant-name">Maya</span>. How can I help you today?</h1>
               <p class="welcome-subtitle">Test any LLM with your API keys. Private, client-side, no signup.</p>
 
               <div class="setup-card" id="setup-card" hidden>
@@ -290,6 +290,11 @@
 
         <section class="settings-block">
           <h3 class="settings-block-title">Appearance</h3>
+          <div class="settings-section">
+            <label class="settings-label" for="assistant-name-input">Assistant name</label>
+            <input type="text" id="assistant-name-input" class="settings-input" placeholder="Maya" maxlength="32" autocomplete="off" />
+            <p class="settings-hint">Shown in the welcome message and chat exports.</p>
+          </div>
           <div class="settings-section">
             <span class="settings-label">Theme</span>
             <div class="theme-picker settings-theme-picker" role="group" aria-label="Theme">

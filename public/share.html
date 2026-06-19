@@ -116,8 +116,8 @@
     function escapeHtml(text) {
       return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
-    function renderMessage(msg) {
-      const role = msg.role === 'user' ? 'You' : 'Assistant';
+    function renderMessage(msg, assistantName) {
+      const role = msg.role === 'user' ? 'You' : (assistantName || 'Maya');
       let imgs = (msg.images || []).map(img => `<img src="${img.dataUrl}" alt="Image" />`).join('');
       const content = escapeHtml(msg.content || '').replace(/\n/g, '<br>');
       return `<div class="msg ${msg.role}"><div class="msg-role">${role}${msg.model ? ' · ' + escapeHtml(msg.model) : ''}</div>${imgs}<div>${content}</div></div>`;
@@ -126,11 +126,12 @@
       const hash = location.hash.slice(1);
       if (!hash) throw new Error('No chat data in link');
       const data = JSON.parse(decodeURIComponent(escape(atob(hash))));
+      const assistantName = data.assistantName || 'Maya';
       document.title = (data.title || 'Shared Chat') + ' · AI Playground';
       document.getElementById('content').innerHTML = `
         <h1>${escapeHtml(data.title || 'Shared Chat')}</h1>
         <p class="meta">Read-only · Exported ${new Date(data.exportedAt).toLocaleString()}</p>
-        ${(data.messages || []).map(renderMessage).join('')}
+        ${(data.messages || []).map(m => renderMessage(m, assistantName)).join('')}
         <p class="footer">Shared from AI Playground</p>
       `;
     } catch (e) {

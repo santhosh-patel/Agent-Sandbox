@@ -24,6 +24,7 @@ const defaultSettings = {
   responseProfile: 'balanced',
   favoriteModels: [],
   recentModels: [],
+  assistantName: 'Maya',
 };
 
 function createId() {
@@ -267,6 +268,11 @@ class StateManager {
     else if (s.provider !== 'openrouter' && !this.getApiKey(s.provider)) issues.push('Add API key');
     if (s.provider && !s.model) issues.push('Pick a model');
     return issues;
+  }
+
+  getAssistantName() {
+    const name = String(this._state.settings.assistantName || '').trim();
+    return name || 'Maya';
   }
 
   getSessionCost(chatId) {

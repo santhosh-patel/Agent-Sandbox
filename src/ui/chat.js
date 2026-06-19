@@ -25,6 +25,7 @@ export class ChatUI {
     this.mobileStatusBar = document.getElementById('mobile-status-bar');
     this.topnavStatusText = document.getElementById('topnav-status-text');
     this.srAnnouncer = document.getElementById('sr-announcer');
+    this.welcomeAssistantName = document.getElementById('welcome-assistant-name');
 
     this.onRegenerate = onRegenerate;
     this.onRetry = onRetry;
@@ -73,6 +74,7 @@ export class ChatUI {
     state.on('messages-truncated', () => this.render({ animate: false }));
     state.on('settings-changed', () => {
       this.updateHeader();
+      this.updateAssistantBranding();
       if (!state.isConfigured()) this.updateSetupCard();
     });
     state.on('follow-ups-updated', () => this.handleFollowUpsUpdated());
@@ -80,6 +82,12 @@ export class ChatUI {
     state.on('prompt-library-changed', () => this.renderQuickActions());
 
     this.render();
+    this.updateAssistantBranding();
+  }
+
+  updateAssistantBranding() {
+    const name = state.getAssistantName();
+    if (this.welcomeAssistantName) this.welcomeAssistantName.textContent = name;
   }
 
   handleMessageAdded(chatId) {
@@ -688,7 +696,7 @@ export class ChatUI {
   showTypingIndicator() {
     this.removeTypingIndicator();
     this.welcomeContainer.style.display = 'none';
-    this.announce('Assistant is responding…');
+    this.announce(`${state.getAssistantName()} is responding…`);
 
     const wrap = document.createElement('div');
     wrap.className = 'typing-indicator-wrap message assistant message-enter';
@@ -696,7 +704,7 @@ export class ChatUI {
       ${messageAvatarHtml('assistant')}
       <div class="message-body">
         <div class="message-content typing-bubble">
-          <span class="typing-text">Thinking…</span>
+          <span class="typing-text">${this.escapeHtml(state.getAssistantName())} is thinking…</span>
         </div>
       </div>
     `;

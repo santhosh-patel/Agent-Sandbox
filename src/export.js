@@ -1,12 +1,18 @@
+import { state } from './state.js';
+
 function escapeMd(text) {
   return String(text || '').replace(/([\\`*_{}[\]()#+\-.!|>])/g, '\\$1');
+}
+
+function roleLabel(role) {
+  return role === 'user' ? 'You' : state.getAssistantName();
 }
 
 export function chatToMarkdown(chat) {
   const lines = [`# ${chat.title || 'Chat'}`, '', `*Exported ${new Date().toLocaleString()}*`, ''];
   for (const msg of chat.messages) {
     if (msg.compareId) continue;
-    const role = msg.role === 'user' ? 'You' : 'Assistant';
+    const role = roleLabel(msg.role);
     lines.push(`## ${role}${msg.model ? ` (${msg.model})` : ''}`, '');
     if (msg.thinking) {
       lines.push('<details><summary>Reasoning</summary>', '', msg.thinking, '', '</details>', '');
@@ -55,7 +61,7 @@ const SHARE_STYLES = `
 `;
 
 function renderShareMessage(msg) {
-  const role = msg.role === 'user' ? 'You' : 'Assistant';
+  const role = roleLabel(msg.role);
   let imgs = '';
   if (msg.images?.length) {
     imgs = msg.images.map(img => `<img src="${img.dataUrl}" alt="Attached image" />`).join('');
@@ -106,6 +112,7 @@ export function downloadShareHtml(chat) {
 export function buildShareLink(chat) {
   const payload = {
     title: chat.title,
+    assistantName: state.getAssistantName(),
     messages: chat.messages.filter(m => !m.compareId).map(m => ({
       role: m.role,
       content: m.content,
