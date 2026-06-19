@@ -2,13 +2,14 @@ import { state } from '../state.js';
 import { renderMarkdown } from './markdown.js';
 import { PROVIDERS } from '../providers/registry.js';
 import { QUICK_ACTIONS } from '../data/templates.js';
+import { RESPONSE_PROFILES } from '../data/presets.js';
 import { messageAvatarHtml } from './icons.js';
 import { showPrompt } from './modal.js';
 import { showToast } from './toast.js';
 import { renderWelcomePrompts } from './prompt-library.js';
 
 export class ChatUI {
-  constructor(onRegenerate, onRetry, onOpenSettings, onFollowUp, onPickCompare) {
+  constructor(onRegenerate, onRetry, onOpenSettings, onFollowUp, onPickCompare, getModelOptions) {
     this.messagesContainer = document.getElementById('messages');
     this.welcomeContainer = document.getElementById('welcome');
     this.setupCard = document.getElementById('setup-card');
@@ -30,6 +31,8 @@ export class ChatUI {
     this.onOpenSettings = onOpenSettings;
     this.onFollowUp = onFollowUp;
     this.onPickCompare = onPickCompare;
+    this.getModelOptions = getModelOptions;
+    this.regenMenuEl = null;
     this.userNearBottom = true;
     this.stickToBottom = true;
     this.scrollBtn = null;
@@ -68,7 +71,10 @@ export class ChatUI {
     state.on('message-added', ({ chatId }) => this.handleMessageAdded(chatId));
     state.on('message-edited', () => this.render({ animate: false }));
     state.on('messages-truncated', () => this.render({ animate: false }));
-    state.on('settings-changed', () => this.updateHeader());
+    state.on('settings-changed', () => {
+      this.updateHeader();
+      if (!state.isConfigured()) this.updateSetupCard();
+    });
     state.on('follow-ups-updated', () => this.handleFollowUpsUpdated());
     state.on('compare-picked', () => this.render({ animate: false }));
     state.on('prompt-library-changed', () => this.renderQuickActions());
@@ -202,6 +208,7 @@ export class ChatUI {
     messageElements.forEach(el => el.remove());
 
     if (!configured) {
+      this.updateSetupCard();
       this.setupCard.hidden = false;
       this.welcomeContainer.style.display = 'flex';
       return;
@@ -361,6 +368,27 @@ export class ChatUI {
     });
   }
 
+  updateSetupCard() {
+    if (!this.setupCard) return;
+    const issues = state.getSetupIssues();
+    const stepsEl = this.setupCard.querySelector('.setup-steps');
+    if (!stepsEl) return;
+    const steps = [
+      { label: 'Choose a provider', done: !!state.settings.provider },
+      { label: 'Add your API key', done: state.settings.provider === 'openrouter' || !!state.getApiKey(state.settings.provider) },
+      { label: 'Pick a model', done: !!state.settings.model },
+    ];
+    stepsEl.innerHTML = steps.map(s =>
+      `<li class="${s.done ? 'setup-step--done' : 'setup-step--pending'}">${s.label}${s.done ? ' ✓' : ''}</li>`,
+    ).join('');
+    const hint = this.setupCard.querySelector('.setup-hint');
+    if (hint) {
+      hint.textContent = issues.length
+        ? `Next: ${issues[0]}`
+        : 'OpenRouter works in-browser with one key.';
+    }
+  }
+
   bindMessageActions(el, msg, index) {
     el.querySelector('.copy-msg-btn')?.addEventListener('click', () => {
       navigator.clipboard.writeText(msg.content).then(() => showToast('Copied to clipboard'));
@@ -371,22 +399,102 @@ export class ChatUI {
       if (newContent?.trim()) {
         const chat = state.getActiveChat();
         state.editUserMessage(chat.id, index, newContent.trim());
-        if (this.onRegenerate) this.onRegenerate();
+        if (this.onRegenerate) this.onRegenerate({});
       }
     });
 
     el.querySelector('.regen-msg-btn')?.addEventListener('click', () => {
-      const chat = state.getActiveChat();
-      if (!chat) return;
-      if (index < chat.messages.length - 1) {
-        state.truncateMessagesAfter(chat.id, index - 1);
-      } else {
-        state.removeLastMessage(chat.id);
-      }
-      if (this.onRegenerate) this.onRegenerate();
+      this.prepareRegenerate(index);
+      if (this.onRegenerate) this.onRegenerate({});
+    });
+
+    el.querySelector('.regen-as-msg-btn')?.addEventListener('click', (e) => {
+      this.showRegenerateMenu(e.currentTarget, index);
     });
 
     this.bindErrorActions(el, index);
+  }
+
+  prepareRegenerate(index) {
+    const chat = state.getActiveChat();
+    if (!chat) return;
+    if (index < chat.messages.length - 1) {
+      state.truncateMessagesAfter(chat.id, index - 1);
+    } else {
+      state.removeLastMessage(chat.id);
+    }
+  }
+
+  closeRegenerateMenu() {
+    this.regenMenuEl?.remove();
+    this.regenMenuEl = null;
+    if (this._regenMenuOutside) {
+      document.removeEventListener('click', this._regenMenuOutside);
+      this._regenMenuOutside = null;
+    }
+  }
+
+  showRegenerateMenu(anchor, index) {
+    this.closeRegenerateMenu();
+
+    const models = this.getModelOptions?.() || [];
+    const favorites = new Set(state.settings.favoriteModels || []);
+    const recent = state.settings.recentModels || [];
+    const prioritized = [
+      ...recent.map(id => models.find(m => m.id === id)).filter(Boolean),
+      ...models.filter(m => favorites.has(m.id)),
+    ];
+    const seen = new Set();
+    const modelChoices = [];
+    prioritized.forEach(m => {
+      if (!seen.has(m.id)) { seen.add(m.id); modelChoices.push(m); }
+    });
+    models.slice(0, 8).forEach(m => {
+      if (!seen.has(m.id)) { seen.add(m.id); modelChoices.push(m); }
+    });
+    if (state.settings.model && !seen.has(state.settings.model)) {
+      modelChoices.unshift({ id: state.settings.model, name: state.settings.model.split('/').pop() });
+    }
+
+    const menu = document.createElement('div');
+    menu.className = 'regen-menu';
+    menu.innerHTML = `
+      <div class="regen-menu-section">
+        <div class="regen-menu-label">Model</div>
+        ${modelChoices.length
+          ? modelChoices.map(m => `<button type="button" class="regen-menu-item" data-model="${this.escapeAttr(m.id)}">${this.escapeHtml(m.name)}</button>`).join('')
+          : `<button type="button" class="regen-menu-item" data-model="${this.escapeAttr(state.settings.model)}">Current model</button>`}
+      </div>
+      <div class="regen-menu-section">
+        <div class="regen-menu-label">Style</div>
+        ${Object.entries(RESPONSE_PROFILES).map(([key, p]) =>
+          `<button type="button" class="regen-menu-item" data-profile="${key}">${p.label}</button>`,
+        ).join('')}
+      </div>
+    `;
+
+    document.body.appendChild(menu);
+    const rect = anchor.getBoundingClientRect();
+    menu.style.top = `${rect.bottom + 6}px`;
+    menu.style.left = `${Math.min(rect.left, window.innerWidth - menu.offsetWidth - 12)}px`;
+
+    this.regenMenuEl = menu;
+
+    menu.querySelectorAll('.regen-menu-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const options = {};
+        if (btn.dataset.model) options.model = btn.dataset.model;
+        if (btn.dataset.profile) options.responseProfile = btn.dataset.profile;
+        this.prepareRegenerate(index);
+        if (this.onRegenerate) this.onRegenerate(options);
+        this.closeRegenerateMenu();
+      });
+    });
+
+    this._regenMenuOutside = (e) => {
+      if (!menu.contains(e.target) && e.target !== anchor) this.closeRegenerateMenu();
+    };
+    setTimeout(() => document.addEventListener('click', this._regenMenuOutside), 0);
   }
 
   renderFollowUps(chat) {
@@ -533,7 +641,10 @@ export class ChatUI {
         <button type="button" class="msg-action-btn copy-msg-btn">Copy</button>
         ${msg.role === 'user'
           ? '<button type="button" class="msg-action-btn edit-msg-btn">Edit</button>'
-          : '<button type="button" class="msg-action-btn regen-msg-btn">Regenerate</button>'}
+          : `<span class="regen-actions">
+              <button type="button" class="msg-action-btn regen-msg-btn">Regenerate</button>
+              <button type="button" class="msg-action-btn regen-as-msg-btn" aria-label="Regenerate as" title="Regenerate as…">▾</button>
+            </span>`}
       </div>
     `;
 

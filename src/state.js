@@ -22,6 +22,8 @@ const defaultSettings = {
   activePreset: '',
   activeSystemPromptPreset: '',
   responseProfile: 'balanced',
+  favoriteModels: [],
+  recentModels: [],
 };
 
 function createId() {
@@ -42,6 +44,7 @@ function createChat(title = 'New Chat') {
     pinned: false,
     archived: false,
     folderId: '',
+    titleManuallySet: false,
   };
 }
 
@@ -70,6 +73,7 @@ class StateManager {
           if (chat.pinned === undefined) chat.pinned = false;
           if (chat.archived === undefined) chat.archived = false;
           if (chat.folderId === undefined) chat.folderId = '';
+          if (chat.titleManuallySet === undefined) chat.titleManuallySet = chat.title !== 'New Chat';
         });
         return {
           activeChat: parsed.activeChat || '',
@@ -80,6 +84,7 @@ class StateManager {
           folders: parsed.folders || [],
           promptLibrary: parsed.promptLibrary || [],
           sidebarFilter: parsed.sidebarFilter || 'all',
+          drafts: parsed.drafts || {},
         };
       }
     } catch (e) {
@@ -94,6 +99,7 @@ class StateManager {
       folders: [],
       promptLibrary: [],
       sidebarFilter: 'all',
+      drafts: {},
     };
   }
 
@@ -132,6 +138,7 @@ class StateManager {
   get folders() { return this._state.folders; }
   get promptLibrary() { return this._state.promptLibrary; }
   get sidebarFilter() { return this._state.sidebarFilter; }
+  get drafts() { return this._state.drafts; }
 
   getActiveChat() {
     return this._state.chats[this._state.activeChat] || null;
@@ -250,10 +257,16 @@ class StateManager {
   }
 
   isConfigured() {
+    return this.getSetupIssues().length === 0;
+  }
+
+  getSetupIssues() {
     const s = this._state.settings;
-    if (!s.provider || !s.model) return false;
-    if (s.provider === 'openrouter') return true;
-    return !!this.getApiKey(s.provider);
+    const issues = [];
+    if (!s.provider) issues.push('Pick a provider');
+    else if (s.provider !== 'openrouter' && !this.getApiKey(s.provider)) issues.push('Add API key');
+    if (s.provider && !s.model) issues.push('Pick a model');
+    return issues;
   }
 
   getSessionCost(chatId) {
@@ -307,6 +320,7 @@ class StateManager {
     const source = this._state.chats[chatId];
     if (!source) return null;
     const chat = createChat(`${source.title} (copy)`);
+    chat.titleManuallySet = true;
     chat.messages = JSON.parse(JSON.stringify(source.messages));
     chat.totalCost = source.totalCost;
     this._state.chats[chat.id] = chat;
@@ -317,16 +331,67 @@ class StateManager {
     return chat;
   }
 
-  renameChat(chatId, title) {
+  renameChat(chatId, title, { manual = true } = {}) {
     const chat = this._state.chats[chatId];
     if (!chat || !title.trim()) return;
     chat.title = title.trim();
+    if (manual) chat.titleManuallySet = true;
     chat.updatedAt = Date.now();
     this._saveState();
     this._emit('chat-renamed', { chatId, title: chat.title });
   }
 
+  maybeAutoTitle(chatId) {
+    const chat = this._state.chats[chatId];
+    if (!chat || chat.titleManuallySet) return;
+    const firstUser = chat.messages.find(m => m.role === 'user' && String(m.content || '').trim());
+    if (!firstUser) return;
+    const text = firstUser.content.trim().replace(/\s+/g, ' ');
+    const title = text.slice(0, 40) + (text.length > 40 ? '…' : '');
+    if (!title || chat.title === title) return;
+    this.renameChat(chatId, title, { manual: false });
+  }
+
+  setDraft(chatId, text) {
+    if (!chatId) return;
+    const value = String(text || '');
+    if (!value.trim()) {
+      delete this._state.drafts[chatId];
+    } else {
+      this._state.drafts[chatId] = value;
+    }
+    this._saveState();
+  }
+
+  getDraft(chatId) {
+    return chatId ? (this._state.drafts[chatId] || '') : '';
+  }
+
+  clearDraft(chatId) {
+    if (!chatId) return;
+    delete this._state.drafts[chatId];
+    this._saveState();
+  }
+
+  pushRecentModel(modelId) {
+    if (!modelId) return;
+    const recent = (this._state.settings.recentModels || []).filter(id => id !== modelId);
+    recent.unshift(modelId);
+    this.updateSettings({ recentModels: recent.slice(0, 5) });
+  }
+
+  toggleFavoriteModel(modelId) {
+    if (!modelId) return false;
+    const favorites = [...(this._state.settings.favoriteModels || [])];
+    const idx = favorites.indexOf(modelId);
+    if (idx >= 0) favorites.splice(idx, 1);
+    else if (favorites.length < 5) favorites.push(modelId);
+    this.updateSettings({ favoriteModels: favorites });
+    return favorites.includes(modelId);
+  }
+
   deleteChat(chatId) {
+    delete this._state.drafts[chatId];
     delete this._state.chats[chatId];
     if (this._state.activeChat === chatId) {
       const remaining = this.getChatList();
@@ -348,9 +413,6 @@ class StateManager {
     if (!chat) return;
     chat.messages.push(message);
     chat.updatedAt = Date.now();
-    if (chat.title === 'New Chat' && message.role === 'user') {
-      chat.title = message.content.slice(0, 50) + (message.content.length > 50 ? '...' : '');
-    }
     if (message.cost) chat.totalCost = (chat.totalCost || 0) + message.cost;
     this._saveState();
     this._emit('message-added', { chatId, message });
@@ -450,6 +512,7 @@ class StateManager {
     chat.tokenUsage = { prompt: 0, completion: 0, total: 0 };
     chat.totalCost = 0;
     chat.title = 'New Chat';
+    chat.titleManuallySet = false;
     chat.updatedAt = Date.now();
     this._saveState();
     this._emit('chat-cleared', chatId);
@@ -537,6 +600,7 @@ class StateManager {
     this._state.folders = [];
     this._state.promptLibrary = [];
     this._state.sidebarFilter = 'all';
+    this._state.drafts = {};
     const chat = createChat();
     this._state.chats[chat.id] = chat;
     this._state.activeChat = chat.id;

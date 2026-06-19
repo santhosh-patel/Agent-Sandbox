@@ -241,13 +241,16 @@
           </div>
 
           <div class="settings-section">
-            <label class="settings-label" for="model-select">Model</label>
+            <label class="settings-label" for="model-search">Model</label>
+            <input type="search" id="model-search" class="settings-input" placeholder="Search models…" autocomplete="off" />
             <div class="model-select-row">
               <select id="model-select" class="settings-select" disabled>
                 <option value="">Add API key first…</option>
               </select>
+              <button type="button" class="btn-icon model-favorite-btn" id="favorite-model-btn" disabled title="Add to favorites" aria-label="Toggle favorite model">☆</button>
               <button type="button" class="btn-text" id="refresh-models-btn" disabled title="Refresh model list">↻</button>
             </div>
+            <div class="model-quick-picks" id="model-quick-picks" hidden></div>
             <p class="settings-hint" id="model-hint"></p>
           </div>
 
@@ -282,6 +285,18 @@
           <div class="settings-section">
             <label class="settings-label" for="system-prompt">System prompt</label>
             <textarea id="system-prompt" class="settings-textarea" rows="3" placeholder="Instructions for the model…"></textarea>
+          </div>
+        </section>
+
+        <section class="settings-block">
+          <h3 class="settings-block-title">Appearance</h3>
+          <div class="settings-section">
+            <span class="settings-label">Theme</span>
+            <div class="theme-picker settings-theme-picker" role="group" aria-label="Theme">
+              <button type="button" class="theme-choice-btn" data-theme-choice="light" title="Light">☀</button>
+              <button type="button" class="theme-choice-btn" data-theme-choice="dark" title="Dark">☾</button>
+              <button type="button" class="theme-choice-btn" data-theme-choice="system" title="System">◐</button>
+            </div>
           </div>
         </section>
 

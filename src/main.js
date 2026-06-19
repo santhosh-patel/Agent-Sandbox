@@ -10,6 +10,7 @@ import { AttachmentManager } from './ui/attachments.js';
 import { createProvider, estimateCost } from './providers/registry.js';
 import { generateFollowUpQueries, heuristicFollowUps } from './followups.js';
 import { buildApiHistory } from './chat-history.js';
+import { RESPONSE_PROFILES } from './data/presets.js';
 import { iconHtml } from './ui/icons.js';
 import { showToast } from './ui/toast.js';
 import { setMarkdownTheme } from './ui/markdown.js';
@@ -34,11 +35,12 @@ class App {
     this.settingsUI = new SettingsUI();
     this.sidebarUI = new SidebarUI();
     this.chatUI = new ChatUI(
-      () => this.handleRegenerate(),
+      (options) => this.handleRegenerate(options),
       () => this.handleRetry(),
       () => this.settingsUI.expandPanel(),
       (prompt) => this.handleFollowUpSend(prompt),
       (compareId, model) => this.handlePickCompare(compareId, model),
+      () => this.settingsUI.getModelListForPicker(),
     );
     this.inputUI = new InputUI(
       (prompt, images) => this.handleSend(prompt, images),
@@ -126,6 +128,29 @@ class App {
     document.querySelectorAll('.provider-chip').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.provider === current);
     });
+  }
+
+  mergeStreamSettings(overrides = {}) {
+    const base = state.settings;
+    let settings = { ...base };
+    if (overrides.model) settings.model = overrides.model;
+    if (overrides.responseProfile) {
+      const profile = RESPONSE_PROFILES[overrides.responseProfile];
+      if (profile) {
+        settings = {
+          ...settings,
+          responseProfile: overrides.responseProfile,
+          temperature: profile.temperature,
+          topP: profile.topP,
+          frequencyPenalty: profile.frequencyPenalty,
+          presencePenalty: profile.presencePenalty,
+          reasoningMode: profile.reasoningMode || false,
+          reasoningEffort: profile.reasoningEffort || 'medium',
+          systemPrompt: profile.systemPrompt || settings.systemPrompt,
+        };
+      }
+    }
+    return settings;
   }
 
   bindThemePicker() {
@@ -222,7 +247,7 @@ class App {
     }
   }
 
-  async handleRegenerate() {
+  async handleRegenerate(options = {}) {
     const activeChat = state.getActiveChat();
     if (!activeChat || activeChat.messages.length === 0) return;
 
@@ -238,7 +263,13 @@ class App {
     if (settings.compareMode && settings.compareModels?.length > 0 && lastUser) {
       await this.executeCompareResponse(activeChat.id, lastUser.content);
     } else {
-      await this.executeStreamingResponse(activeChat.id);
+      if (options.model || options.responseProfile) {
+        const parts = [];
+        if (options.model) parts.push(options.model.split('/').pop());
+        if (options.responseProfile) parts.push(RESPONSE_PROFILES[options.responseProfile]?.label || options.responseProfile);
+        showToast(`Regenerating${parts.length ? ` with ${parts.join(', ')}` : ''}`);
+      }
+      await this.executeStreamingResponse(activeChat.id, options);
     }
   }
 
@@ -280,6 +311,7 @@ class App {
 
     try {
       await Promise.all(tasks);
+      state.maybeAutoTitle(chatId);
     } finally {
       this.inputUI.setLoading(false);
       this.chatUI.render({ animate: false });
@@ -340,7 +372,7 @@ class App {
     }
   }
 
-  async executeStreamingResponse(chatId) {
+  async executeStreamingResponse(chatId, overrides = {}) {
     this.abortController = new AbortController();
     this.inputUI.setLoading(true);
     this.chatUI.showTypingIndicator();
@@ -348,7 +380,7 @@ class App {
     const activeChat = state.getActiveChat();
     if (!activeChat) return;
 
-    const settings = state.settings;
+    const settings = this.mergeStreamSettings(overrides);
     const key = state.getApiKey(settings.provider);
     const provider = createProvider(settings.provider, key, settings.corsProxyUrl);
 
@@ -375,12 +407,12 @@ class App {
       for await (const chunk of stream) {
         if (chunk.type === 'text') {
           fullText += chunk.content;
-          state.updateLastAssistantMessage(chatId, fullText, { thinking: fullThinking, skipSave: true });
+          state.updateLastAssistantMessage(chatId, fullText, { thinking: fullThinking, skipSave: true, model: settings.model });
           const msg = state.getActiveChat()?.messages[assistantIndex];
           if (msg) this.chatUI.updateMessageAt(assistantIndex, msg);
         } else if (chunk.type === 'thinking') {
           fullThinking += chunk.content;
-          state.updateLastAssistantMessage(chatId, fullText, { thinking: fullThinking, skipSave: true });
+          state.updateLastAssistantMessage(chatId, fullText, { thinking: fullThinking, skipSave: true, model: settings.model });
           const msg = state.getActiveChat()?.messages[assistantIndex];
           if (msg) this.chatUI.updateMessageAt(assistantIndex, msg);
         } else if (chunk.type === 'usage') {
@@ -391,6 +423,7 @@ class App {
             cost,
             latency,
             thinking: fullThinking,
+            model: settings.model,
           });
           state.recordUsage(settings.provider, chunk.usage.total_tokens, cost || 0);
         }
@@ -409,14 +442,16 @@ class App {
           cost,
           latency,
           thinking: fullThinking,
+          model: settings.model,
         });
         state.recordUsage(settings.provider, promptTokens + completionTokens, cost || 0);
       } else {
-        state.updateLastAssistantMessage(chatId, fullText, { thinking: fullThinking });
+        state.updateLastAssistantMessage(chatId, fullText, { thinking: fullThinking, model: settings.model });
       }
 
       if (lastMsg) lastMsg.isStreaming = false;
       state.flushSave();
+      state.maybeAutoTitle(chatId);
       const finalMsg = state.getActiveChat()?.messages[assistantIndex];
       if (finalMsg) this.chatUI.updateMessageAt(assistantIndex, finalMsg);
       this.chatUI.announce('Response complete');

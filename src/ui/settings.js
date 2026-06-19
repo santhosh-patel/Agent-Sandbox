@@ -30,7 +30,10 @@ export class SettingsUI {
     this.corsProxyInput = document.getElementById('cors-proxy-input');
     this.switchOpenRouterBtn = document.getElementById('switch-openrouter-btn');
     this.modelSelect = document.getElementById('model-select');
+    this.modelSearch = document.getElementById('model-search');
     this.modelHint = document.getElementById('model-hint');
+    this.favoriteModelBtn = document.getElementById('favorite-model-btn');
+    this.modelQuickPicks = document.getElementById('model-quick-picks');
     this.refreshModelsBtn = document.getElementById('refresh-models-btn');
     this.compareModeToggle = document.getElementById('compare-mode-toggle');
     this.compareModelsRow = document.getElementById('compare-models-row');
@@ -39,6 +42,7 @@ export class SettingsUI {
     this.profileSelect = document.getElementById('profile-select');
     this.systemPrompt = document.getElementById('system-prompt');
     this.lastModelList = [];
+    this.modelSearchQuery = '';
 
     this.availableModels = [];
     this.init();
@@ -65,8 +69,28 @@ export class SettingsUI {
     this.refreshModelsBtn.addEventListener('click', () => this.fetchModels(true));
     this.modelSelect.addEventListener('change', () => {
       state.updateSettings({ model: this.modelSelect.value });
+      state.pushRecentModel(this.modelSelect.value);
       this.modelHint.textContent = getModelHint(this.modelSelect.value);
+      this.updateFavoriteButton();
+      this.renderModelQuickPicks();
       this.updateSettingsStatus();
+    });
+
+    this.modelSearch?.addEventListener('input', () => {
+      this.modelSearchQuery = this.modelSearch.value.trim().toLowerCase();
+      this.renderModelOptions(this.lastModelList);
+    });
+
+    this.favoriteModelBtn?.addEventListener('click', () => {
+      const modelId = this.modelSelect.value;
+      if (!modelId) return;
+      const added = state.toggleFavoriteModel(modelId);
+      if (!added && !(state.settings.favoriteModels || []).includes(modelId)) {
+        showToast('You can save up to 5 favorite models', { isError: true });
+      }
+      this.updateFavoriteButton();
+      this.renderModelOptions(this.lastModelList);
+      this.renderModelQuickPicks();
     });
 
     this.compareModeToggle?.addEventListener('change', () => {
@@ -90,6 +114,7 @@ export class SettingsUI {
 
     state.on('settings-changed', () => this.updateSettingsStatus());
     state.on('usage-updated', () => this.updateSettingsStatus());
+    state.on('apikey-changed', () => this.updateSettingsStatus());
 
     this.loadStateValues();
 
@@ -218,19 +243,100 @@ export class SettingsUI {
 
   updateSettingsStatus() {
     if (!this.settingsStatus) return;
+    const issues = state.getSetupIssues();
+    if (issues.length) {
+      this.settingsStatus.innerHTML = `
+        <span class="settings-status-item settings-status-item--warn">${issues.join(' · ')}</span>
+      `;
+      return;
+    }
+
     const settings = state.settings;
-    const provider = settings.provider ? (PROVIDERS[settings.provider]?.name || settings.provider) : 'No provider';
-    const model = settings.model || 'No model';
-    const hasKey = settings.provider && !!state.getApiKey(settings.provider);
+    const provider = PROVIDERS[settings.provider]?.name || settings.provider;
+    const modelShort = settings.model.split('/').pop();
+    const hasKey = settings.provider === 'openrouter' || !!state.getApiKey(settings.provider);
     const keyLabel = hasKey ? 'Key saved' : 'No key';
+    const usage = state.getUsageStats();
+    const today = new Date().toISOString().slice(0, 10);
+    const day = usage.daily[today] || { cost: 0 };
+    const costLabel = day.cost > 0 ? `$${day.cost.toFixed(2)} today` : '$0 today';
 
     this.settingsStatus.innerHTML = `
       <span class="settings-status-item">${provider}</span>
       <span class="settings-status-sep" aria-hidden="true">·</span>
-      <span class="settings-status-item">${model}</span>
+      <span class="settings-status-item">${modelShort}</span>
       <span class="settings-status-sep" aria-hidden="true">·</span>
       <span class="settings-status-item settings-status-item--${hasKey ? 'ok' : 'warn'}">${keyLabel}</span>
+      <span class="settings-status-sep" aria-hidden="true">·</span>
+      <span class="settings-status-item">${costLabel}</span>
     `;
+  }
+
+  updateFavoriteButton() {
+    if (!this.favoriteModelBtn) return;
+    const modelId = this.modelSelect.value;
+    const isFavorite = (state.settings.favoriteModels || []).includes(modelId);
+    this.favoriteModelBtn.textContent = isFavorite ? '★' : '☆';
+    this.favoriteModelBtn.classList.toggle('is-favorite', isFavorite);
+    this.favoriteModelBtn.disabled = !modelId;
+    this.favoriteModelBtn.title = isFavorite ? 'Remove from favorites' : 'Add to favorites';
+  }
+
+  renderModelQuickPicks() {
+    if (!this.modelQuickPicks) return;
+    const favorites = state.settings.favoriteModels || [];
+    const recent = (state.settings.recentModels || []).filter(id => !favorites.includes(id));
+    const modelMap = new Map(this.lastModelList.map(m => [m.id, m.name]));
+
+    const chips = [
+      ...favorites.map(id => ({ id, label: modelMap.get(id) || id.split('/').pop(), kind: 'favorite' })),
+      ...recent.slice(0, 3).map(id => ({ id, label: modelMap.get(id) || id.split('/').pop(), kind: 'recent' })),
+    ];
+
+    if (!chips.length) {
+      this.modelQuickPicks.hidden = true;
+      this.modelQuickPicks.innerHTML = '';
+      return;
+    }
+
+    this.modelQuickPicks.hidden = false;
+    this.modelQuickPicks.innerHTML = chips.map(chip => `
+      <button type="button" class="model-quick-chip model-quick-chip--${chip.kind}" data-model-id="${chip.id}" title="${chip.id}">
+        ${chip.kind === 'favorite' ? '★ ' : ''}${chip.label}
+      </button>
+    `).join('');
+
+    this.modelQuickPicks.querySelectorAll('.model-quick-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.modelId;
+        if (!id) return;
+        if (Array.from(this.modelSelect.options).some(o => o.value === id)) {
+          this.modelSelect.value = id;
+          this.modelSelect.dispatchEvent(new Event('change'));
+        }
+      });
+    });
+  }
+
+  filterModels(models) {
+    if (!this.modelSearchQuery) return models;
+    return models.filter(m =>
+      m.id.toLowerCase().includes(this.modelSearchQuery)
+      || m.name.toLowerCase().includes(this.modelSearchQuery),
+    );
+  }
+
+  appendModelGroup(select, label, models) {
+    if (!models.length) return;
+    const group = document.createElement('optgroup');
+    group.label = label;
+    models.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.name;
+      group.appendChild(opt);
+    });
+    select.appendChild(group);
   }
 
   updateProviderUI() {
@@ -257,6 +363,8 @@ export class SettingsUI {
     this.keyStatus.className = 'key-status';
     this.keyStatus.textContent = '';
     this.testKeyBtn.disabled = !this.apiKeyInput.value;
+    if (this.modelSearch) this.modelSearch.value = '';
+    this.modelSearchQuery = '';
     state.updateSettings({ provider, model: '' });
     this.updateProviderUI();
     this.fetchModels(false);
@@ -354,18 +462,47 @@ export class SettingsUI {
   }
 
   renderModelOptions(models) {
+    this.lastModelList = models;
     this.modelSelect.innerHTML = '';
+
     if (!models.length) {
       this.modelSelect.innerHTML = '<option value="">No models available</option>';
+      this.updateFavoriteButton();
+      this.renderModelQuickPicks();
       return;
     }
 
-    models.forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m.id;
-      opt.textContent = m.name;
-      this.modelSelect.appendChild(opt);
-    });
+    const filtered = this.filterModels(models);
+    if (!filtered.length) {
+      this.modelSelect.innerHTML = '<option value="">No models match search</option>';
+      this.updateFavoriteButton();
+      this.renderModelQuickPicks();
+      return;
+    }
+
+    const favorites = (state.settings.favoriteModels || [])
+      .map(id => filtered.find(m => m.id === id))
+      .filter(Boolean);
+    const recent = (state.settings.recentModels || [])
+      .map(id => filtered.find(m => m.id === id))
+      .filter(m => m && !favorites.some(f => f.id === m.id));
+    const usedIds = new Set([...favorites, ...recent].map(m => m.id));
+    const rest = filtered.filter(m => !usedIds.has(m.id));
+
+    if (favorites.length) this.appendModelGroup(this.modelSelect, 'Favorites', favorites);
+    if (recent.length) this.appendModelGroup(this.modelSelect, 'Recent', recent);
+    if (rest.length) {
+      this.appendModelGroup(this.modelSelect, usedIds.size ? 'All models' : 'Models', rest);
+    }
+
+    if (!this.modelSelect.options.length && filtered.length) {
+      filtered.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.name;
+        this.modelSelect.appendChild(opt);
+      });
+    }
 
     const current = state.settings.model;
     if (current && Array.from(this.modelSelect.options).some(o => o.value === current)) {
@@ -373,11 +510,12 @@ export class SettingsUI {
     } else {
       const first = this.modelSelect.options[0]?.value || '';
       this.modelSelect.value = first;
-      state.updateSettings({ model: first });
+      if (first) state.updateSettings({ model: first });
     }
 
     this.modelHint.textContent = getModelHint(this.modelSelect.value);
-    this.lastModelList = models;
+    this.updateFavoriteButton();
+    this.renderModelQuickPicks();
     this.renderCompareModelChecks(models);
     this.updateSettingsStatus();
   }
@@ -419,5 +557,9 @@ export class SettingsUI {
         this.renderCompareModelChecks(models);
       });
     });
+  }
+
+  getModelListForPicker() {
+    return this.lastModelList.length ? this.lastModelList : [];
   }
 }

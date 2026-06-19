@@ -14,6 +14,8 @@ export class InputUI {
     this.onSend = onSend;
     this.onStop = onStop;
     this.getAttachments = null;
+    this.activeChatId = state.activeChat;
+    this.draftTimer = null;
 
     this.init();
   }
@@ -23,7 +25,10 @@ export class InputUI {
   }
 
   init() {
-    this.textarea.addEventListener('input', () => this.handleInput());
+    this.textarea.addEventListener('input', () => {
+      this.handleInput();
+      this.scheduleDraftSave();
+    });
     this.textarea.addEventListener('keydown', (e) => this.handleKeyDown(e));
 
     this.sendBtn.addEventListener('click', () => this.triggerSend());
@@ -34,10 +39,40 @@ export class InputUI {
     state.on('settings-changed', () => {
       this.updatePlaceholder();
       this.updateModelPill();
+      this.handleInput();
     });
+
+    state.on('chat-switched', (chatId) => this.switchChatDraft(chatId));
+    state.on('chat-created', (chat) => this.switchChatDraft(chat.id));
+    state.on('data-cleared', () => {
+      this.activeChatId = state.activeChat;
+      this.textarea.value = '';
+      this.handleInput();
+    });
+
+    this.loadDraftForChat(this.activeChatId);
     this.updatePlaceholder();
     this.updateModelPill();
     this.handleInput();
+  }
+
+  switchChatDraft(chatId) {
+    if (this.activeChatId) state.setDraft(this.activeChatId, this.textarea.value);
+    this.activeChatId = chatId;
+    this.loadDraftForChat(chatId);
+  }
+
+  loadDraftForChat(chatId) {
+    this.textarea.value = state.getDraft(chatId);
+    this.textarea.style.height = 'auto';
+    this.handleInput();
+  }
+
+  scheduleDraftSave() {
+    clearTimeout(this.draftTimer);
+    this.draftTimer = setTimeout(() => {
+      if (this.activeChatId) state.setDraft(this.activeChatId, this.textarea.value);
+    }, 300);
   }
 
   updateModelPill() {
@@ -55,9 +90,9 @@ export class InputUI {
   }
 
   updatePlaceholder() {
-    if (!state.isConfigured()) {
-      this.textarea.placeholder = 'Configure API key in settings to start…';
-      this.textarea.disabled = false;
+    const issues = state.getSetupIssues();
+    if (issues.length) {
+      this.textarea.placeholder = `${issues[0]} — open settings to continue`;
     } else {
       this.textarea.placeholder = 'Ask anything, paste images, test models…';
     }
@@ -71,6 +106,7 @@ export class InputUI {
     const hasAttachments = this.getAttachments?.()?.length > 0;
     const configured = state.isConfigured();
     this.sendBtn.disabled = (!val && !hasAttachments) || !configured;
+    this.sendBtn.title = configured ? 'Send message' : state.getSetupIssues().join(' · ');
 
     if (this.textarea.value.length > 500) {
       this.charCount.textContent = `${this.textarea.value.length} chars`;
@@ -119,12 +155,14 @@ export class InputUI {
     if ((!val && !images.length) || this.sendBtn.disabled) return;
     if (this.onSend) this.onSend(val, images);
     this.textarea.value = '';
+    if (this.activeChatId) state.clearDraft(this.activeChatId);
     this.handleInput();
   }
 
   setPrompt(prompt) {
     this.textarea.value = prompt;
     this.handleInput();
+    this.scheduleDraftSave();
     this.textarea.focus();
   }
 
