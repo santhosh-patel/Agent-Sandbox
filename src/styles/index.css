@@ -434,7 +434,10 @@ body {
   align-items: center;
   justify-content: center;
   flex: 1;
-  padding: 80px 24px 48px;
+  align-self: center;
+  width: 100%;
+  max-width: min(640px, 100%);
+  padding: clamp(24px, 6vh, 80px) clamp(16px, 4vw, 24px);
   text-align: center;
   animation: fadeInUp 0.6s ease-out;
 }
@@ -459,8 +462,8 @@ body {
   font-weight: 400;
   color: var(--text-secondary);
   line-height: 1.7;
-  max-width: 440px;
-  margin-bottom: 40px;
+  max-width: 42ch;
+  margin-bottom: clamp(20px, 4vh, 40px);
 }
 
 .quick-actions {
@@ -1645,22 +1648,33 @@ body.settings-collapsed .edge-toggle-right svg {
     justify-content: center;
   }
 
-  .quick-actions {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-
   .welcome {
-    padding: 48px 16px 32px;
+    padding: clamp(20px, 5vh, 48px) 16px;
   }
 
   .welcome-title {
-    font-size: clamp(1.75rem, 6vw, 2.25rem);
+    font-size: clamp(1.375rem, 6vw, 1.875rem);
   }
 
   .welcome-subtitle {
-    font-size: 0.9375rem;
-    margin-bottom: 28px;
+    font-size: 0.875rem;
+    margin-bottom: 20px;
+  }
+
+  .setup-card {
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  .quick-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .quick-action {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
   }
 
   .message,
@@ -1903,44 +1917,35 @@ body.has-messages .bg-gradient {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 24px;
-  max-width: 400px;
-  margin-bottom: 24px;
-  text-align: left;
+  max-width: 420px;
+  width: 100%;
+  margin: 0 auto 24px;
+  text-align: center;
 }
 
 .setup-card h2 { font-size: 1rem; margin-bottom: 12px; }
 
 .setup-steps {
   list-style: none;
-  margin: 0 0 16px;
+  margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
 .setup-steps li {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-  padding: 6px 0;
-  font-size: 0.85rem;
+  padding: 0;
+  font-size: 0.875rem;
   color: var(--text-secondary);
 }
 
-.setup-step-num {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--accent-soft);
-  color: var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.setup-hint { font-size: 0.75rem; color: var(--text-tertiary); margin-top: 12px; }
-
-.setup-step-num { display: none; }
+.setup-hint { font-size: 0.75rem; color: var(--text-tertiary); margin-top: 16px; margin-bottom: 0; }
 
 .typing-text {
   padding: 20px;

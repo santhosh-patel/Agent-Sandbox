@@ -56,10 +56,6 @@ export class ChatUI {
 
     this.chatTitleBtn?.addEventListener('click', () => this.renameChat());
 
-    document.getElementById('setup-open-settings')?.addEventListener('click', () => {
-      if (this.onOpenSettings) this.onOpenSettings();
-    });
-
     this.mobileStatusBar?.addEventListener('click', () => {
       if (this.onOpenSettings) this.onOpenSettings();
     });
