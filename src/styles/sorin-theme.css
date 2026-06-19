@@ -72,6 +72,14 @@
 
   --avatar-user-icon: #3d3929;
 
+  /* Sidebar controls — soft elevated surfaces */
+  --sidebar-bg: #fcf8ef;
+  --sidebar-chip-bg: #fffef9;
+  --sidebar-chip-hover: #faf6ed;
+  --sidebar-chip-border: var(--border);
+  --sidebar-chip-active-bg: rgba(184, 221, 182, 0.28);
+  --sidebar-chip-active-border: var(--accent-secondary);
+
   --sidebar-width: 260px;
   --settings-width: 360px;
   --topnav-height: 64px;
@@ -153,6 +161,13 @@
   --glass-shadow-history: 0 2px 12px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 248, 235, 0.05);
 
   --avatar-user-icon: #ffffff;
+
+  --sidebar-bg: #222118;
+  --sidebar-chip-bg: #2e2c24;
+  --sidebar-chip-hover: #36342c;
+  --sidebar-chip-border: var(--border);
+  --sidebar-chip-active-bg: rgba(143, 201, 141, 0.18);
+  --sidebar-chip-active-border: var(--accent-secondary);
 }
 
 /* ---- Gradient background ---- */
@@ -278,10 +293,8 @@
 
 /* ---- Sidebar glass ---- */
 .sidebar {
-  background: var(--glass-surface);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border-right: 1px solid var(--glass-border);
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
 }
 
 .sidebar-header {
@@ -298,18 +311,21 @@
   margin: 0 14px 16px;
   width: calc(100% - 28px);
   padding: 12px 16px;
-  background: var(--glass-surface-strong);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
+  background: var(--sidebar-chip-bg);
+  border: 1px solid var(--sidebar-chip-border);
   border-radius: var(--radius-lg);
+  color: var(--text-primary);
   font-weight: 600;
   font-size: 0.875rem;
+  box-shadow: none;
+  transition: background var(--transition), border-color var(--transition), color var(--transition), box-shadow var(--transition);
+}
+
+.btn-new-chat:hover {
+  background: var(--sidebar-chip-hover);
+  border-color: var(--accent-secondary);
+  color: var(--accent);
   box-shadow: var(--shadow-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
 }
 
 .sidebar-section-label {
@@ -333,9 +349,9 @@
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border: none;
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
-  background: none;
+  background: transparent;
   color: var(--text-secondary);
   font-family: var(--font-sans);
   font-size: 0.875rem;
@@ -343,22 +359,38 @@
   cursor: pointer;
   width: 100%;
   text-align: left;
-  transition: background var(--transition), color var(--transition);
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
 }
 
 .sidebar-menu-item:hover {
-  background: var(--accent-soft);
+  background: var(--sidebar-chip-bg);
+  border-color: var(--sidebar-chip-border);
   color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .sidebar-search { margin: 0 14px 8px; }
 .sidebar-search input {
+  width: 100%;
+  padding: 11px 14px;
   border-radius: var(--radius-lg);
-  background: var(--glass-history-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-history-border);
-  box-shadow: var(--glass-shadow-tab);
+  background: var(--sidebar-chip-bg);
+  border: 1px solid var(--sidebar-chip-border);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-family: var(--font-sans);
+  outline: none;
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.sidebar-search input:focus {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.sidebar-search input::placeholder {
+  color: var(--text-tertiary);
 }
 
 /* ---- Chat history list (glass) ---- */
@@ -376,28 +408,27 @@
 }
 
 .chat-item {
-  background: var(--glass-history-bg);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--glass-history-border);
-  box-shadow: var(--glass-shadow-history);
-  margin-bottom: 4px;
+  background: var(--sidebar-chip-bg);
+  border: 1px solid var(--sidebar-chip-border);
+  box-shadow: none;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
   transition: background var(--transition), border-color var(--transition), box-shadow var(--transition), color var(--transition);
 }
 
 .chat-item:hover {
-  background: var(--glass-surface-strong);
-  border-color: var(--glass-border);
+  background: var(--sidebar-chip-hover);
+  border-color: var(--accent-tertiary);
   color: var(--text-primary);
-  box-shadow: var(--shadow-sm), var(--glass-inset);
+  box-shadow: var(--shadow-sm);
 }
 
 .chat-item.active {
-  background: var(--glass-history-active);
-  border-color: var(--accent-secondary);
-  color: var(--accent);
-  font-weight: 500;
-  box-shadow: var(--shadow-md), var(--glass-inset);
+  background: var(--sidebar-chip-active-bg);
+  border-color: var(--sidebar-chip-active-border);
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: none;
 }
 
 .session-badge {
@@ -1273,48 +1304,44 @@
   color: var(--accent);
 }
 
-/* ---- Sidebar filters & folders (glass tabs) ---- */
+/* ---- Sidebar filters ---- */
 .sidebar-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin: 0 10px 10px;
-  padding: 6px;
-  background: var(--glass-surface);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--glass-shadow-tab);
+  margin: 0 14px 10px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .filter-tab {
   padding: 6px 12px;
   font-size: 0.72rem;
   font-weight: 500;
-  border: 1px solid var(--glass-history-border);
+  border: 1px solid var(--sidebar-chip-border);
   border-radius: var(--radius-full);
-  background: var(--glass-history-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--sidebar-chip-bg);
   color: var(--text-secondary);
   cursor: pointer;
-  box-shadow: var(--glass-shadow-tab);
+  box-shadow: var(--shadow-sm);
   transition: background var(--transition), border-color var(--transition), color var(--transition), box-shadow var(--transition);
 }
 
 .filter-tab:hover {
-  background: var(--glass-surface-strong);
-  border-color: var(--glass-border);
+  background: var(--sidebar-chip-hover);
+  border-color: var(--border-strong);
   color: var(--text-primary);
-  box-shadow: var(--shadow-sm), var(--glass-inset);
+  box-shadow: var(--shadow-sm);
 }
 
 .filter-tab.active {
-  background: var(--glass-history-active);
-  border-color: var(--accent-secondary);
+  background: var(--sidebar-chip-active-bg);
+  border-color: var(--sidebar-chip-active-border);
   color: var(--accent);
-  box-shadow: var(--shadow-sm), var(--glass-inset);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
 }
 
 .filter-tab-icon {
@@ -1326,6 +1353,14 @@
 /* ---- Chat item states ---- */
 .chat-item.pinned .chat-item-text { font-weight: 600; }
 .chat-pin-icon { margin-right: 4px; font-size: 0.7rem; }
+
+.chat-item-meta {
+  color: var(--text-secondary);
+}
+
+.chat-item.active .chat-item-meta {
+  color: var(--text-tertiary);
+}
 
 .chat-item-actions {
   display: flex;
