@@ -22,16 +22,25 @@
 
   <div id="app">
     <header class="mobile-header">
-      <button type="button" class="btn-text" id="sidebar-toggle">Chats</button>
-      <div class="mobile-header-center">
-        <img src="/icon.png" alt="" class="app-icon" width="24" height="24" />
-        <button type="button" class="mobile-status-bar" id="mobile-status-bar" aria-label="Open settings">
-        <span id="mobile-provider">No provider</span>
-        <span class="meta-sep" aria-hidden="true"></span>
-        <span id="mobile-model">Select model</span>
+      <button type="button" class="mobile-nav-btn" id="sidebar-toggle" aria-label="Open chats">
+        <span>Chats</span>
+      </button>
+      <button type="button" class="mobile-status-bar" id="mobile-status-bar" aria-label="Open settings">
+        <img src="/icon.png" alt="" class="app-icon mobile-status-icon" width="20" height="20" />
+        <span class="mobile-status-text">
+          <span id="mobile-provider">No provider</span>
+          <span class="meta-sep" aria-hidden="true"></span>
+          <span id="mobile-model">Select model</span>
+        </span>
+      </button>
+      <div class="mobile-header-actions">
+        <button type="button" class="mobile-nav-btn mobile-nav-btn--icon" id="mobile-help-btn" aria-label="Help">
+          <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        </button>
+        <button type="button" class="mobile-nav-btn" id="settings-toggle-mobile" aria-label="Open settings">
+          <span>Settings</span>
         </button>
       </div>
-      <button type="button" class="btn-text" id="settings-toggle-mobile">Settings</button>
     </header>
 
     <aside class="sidebar" id="sidebar">

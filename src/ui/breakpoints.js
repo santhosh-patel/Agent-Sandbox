@@ -22,6 +22,7 @@ export function onViewportChange(fn) {
 export function closeMobileSidebar() {
   document.getElementById('sidebar')?.classList.remove('open');
   document.getElementById('sidebar-overlay')?.classList.remove('visible');
+  document.body.classList.remove('sidebar-open');
 }
 
 export function closeSettingsPanel() {

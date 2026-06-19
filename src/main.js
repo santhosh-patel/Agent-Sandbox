@@ -89,6 +89,9 @@ class App {
     document.getElementById('sidebar-help-btn')?.addEventListener('click', () => {
       this.helpUI.togglePanel();
     });
+    document.getElementById('mobile-help-btn')?.addEventListener('click', () => {
+      this.helpUI.togglePanel();
+    });
 
     this.bindProviderChips();
     this.bindThemePicker();

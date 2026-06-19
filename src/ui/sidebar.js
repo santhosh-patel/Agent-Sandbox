@@ -69,11 +69,13 @@ export class SidebarUI {
     closeSettingsPanel();
     this.sidebar.classList.add('open');
     this.sidebarOverlay.classList.add('visible');
+    document.body.classList.add('sidebar-open');
   }
 
   closeMobileSidebar() {
     this.sidebar.classList.remove('open');
     this.sidebarOverlay.classList.remove('visible');
+    document.body.classList.remove('sidebar-open');
   }
 
   isMobile() {
