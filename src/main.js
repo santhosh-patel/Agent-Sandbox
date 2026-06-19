@@ -6,6 +6,7 @@ import { SettingsUI } from './ui/settings.js';
 import { ShortcutsUI } from './ui/shortcuts.js';
 import { createProvider, estimateCost } from './providers/registry.js';
 import { generateFollowUpQueries, heuristicFollowUps } from './followups.js';
+import { buildApiHistory } from './chat-history.js';
 import { iconHtml } from './ui/icons.js';
 
 class App {
@@ -218,9 +219,7 @@ class App {
     const settings = { ...state.settings, model };
     const provider = createProvider(settings.provider, key, settings.corsProxyUrl);
     const chat = state.getActiveChat();
-    const history = chat.messages
-      .filter(m => !m.compareId)
-      .map(m => ({ role: m.role, content: m.content }));
+    const history = buildApiHistory(chat.messages);
 
     let fullText = '';
     let fullThinking = '';
@@ -280,7 +279,7 @@ class App {
     const key = state.getApiKey(settings.provider);
     const provider = createProvider(settings.provider, key, settings.corsProxyUrl);
 
-    const history = activeChat.messages.map(m => ({ role: m.role, content: m.content }));
+    const history = buildApiHistory(activeChat.messages);
 
     state.addMessage(chatId, {
       role: 'assistant',
