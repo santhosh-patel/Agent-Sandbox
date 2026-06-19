@@ -4,7 +4,7 @@ import { PROVIDERS } from '../providers/registry.js';
 import { QUICK_ACTIONS } from '../data/templates.js';
 
 export class ChatUI {
-  constructor(onRegenerate, onRetry, onOpenSettings) {
+  constructor(onRegenerate, onRetry, onOpenSettings, onFollowUp) {
     this.messagesContainer = document.getElementById('messages');
     this.welcomeContainer = document.getElementById('welcome');
     this.setupCard = document.getElementById('setup-card');
@@ -23,6 +23,7 @@ export class ChatUI {
     this.onRegenerate = onRegenerate;
     this.onRetry = onRetry;
     this.onOpenSettings = onOpenSettings;
+    this.onFollowUp = onFollowUp;
     this.userNearBottom = true;
 
     this.init();
@@ -53,6 +54,7 @@ export class ChatUI {
     state.on('message-edited', () => this.render());
     state.on('messages-truncated', () => this.render());
     state.on('settings-changed', () => this.updateHeader());
+    state.on('follow-ups-updated', () => this.render());
 
     this.render();
   }
@@ -171,7 +173,49 @@ export class ChatUI {
       }
     }
 
+    this.renderFollowUps(activeChat);
+
     this.scrollToBottom();
+  }
+
+  renderFollowUps(chat) {
+    this.messagesContainer.querySelectorAll('.follow-up-wrap').forEach(el => el.remove());
+
+    if (!chat || chat.messages.length === 0) return;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'follow-up-wrap';
+
+    if (chat.followUpsLoading) {
+      wrap.innerHTML = `
+        <div class="follow-up-label">Suggested follow-ups</div>
+        <div class="follow-up-loading">Generating suggestions…</div>
+      `;
+      this.messagesContainer.appendChild(wrap);
+      return;
+    }
+
+    const suggestions = chat.followUpSuggestions || [];
+    if (suggestions.length === 0) return;
+
+    wrap.innerHTML = `
+      <div class="follow-up-label">Suggested follow-ups</div>
+      <div class="follow-up-list"></div>
+    `;
+
+    const list = wrap.querySelector('.follow-up-list');
+    suggestions.forEach(text => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'follow-up-chip';
+      btn.textContent = text;
+      btn.addEventListener('click', () => {
+        if (this.onFollowUp) this.onFollowUp(text);
+      });
+      list.appendChild(btn);
+    });
+
+    this.messagesContainer.appendChild(wrap);
   }
 
   createCompareGroup(messages) {

@@ -36,6 +36,8 @@ function createChat(title = 'New Chat') {
     updatedAt: Date.now(),
     tokenUsage: { prompt: 0, completion: 0, total: 0 },
     totalCost: 0,
+    followUpSuggestions: [],
+    followUpsLoading: false,
   };
 }
 
@@ -218,6 +220,32 @@ class StateManager {
     if (message.cost) chat.totalCost = (chat.totalCost || 0) + message.cost;
     this._saveState();
     this._emit('message-added', { chatId, message });
+  }
+
+  clearFollowUpSuggestions(chatId) {
+    const chat = this._state.chats[chatId];
+    if (!chat) return;
+    chat.followUpSuggestions = [];
+    chat.followUpsLoading = false;
+    this._saveState();
+    this._emit('follow-ups-updated', { chatId });
+  }
+
+  setFollowUpsLoading(chatId, loading) {
+    const chat = this._state.chats[chatId];
+    if (!chat) return;
+    chat.followUpsLoading = loading;
+    if (!loading && !chat.followUpSuggestions) chat.followUpSuggestions = [];
+    this._emit('follow-ups-updated', { chatId });
+  }
+
+  setFollowUpSuggestions(chatId, suggestions) {
+    const chat = this._state.chats[chatId];
+    if (!chat) return;
+    chat.followUpSuggestions = (suggestions || []).slice(0, 3);
+    chat.followUpsLoading = false;
+    this._saveState();
+    this._emit('follow-ups-updated', { chatId });
   }
 
   updateLastAssistantMessage(chatId, content, meta = {}) {

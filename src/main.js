@@ -5,6 +5,7 @@ import { InputUI } from './ui/input.js';
 import { SettingsUI } from './ui/settings.js';
 import { ShortcutsUI } from './ui/shortcuts.js';
 import { createProvider, estimateCost } from './providers/registry.js';
+import { generateFollowUpQueries, heuristicFollowUps } from './followups.js';
 
 class App {
   constructor() {
@@ -24,7 +25,8 @@ class App {
     this.chatUI = new ChatUI(
       () => this.handleRegenerate(),
       () => this.handleRetry(),
-      () => this.settingsUI.expandPanel()
+      () => this.settingsUI.expandPanel(),
+      (prompt) => this.handleSend(prompt),
     );
     this.inputUI = new InputUI(
       (prompt) => this.handleSend(prompt),
@@ -76,6 +78,8 @@ class App {
   }
 
   async handleSend(prompt) {
+    if (this.abortController || this.abortControllers.length > 0) return;
+
     this.lastPrompt = prompt;
     const activeChat = state.getActiveChat();
     if (!activeChat) return;
@@ -99,6 +103,7 @@ class App {
       content: prompt,
       createdAt: Date.now(),
     });
+    state.clearFollowUpSuggestions(activeChat.id);
 
     if (settings.compareMode && settings.compareModels?.length > 0) {
       await this.executeCompareResponse(activeChat.id, prompt);
@@ -298,6 +303,14 @@ class App {
 
       if (lastMsg) lastMsg.isStreaming = false;
       this.chatUI.announce('Response complete');
+
+      const lastAssistant = activeChat.messages[activeChat.messages.length - 1];
+      if (lastAssistant?.role === 'assistant' && !lastAssistant.isError && fullText) {
+        const lastUser = [...activeChat.messages].reverse().find(m => m.role === 'user');
+        if (lastUser) {
+          this.generateFollowUps(chatId, lastUser.content, fullText);
+        }
+      }
     } catch (e) {
       if (e.name === 'AbortError') {
         this.showToast('Generation stopped.');
@@ -316,6 +329,34 @@ class App {
   handleStop() {
     if (this.abortController) this.abortController.abort();
     this.abortControllers.forEach(c => c.abort());
+  }
+
+  async generateFollowUps(chatId, userQuestion, assistantResponse) {
+    if (state.settings.compareMode) return;
+
+    const chat = state.getActiveChat();
+    if (!chat || chat.id !== chatId) return;
+
+    state.setFollowUpsLoading(chatId, true);
+
+    try {
+      const settings = state.settings;
+      const key = state.getApiKey(settings.provider);
+      const provider = createProvider(settings.provider, key, settings.corsProxyUrl);
+      const suggestions = await generateFollowUpQueries(
+        provider,
+        userQuestion,
+        assistantResponse,
+        settings,
+      );
+      if (state.getActiveChat()?.id === chatId) {
+        state.setFollowUpSuggestions(chatId, suggestions);
+      }
+    } catch {
+      if (state.getActiveChat()?.id === chatId) {
+        state.setFollowUpSuggestions(chatId, heuristicFollowUps(userQuestion));
+      }
+    }
   }
 
   showToast(message, isError = false) {

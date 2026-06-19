@@ -545,6 +545,60 @@ body {
   box-shadow: var(--shadow-md);
 }
 
+/* Follow-up suggestions */
+.follow-up-wrap {
+  width: 100%;
+  max-width: 768px;
+  margin: 8px auto 0;
+  padding: 4px 0 12px;
+}
+
+.follow-up-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+
+.follow-up-loading {
+  font-size: 0.8125rem;
+  color: var(--text-tertiary);
+  padding: 8px 0;
+}
+
+.follow-up-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.follow-up-chip {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 400;
+  font-family: var(--font-sans);
+  color: var(--text-secondary);
+  line-height: 1.45;
+  box-shadow: var(--shadow-sm);
+  transition: background var(--transition), box-shadow var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.follow-up-chip:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}
+
 .quick-action-icon {
   font-size: 1.2rem;
   flex-shrink: 0;
