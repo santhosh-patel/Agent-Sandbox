@@ -1,5 +1,6 @@
 import { state } from '../state.js';
 import { showConfirm } from './modal.js';
+import { isMobile, onViewportChange, closeSettingsPanel } from './breakpoints.js';
 
 export class SidebarUI {
   constructor() {
@@ -34,6 +35,10 @@ export class SidebarUI {
     const collapsed = localStorage.getItem('sidebar-collapsed') === 'true';
     this.setCollapsed(collapsed);
 
+    onViewportChange(({ mobile }) => {
+      if (!mobile) this.closeMobileSidebar();
+    });
+
     state.on('chat-created', () => this.render());
     state.on('chat-deleted', () => this.render());
     state.on('chat-switched', () => this.render());
@@ -57,6 +62,7 @@ export class SidebarUI {
   }
 
   openMobileSidebar() {
+    closeSettingsPanel();
     this.sidebar.classList.add('open');
     this.sidebarOverlay.classList.add('visible');
   }
@@ -67,7 +73,7 @@ export class SidebarUI {
   }
 
   isMobile() {
-    return window.matchMedia('(max-width: 768px)').matches;
+    return isMobile();
   }
 
   toggleSidebar() {

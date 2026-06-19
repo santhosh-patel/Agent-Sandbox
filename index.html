@@ -2,7 +2,7 @@
 <html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>AI Playground</title>
   <meta name="description" content="Test any LLM with your own API keys. Client-side only." />
   <meta name="theme-color" content="#f7f3eb" />
@@ -64,15 +64,6 @@
           <span class="header-model" id="header-model">Select model</span>
           <span class="session-cost" id="session-cost" hidden></span>
         </div>
-        <div class="chat-header-right">
-          <button type="button" class="btn-text" id="chat-menu-btn">Menu</button>
-          <div class="dropdown-menu" id="chat-menu" hidden>
-            <button type="button" class="dropdown-item" id="export-chat-btn">Export</button>
-            <button type="button" class="dropdown-item" id="duplicate-chat-btn">Duplicate</button>
-            <button type="button" class="dropdown-item" id="clear-chat-btn">Clear</button>
-            <button type="button" class="dropdown-item dropdown-danger" id="delete-chat-btn">Delete</button>
-          </div>
-        </div>
       </div>
 
       <div class="messages" id="messages">
@@ -112,6 +103,7 @@
     <aside class="settings-panel" id="settings-panel">
       <div class="settings-header">
         <h2>Settings</h2>
+        <button type="button" class="btn-text settings-close-btn" id="settings-close-btn" aria-label="Close settings">Close</button>
       </div>
 
       <div class="settings-body">
@@ -146,7 +138,16 @@
               </div>
               <div class="api-key-row">
                 <input type="password" id="api-key-input" class="settings-input" placeholder="Paste API key…" />
-                <button type="button" class="btn-text" id="toggle-key-visibility">Show</button>
+                <button type="button" class="btn-icon btn-eye-toggle" id="toggle-key-visibility" aria-label="Show API key" title="Show API key">
+                  <svg class="eye-icon eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  <svg class="eye-icon eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                </button>
                 <button type="button" class="btn btn-test" id="test-key-btn">Verify</button>
               </div>
               <div class="key-status" id="key-status"></div>

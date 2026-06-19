@@ -3,6 +3,7 @@ import { PROVIDERS, createProvider } from '../providers/registry.js';
 import { PARAMETER_PRESETS, SYSTEM_PROMPT_PRESETS } from '../data/presets.js';
 import { getModelHint } from '../data/model-hints.js';
 import { showConfirm } from './modal.js';
+import { isMobile, isTablet, onViewportChange, closeMobileSidebar } from './breakpoints.js';
 
 export class SettingsUI {
   constructor() {
@@ -10,6 +11,7 @@ export class SettingsUI {
     this.overlay = document.getElementById('overlay');
     this.edgeToggle = document.getElementById('settings-edge-toggle');
     this.mobileToggle = document.getElementById('settings-toggle-mobile');
+    this.settingsCloseBtn = document.getElementById('settings-close-btn');
 
     this.providerSelect = document.getElementById('provider-select');
     this.providerDescription = document.getElementById('provider-description');
@@ -50,6 +52,7 @@ export class SettingsUI {
 
   init() {
     if (this.mobileToggle) this.mobileToggle.addEventListener('click', () => this.togglePanel());
+    if (this.settingsCloseBtn) this.settingsCloseBtn.addEventListener('click', () => this.collapsePanel());
     if (this.edgeToggle) this.edgeToggle.addEventListener('click', () => this.togglePanel());
     this.overlay.addEventListener('click', () => this.collapsePanel());
 
@@ -120,8 +123,13 @@ export class SettingsUI {
     this.loadStateValues();
 
     const stored = localStorage.getItem('settings-collapsed');
-    const collapsed = stored !== null ? stored === 'true' : this.isMobile();
+    const collapsed = stored !== null ? stored === 'true' : this.isOverlayMode();
     this.setCollapsed(collapsed);
+
+    onViewportChange(({ mobile, tablet }) => {
+      if (!mobile) closeMobileSidebar();
+      if (!tablet && this.overlay) this.overlay.classList.remove('visible');
+    });
   }
 
   renderPresets() {
@@ -232,12 +240,20 @@ export class SettingsUI {
   }
 
   isMobile() {
-    return window.matchMedia('(max-width: 768px)').matches;
+    return isMobile();
+  }
+
+  isOverlayMode() {
+    return isTablet();
+  }
+
+  expandPanel() {
+    if (this.isOverlayMode()) closeMobileSidebar();
+    this.setCollapsed(false);
   }
 
   openPanel() { this.expandPanel(); }
   closePanel() { this.collapsePanel(); }
-  expandPanel() { this.setCollapsed(false); }
   collapsePanel() { this.setCollapsed(true); }
   togglePanel() { this.setCollapsed(!this.panel.classList.contains('collapsed')); }
 
@@ -245,7 +261,7 @@ export class SettingsUI {
     this.panel.classList.toggle('collapsed', collapsed);
     document.body.classList.toggle('settings-collapsed', collapsed);
     if (this.edgeToggle) this.edgeToggle.setAttribute('aria-expanded', String(!collapsed));
-    if (this.overlay) this.overlay.classList.toggle('visible', !collapsed && this.isMobile());
+    if (this.overlay) this.overlay.classList.toggle('visible', !collapsed && this.isOverlayMode());
     localStorage.setItem('settings-collapsed', collapsed);
   }
 
@@ -338,7 +354,10 @@ export class SettingsUI {
     const isPass = this.apiKeyInput.type === 'password';
     this.apiKeyInput.type = isPass ? 'text' : 'password';
     if (this.toggleKeyVisibilityBtn) {
-      this.toggleKeyVisibilityBtn.textContent = isPass ? 'Hide' : 'Show';
+      this.toggleKeyVisibilityBtn.classList.toggle('key-visible', isPass);
+      const label = isPass ? 'Hide API key' : 'Show API key';
+      this.toggleKeyVisibilityBtn.setAttribute('aria-label', label);
+      this.toggleKeyVisibilityBtn.setAttribute('title', label);
     }
   }
 

@@ -2,7 +2,6 @@ import { state } from '../state.js';
 import { renderMarkdown } from './markdown.js';
 import { PROVIDERS } from '../providers/registry.js';
 import { QUICK_ACTIONS } from '../data/templates.js';
-import { showConfirm } from './modal.js';
 
 export class ChatUI {
   constructor(onRegenerate, onRetry, onOpenSettings) {
@@ -16,8 +15,6 @@ export class ChatUI {
     this.sessionCostEl = document.getElementById('session-cost');
     this.chatTitleBtn = document.getElementById('chat-title-btn');
     this.chatTitleEl = document.getElementById('chat-title');
-    this.chatMenuBtn = document.getElementById('chat-menu-btn');
-    this.chatMenu = document.getElementById('chat-menu');
     this.mobileProvider = document.getElementById('mobile-provider');
     this.mobileModel = document.getElementById('mobile-model');
     this.mobileStatusBar = document.getElementById('mobile-status-bar');
@@ -36,20 +33,6 @@ export class ChatUI {
       const { scrollTop, scrollHeight, clientHeight } = this.messagesContainer;
       this.userNearBottom = scrollHeight - scrollTop - clientHeight < 120;
     });
-
-    document.getElementById('export-chat-btn')?.addEventListener('click', () => this.exportChat());
-    document.getElementById('duplicate-chat-btn')?.addEventListener('click', () => {
-      const chat = state.getActiveChat();
-      if (chat) state.duplicateChat(chat.id);
-    });
-    document.getElementById('clear-chat-btn')?.addEventListener('click', () => this.clearChat());
-    document.getElementById('delete-chat-btn')?.addEventListener('click', () => this.deleteChat());
-
-    this.chatMenuBtn?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.chatMenu.hidden = !this.chatMenu.hidden;
-    });
-    document.addEventListener('click', () => { if (this.chatMenu) this.chatMenu.hidden = true; });
 
     this.chatTitleBtn?.addEventListener('click', () => this.renameChat());
 
@@ -132,50 +115,6 @@ export class ChatUI {
 
     const hasMessages = chat && chat.messages.length > 0;
     document.body.classList.toggle('has-messages', hasMessages);
-  }
-
-  async clearChat() {
-    const chat = state.getActiveChat();
-    if (!chat || chat.messages.length === 0) return;
-    const ok = await showConfirm({
-      title: 'Clear messages',
-      message: 'Remove all messages in this conversation?',
-      confirmText: 'Clear',
-      destructive: true,
-    });
-    if (ok) state.clearChat(chat.id);
-    this.chatMenu.hidden = true;
-  }
-
-  async deleteChat() {
-    const chat = state.getActiveChat();
-    if (!chat) return;
-    const ok = await showConfirm({
-      title: 'Delete chat',
-      message: 'Delete this conversation permanently?',
-      confirmText: 'Delete',
-      destructive: true,
-    });
-    if (ok) state.deleteChat(chat.id);
-    this.chatMenu.hidden = true;
-  }
-
-  exportChat() {
-    const chat = state.getActiveChat();
-    if (!chat) return;
-    const data = state.exportChat(chat.id);
-    this.downloadFile(`chat-${chat.title.slice(0, 30)}.json`, data);
-    this.chatMenu.hidden = true;
-  }
-
-  downloadFile(name, content) {
-    const blob = new Blob([content], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = name;
-    a.click();
-    URL.revokeObjectURL(url);
   }
 
   async renameChat() {
