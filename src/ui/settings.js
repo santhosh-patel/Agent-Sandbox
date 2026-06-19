@@ -292,6 +292,9 @@ export class SettingsUI {
   toggleKeyVisibility() {
     const isPass = this.apiKeyInput.type === 'password';
     this.apiKeyInput.type = isPass ? 'text' : 'password';
+    if (this.toggleKeyVisibilityBtn) {
+      this.toggleKeyVisibilityBtn.textContent = isPass ? 'Hide' : 'Show';
+    }
   }
 
   showStatus(text, type) {

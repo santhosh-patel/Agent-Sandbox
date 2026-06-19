@@ -11,7 +11,7 @@ export class ChatUI {
     this.setupCard = document.getElementById('setup-card');
     this.quickActionsEl = document.getElementById('quick-actions');
     this.templateGrid = document.getElementById('template-grid');
-    this.headerProviderBadge = document.getElementById('provider-badge');
+    this.headerProviderBadge = null;
     this.headerProviderName = document.getElementById('header-provider');
     this.headerModel = document.getElementById('header-model');
     this.sessionCostEl = document.getElementById('session-cost');
@@ -106,7 +106,6 @@ export class ChatUI {
     if (!this.templateGrid) return;
     this.templateGrid.innerHTML = PROMPT_TEMPLATES.map(t => `
       <button type="button" class="template-card" data-id="${t.id}">
-        <span class="template-icon">${t.icon}</span>
         <span class="template-label">${t.label}</span>
         <span class="template-cat">${t.category}</span>
       </button>
@@ -147,18 +146,13 @@ export class ChatUI {
 
     if (providerInfo) {
       this.headerProviderName.textContent = providerInfo.name;
-      this.headerProviderBadge.style.display = 'inline-flex';
-      this.headerProviderBadge.style.color = providerInfo.color;
-      this.headerProviderBadge.style.backgroundColor = `${providerInfo.color}15`;
-      const dot = this.headerProviderBadge.querySelector('.provider-dot');
-      if (dot) dot.style.backgroundColor = providerInfo.color;
       this.headerModel.textContent = settings.model || 'Select model';
 
       if (this.mobileProvider) this.mobileProvider.textContent = providerInfo.name;
       if (this.mobileModel) this.mobileModel.textContent = settings.model || 'Select model';
     } else {
-      this.headerProviderBadge.style.display = 'none';
-      this.headerModel.textContent = 'Select a provider and model';
+      this.headerProviderName.textContent = 'No provider';
+      this.headerModel.textContent = 'Select model';
       if (this.mobileProvider) this.mobileProvider.textContent = 'No provider';
       if (this.mobileModel) this.mobileModel.textContent = 'Select model';
     }
@@ -314,10 +308,7 @@ export class ChatUI {
     if (isAssistant && msg.thinking) {
       thinkingHtml = `
         <div class="thinking-block">
-          <button type="button" class="thinking-header" aria-expanded="true">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-            Reasoning
-          </button>
+          <button type="button" class="thinking-header" aria-expanded="true">Reasoning</button>
           <div class="thinking-content">${this.escapeHtml(msg.thinking)}</div>
         </div>
       `;
@@ -344,26 +335,15 @@ export class ChatUI {
 
     const actionsHtml = `
       <div class="message-actions">
-        <button type="button" class="msg-action-btn copy-msg-btn" title="Copy">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          Copy
-        </button>
-        ${msg.role === 'user' ? `
-          <button type="button" class="msg-action-btn edit-msg-btn" title="Edit">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-            Edit
-          </button>
-        ` : `
-          <button type="button" class="msg-action-btn regen-msg-btn" title="Regenerate">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-            Regenerate
-          </button>
-        `}
+        <button type="button" class="msg-action-btn copy-msg-btn">Copy</button>
+        ${msg.role === 'user'
+          ? '<button type="button" class="msg-action-btn edit-msg-btn">Edit</button>'
+          : '<button type="button" class="msg-action-btn regen-msg-btn">Regenerate</button>'}
       </div>
     `;
 
     el.innerHTML = `
-      <div class="message-avatar">${avatar}</div>
+      <div class="message-label">${msg.role === 'user' ? 'You' : 'Assistant'}</div>
       <div class="message-body">
         <div class="message-content">
           ${thinkingHtml}
@@ -441,14 +421,10 @@ export class ChatUI {
     const wrap = document.createElement('div');
     wrap.className = 'typing-indicator-wrap message assistant';
     wrap.innerHTML = `
-      <div class="message-avatar">AI</div>
+      <div class="message-label">Assistant</div>
       <div class="message-body">
         <div class="message-content typing-bubble">
-          <div class="typing-indicator">
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-          </div>
+          <span class="typing-text">Thinking…</span>
         </div>
       </div>
     `;

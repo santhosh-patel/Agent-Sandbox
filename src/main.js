@@ -1,45 +1,52 @@
-import { state } from './state.js';
+import { state, createId } from './state.js';
 import { SidebarUI } from './ui/sidebar.js';
 import { ChatUI } from './ui/chat.js';
 import { InputUI } from './ui/input.js';
 import { SettingsUI } from './ui/settings.js';
+import { ShortcutsUI } from './ui/shortcuts.js';
 import { createProvider, estimateCost } from './providers/registry.js';
 
 class App {
   constructor() {
     this.abortController = null;
+    this.abortControllers = [];
     this.sidebarUI = null;
     this.chatUI = null;
     this.inputUI = null;
     this.settingsUI = null;
+    this.shortcutsUI = null;
+    this.lastPrompt = '';
   }
 
   init() {
-    // Initial UI Setup
+    this.settingsUI = new SettingsUI();
     this.sidebarUI = new SidebarUI();
-    this.chatUI = new ChatUI(() => this.handleRegenerate());
+    this.chatUI = new ChatUI(
+      () => this.handleRegenerate(),
+      () => this.handleRetry(),
+      () => this.settingsUI.expandPanel()
+    );
     this.inputUI = new InputUI(
       (prompt) => this.handleSend(prompt),
       () => this.handleStop()
     );
-    this.settingsUI = new SettingsUI();
 
-    // Hook mobile sidebar toggle buttons
-    const sidebarToggle = document.getElementById('sidebar-toggle');
-    if (sidebarToggle) {
-      sidebarToggle.addEventListener('click', () => {
-        this.sidebarUI.toggleSidebar();
-      });
-    }
+    this.shortcutsUI = new ShortcutsUI({
+      focusInput: () => this.inputUI.focus(),
+      focusSearch: () => document.getElementById('chat-search')?.focus(),
+      toggleSettings: () => this.settingsUI.togglePanel(),
+      newChat: () => state.createNewChat(),
+      send: () => this.inputUI.triggerSend(),
+      onEscape: () => this.handleStop(),
+    });
 
-    // Set theme on launch
+    document.getElementById('sidebar-toggle')?.addEventListener('click', () => {
+      this.sidebarUI.toggleSidebar();
+    });
+
     this.applyTheme(state.settings.theme || 'dark');
-    const themeBtn = document.getElementById('theme-toggle-btn');
-    if (themeBtn) {
-      themeBtn.addEventListener('click', () => this.toggleTheme());
-    }
+    document.getElementById('theme-toggle-btn')?.addEventListener('click', () => this.toggleTheme());
 
-    // Check system preference for theme changes
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
       if (state.settings.theme === 'system') {
         this.applyTheme(e.matches ? 'dark' : 'light');
@@ -47,15 +54,12 @@ class App {
     });
 
     state.on('settings-changed', (settings) => {
-      if (settings.theme) {
-        this.applyTheme(settings.theme);
-      }
+      if (settings.theme) this.applyTheme(settings.theme);
     });
   }
 
   toggleTheme() {
-    const current = state.settings.theme;
-    const next = current === 'dark' ? 'light' : 'dark';
+    const next = state.settings.theme === 'dark' ? 'light' : 'dark';
     state.updateSettings({ theme: next });
     this.applyTheme(next);
   }
@@ -65,62 +69,160 @@ class App {
     if (theme === 'system') {
       activeTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
-
     document.documentElement.setAttribute('data-theme', activeTheme);
-    
-    // Update footer button UI
+
     const label = document.getElementById('theme-label');
-    const icon = document.getElementById('theme-icon');
-    if (label) label.innerText = activeTheme === 'dark' ? 'Light' : 'Dark';
-    if (icon) {
-      if (activeTheme === 'dark') {
-        icon.innerHTML = '<path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 5a7 7 0 100 14 7 7 0 000-14z"/>';
-      } else {
-        icon.innerHTML = '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';
-      }
-    }
+    if (label) label.textContent = activeTheme === 'dark' ? 'Dark mode' : 'Light mode';
   }
 
   async handleSend(prompt) {
+    this.lastPrompt = prompt;
     const activeChat = state.getActiveChat();
     if (!activeChat) return;
 
-    const settings = state.settings;
-    if (!settings.provider || !settings.model) {
-      this.showToast('Please select a provider and model in settings first.', true);
-      this.settingsUI.openPanel();
+    if (!state.isConfigured()) {
+      this.showToast('Configure provider and API key in settings.', true);
+      this.settingsUI.expandPanel();
       return;
     }
 
+    const settings = state.settings;
     const key = state.getApiKey(settings.provider);
     if (!key && settings.provider !== 'openrouter') {
-      this.showToast('Please configure your API key for this provider.', true);
-      this.settingsUI.openPanel();
+      this.showToast('Add your API key in settings.', true);
+      this.settingsUI.expandPanel();
       return;
     }
 
-    // Add user message to state
     state.addMessage(activeChat.id, {
       role: 'user',
       content: prompt,
       createdAt: Date.now(),
     });
 
-    this.executeStreamingResponse(activeChat.id);
+    if (settings.compareMode && settings.compareModels?.length > 0) {
+      await this.executeCompareResponse(activeChat.id, prompt);
+    } else {
+      await this.executeStreamingResponse(activeChat.id);
+    }
   }
 
   async handleRegenerate() {
     const activeChat = state.getActiveChat();
     if (!activeChat || activeChat.messages.length === 0) return;
 
-    // Remove last message if it's from assistant
-    const lastMsg = activeChat.messages[activeChat.messages.length - 1];
-    if (lastMsg && lastMsg.role === 'assistant') {
-      state.removeLastMessage(activeChat.id);
-      this.chatUI.render();
+    while (activeChat.messages.length > 0) {
+      const last = activeChat.messages[activeChat.messages.length - 1];
+      if (last.role === 'assistant' || last.compareId) {
+        state.removeLastMessage(activeChat.id);
+      } else break;
     }
 
-    this.executeStreamingResponse(activeChat.id);
+    const settings = state.settings;
+    const lastUser = [...activeChat.messages].reverse().find(m => m.role === 'user');
+    if (settings.compareMode && settings.compareModels?.length > 0 && lastUser) {
+      await this.executeCompareResponse(activeChat.id, lastUser.content);
+    } else {
+      await this.executeStreamingResponse(activeChat.id);
+    }
+  }
+
+  async handleRetry() {
+    const activeChat = state.getActiveChat();
+    if (!activeChat) return;
+    const lastMsg = activeChat.messages[activeChat.messages.length - 1];
+    if (lastMsg?.role === 'assistant') state.removeLastMessage(activeChat.id);
+    await this.executeStreamingResponse(activeChat.id);
+  }
+
+  async executeCompareResponse(chatId, prompt) {
+    const settings = state.settings;
+    const models = settings.compareModels.slice(0, 3);
+    const compareId = createId();
+    const key = state.getApiKey(settings.provider);
+
+    this.inputUI.setLoading(true);
+    this.chatUI.showTypingIndicator();
+
+    models.forEach(model => {
+      state.addMessage(chatId, {
+        role: 'assistant',
+        content: '',
+        compareId,
+        compareModel: model,
+        model,
+        isStreaming: true,
+        createdAt: Date.now(),
+      });
+    });
+
+    this.chatUI.removeTypingIndicator();
+    this.chatUI.render();
+
+    this.abortControllers = models.map(() => new AbortController());
+
+    const tasks = models.map((model, i) => this.streamSingleModel(chatId, compareId, model, key, this.abortControllers[i].signal));
+
+    try {
+      await Promise.all(tasks);
+    } finally {
+      this.inputUI.setLoading(false);
+      this.chatUI.render();
+      this.abortControllers = [];
+    }
+  }
+
+  async streamSingleModel(chatId, compareId, model, key, signal) {
+    const settings = { ...state.settings, model };
+    const provider = createProvider(settings.provider, key, settings.corsProxyUrl);
+    const chat = state.getActiveChat();
+    const history = chat.messages
+      .filter(m => !m.compareId)
+      .map(m => ({ role: m.role, content: m.content }));
+
+    let fullText = '';
+    let fullThinking = '';
+    const startTime = Date.now();
+
+    try {
+      const stream = provider.streamChat(history, settings, signal);
+      for await (const chunk of stream) {
+        if (chunk.type === 'text') {
+          fullText += chunk.content;
+          state.updateCompareMessage(chatId, compareId, model, fullText, { thinking: fullThinking, isStreaming: true });
+          this.chatUI.render();
+        } else if (chunk.type === 'thinking') {
+          fullThinking += chunk.content;
+          state.updateCompareMessage(chatId, compareId, model, fullText, { thinking: fullThinking, isStreaming: true });
+        } else if (chunk.type === 'usage') {
+          const latency = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
+          const cost = estimateCost(model, chunk.usage.prompt_tokens, chunk.usage.completion_tokens);
+          state.updateCompareMessage(chatId, compareId, model, fullText, {
+            tokens: chunk.usage,
+            cost,
+            latency,
+            thinking: fullThinking,
+          });
+          state.recordUsage(settings.provider, chunk.usage.total_tokens, cost || 0);
+        }
+      }
+
+      const latency = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
+      if (!fullText) fullText = '(No response)';
+
+      state.updateCompareMessage(chatId, compareId, model, fullText, {
+        isStreaming: false,
+        latency,
+        thinking: fullThinking,
+      });
+    } catch (e) {
+      if (e.name !== 'AbortError') {
+        state.updateCompareMessage(chatId, compareId, model, e.message, {
+          isStreaming: false,
+          isError: true,
+        });
+      }
+    }
   }
 
   async executeStreamingResponse(chatId) {
@@ -135,16 +237,12 @@ class App {
     const key = state.getApiKey(settings.provider);
     const provider = createProvider(settings.provider, key, settings.corsProxyUrl);
 
-    // Filter messages up to the current ones
-    const history = activeChat.messages.map(m => ({
-      role: m.role,
-      content: m.content,
-    }));
+    const history = activeChat.messages.map(m => ({ role: m.role, content: m.content }));
 
-    // Create container for assistant response
     state.addMessage(chatId, {
       role: 'assistant',
       content: '',
+      model: settings.model,
       isStreaming: true,
       createdAt: Date.now(),
     });
@@ -158,7 +256,7 @@ class App {
 
     try {
       const stream = provider.streamChat(history, settings, this.abortController.signal);
-      
+
       for await (const chunk of stream) {
         if (chunk.type === 'text') {
           fullText += chunk.content;
@@ -169,52 +267,43 @@ class App {
           state.updateLastAssistantMessage(chatId, fullText, { thinking: fullThinking });
           this.chatUI.render();
         } else if (chunk.type === 'usage') {
-          const latency = ((Date.now() - startTime) / 1000).toFixed(2);
+          const latency = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
           const cost = estimateCost(settings.model, chunk.usage.prompt_tokens, chunk.usage.completion_tokens);
           state.updateLastAssistantMessage(chatId, fullText, {
             tokens: chunk.usage,
-            cost: cost,
-            latency: parseFloat(latency),
+            cost,
+            latency,
             thinking: fullThinking,
           });
+          state.recordUsage(settings.provider, chunk.usage.total_tokens, cost || 0);
         }
       }
 
-      // Finish streaming status
-      const latency = ((Date.now() - startTime) / 1000).toFixed(2);
-      
-      // Calculate token approximation if usage wasn't returned
+      const latency = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
       const lastMsg = activeChat.messages[activeChat.messages.length - 1];
+
       if (lastMsg && !lastMsg.tokens) {
-        // Approximate token counting
         const promptText = history.map(h => h.content).join(' ');
         const promptTokens = Math.ceil(promptText.split(/\s+/).length * 1.3);
         const completionTokens = Math.ceil(fullText.split(/\s+/).length * 1.3);
-        const totalTokens = promptTokens + completionTokens;
-        
         const cost = estimateCost(settings.model, promptTokens, completionTokens);
-        
         state.updateLastAssistantMessage(chatId, fullText, {
-          tokens: { prompt_tokens: promptTokens, completion_tokens: completionTokens, total_tokens: totalTokens },
-          cost: cost,
-          latency: parseFloat(latency),
+          tokens: { prompt_tokens: promptTokens, completion_tokens: completionTokens, total_tokens: promptTokens + completionTokens },
+          cost,
+          latency,
           thinking: fullThinking,
         });
+        state.recordUsage(settings.provider, promptTokens + completionTokens, cost || 0);
       }
 
-      // Turn off streaming active flag
-      const msg = activeChat.messages[activeChat.messages.length - 1];
-      if (msg) msg.isStreaming = false;
-
+      if (lastMsg) lastMsg.isStreaming = false;
+      this.chatUI.announce('Response complete');
     } catch (e) {
       if (e.name === 'AbortError') {
         this.showToast('Generation stopped.');
       } else {
-        console.error('Streaming error:', e);
-        this.showToast(e.message, true);
-        state.updateLastAssistantMessage(chatId, `<span style="display: inline-flex; align-items: center; gap: 6px; color: var(--error);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>**API Error:**</span> ${e.message}`);
+        state.updateLastAssistantMessage(chatId, e.message, { isError: true });
       }
-      
       const msg = activeChat.messages[activeChat.messages.length - 1];
       if (msg) msg.isStreaming = false;
     } finally {
@@ -225,18 +314,16 @@ class App {
   }
 
   handleStop() {
-    if (this.abortController) {
-      this.abortController.abort();
-    }
+    if (this.abortController) this.abortController.abort();
+    this.abortControllers.forEach(c => c.abort());
   }
 
   showToast(message, isError = false) {
     const toast = document.createElement('div');
     toast.className = 'toast visible';
     if (isError) toast.style.borderColor = 'var(--error)';
-    toast.innerText = message;
+    toast.textContent = message;
     document.body.appendChild(toast);
-    
     setTimeout(() => {
       toast.classList.remove('visible');
       setTimeout(() => toast.remove(), 300);
@@ -244,7 +331,6 @@ class App {
   }
 }
 
-// Instantiate and start app on page load
 const app = new App();
 window.addEventListener('DOMContentLoaded', () => app.init());
 export default app;

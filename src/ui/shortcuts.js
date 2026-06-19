@@ -10,11 +10,7 @@ export class ShortcutsUI {
 
     const hint = document.getElementById('edge-hint');
     if (hint && !localStorage.getItem('edge-hint-dismissed')) {
-      setTimeout(() => hint.classList.add('visible'), 1500);
-      hint.querySelector('.edge-hint-close')?.addEventListener('click', () => {
-        hint.classList.remove('visible');
-        localStorage.setItem('edge-hint-dismissed', 'true');
-      });
+      hint.remove();
     }
   }
 
@@ -85,10 +81,8 @@ export class ShortcutsUI {
     this.panel.innerHTML = `
       <div class="shortcuts-content">
         <div class="shortcuts-header">
-          <h3>Keyboard shortcuts</h3>
-          <button type="button" class="btn-icon shortcuts-close" aria-label="Close">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
+          <h3>Shortcuts</h3>
+          <button type="button" class="btn-text shortcuts-close">Close</button>
         </div>
         <div class="shortcuts-list">
           <div class="shortcut-row"><kbd>/</kbd><span>Focus message input</span></div>

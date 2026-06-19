@@ -19,13 +19,7 @@ renderer.code = function(code, infostring, escaped) {
     <div class="code-block-wrapper">
       <div class="code-block-header">
         <span class="code-lang">${lang}</span>
-        <button class="code-copy-btn" onclick="window.copyCodeBlock(this)" data-code="${encodeURIComponent(code)}">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-          </svg>
-          Copy
-        </button>
+        <button class="code-copy-btn" onclick="window.copyCodeBlock(this)" data-code="${encodeURIComponent(code)}">Copy</button>
       </div>
       <pre><code class="hljs language-${lang}">${highlighted}</code></pre>
     </div>
@@ -53,16 +47,11 @@ function escapeHtml(text) {
 window.copyCodeBlock = function(button) {
   const code = decodeURIComponent(button.getAttribute('data-code'));
   navigator.clipboard.writeText(code).then(() => {
-    const originalHTML = button.innerHTML;
-    button.innerHTML = `
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2">
-        <polyline points="20 6 9 17 4 12"></polyline>
-      </svg>
-      Copied!
-    `;
+    const original = button.textContent;
+    button.textContent = 'Copied';
     button.style.color = 'var(--success)';
     setTimeout(() => {
-      button.innerHTML = originalHTML;
+      button.textContent = original;
       button.style.color = '';
     }, 2000);
   }).catch(err => {

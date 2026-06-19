@@ -3,13 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Playground — Test Any LLM Instantly</title>
-  <meta name="description" content="A premium AI playground to test OpenAI, Anthropic, Gemini, Groq, DeepSeek and more with your own API keys. No signup required." />
+  <title>AI Playground</title>
+  <meta name="description" content="Test any LLM with your own API keys. Client-side only." />
   <meta name="theme-color" content="#1a1625" />
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/src/styles/index.css" />
 </head>
 <body>
@@ -23,99 +22,77 @@
 
   <div id="app">
     <header class="mobile-header">
-      <button class="btn-icon" id="sidebar-toggle" aria-label="Toggle sidebar">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      </button>
+      <button type="button" class="btn-text" id="sidebar-toggle">Chats</button>
       <button type="button" class="mobile-status-bar" id="mobile-status-bar" aria-label="Open settings">
         <span id="mobile-provider">No provider</span>
         <span class="mobile-status-dot">·</span>
         <span id="mobile-model">Select model</span>
       </button>
-      <button class="btn-icon" id="settings-toggle-mobile" aria-label="Settings">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
-      </button>
+      <button type="button" class="btn-text" id="settings-toggle-mobile">Settings</button>
     </header>
 
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <div class="logo">
-          <span class="logo-icon">✦</span>
-          <span class="logo-text">AI Playground</span>
-        </div>
+        <span class="logo-text">Playground</span>
       </div>
 
-      <button class="btn btn-new-chat" id="new-chat-btn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        New Chat
-      </button>
+      <button type="button" class="btn btn-new-chat" id="new-chat-btn">New chat</button>
 
       <div class="sidebar-search">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="chat-search" placeholder="Search chats..." />
+        <input type="text" id="chat-search" placeholder="Search…" />
       </div>
 
       <div class="chat-list" id="chat-list"></div>
 
       <div class="sidebar-footer">
-        <button class="btn-sidebar" id="theme-toggle-btn" title="Switch theme" style="width: 100%">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="theme-icon"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        <button type="button" class="btn-sidebar" id="theme-toggle-btn">
           <span id="theme-label">Dark mode</span>
         </button>
-        <button class="btn-sidebar" id="reset-layout-btn" title="Reset panel layout" style="width: 100%">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
-          <span>Reset layout</span>
-        </button>
+        <button type="button" class="btn-sidebar" id="reset-layout-btn">Reset layout</button>
       </div>
     </aside>
 
     <main class="main" id="main">
       <div class="chat-header" id="chat-header">
         <div class="chat-header-left">
-          <button type="button" class="chat-title-btn" id="chat-title-btn" title="Rename chat">
-            <span id="chat-title">New Chat</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          <button type="button" class="chat-title-btn" id="chat-title-btn" title="Rename">
+            <span id="chat-title">New chat</span>
           </button>
-          <div class="provider-badge" id="provider-badge">
-            <span class="provider-dot"></span>
-            <span id="header-provider">No Provider</span>
-          </div>
+          <span class="header-meta" id="header-provider">No provider</span>
           <span class="header-separator">·</span>
-          <span class="header-model" id="header-model">Select a model</span>
+          <span class="header-model" id="header-model">Select model</span>
           <span class="session-cost" id="session-cost" hidden></span>
         </div>
         <div class="chat-header-right">
-          <button class="btn-icon" id="chat-menu-btn" title="Chat actions" aria-label="Chat actions">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-          </button>
+          <button type="button" class="btn-text" id="chat-menu-btn">Menu</button>
           <div class="dropdown-menu" id="chat-menu" hidden>
-            <button type="button" class="dropdown-item" id="export-chat-btn">Export chat</button>
-            <button type="button" class="dropdown-item" id="duplicate-chat-btn">Duplicate chat</button>
-            <button type="button" class="dropdown-item" id="clear-chat-btn">Clear messages</button>
-            <button type="button" class="dropdown-item dropdown-danger" id="delete-chat-btn">Delete chat</button>
+            <button type="button" class="dropdown-item" id="export-chat-btn">Export</button>
+            <button type="button" class="dropdown-item" id="duplicate-chat-btn">Duplicate</button>
+            <button type="button" class="dropdown-item" id="clear-chat-btn">Clear</button>
+            <button type="button" class="dropdown-item dropdown-danger" id="delete-chat-btn">Delete</button>
           </div>
         </div>
       </div>
 
       <div class="messages" id="messages">
         <div class="welcome" id="welcome">
-          <div class="welcome-icon">✦</div>
           <h1 class="welcome-title">AI Playground</h1>
-          <p class="welcome-subtitle">Test any LLM instantly with your own API keys.<br/>No signup. Keys stay in your browser.</p>
+          <p class="welcome-subtitle">Test any LLM with your API keys. Everything stays in your browser.</p>
 
           <div class="setup-card" id="setup-card" hidden>
-            <h2>Get started in 3 steps</h2>
+            <h2>Get started</h2>
             <ol class="setup-steps">
-              <li><span class="setup-step-num">1</span> Choose a provider</li>
-              <li><span class="setup-step-num">2</span> Paste your API key</li>
-              <li><span class="setup-step-num">3</span> Pick a model and send a message</li>
+              <li>Choose a provider</li>
+              <li>Add your API key</li>
+              <li>Pick a model and send a message</li>
             </ol>
             <button type="button" class="btn btn-primary" id="setup-open-settings">Open settings</button>
-            <p class="setup-hint">Tip: OpenRouter works in-browser with one key for 200+ models.</p>
+            <p class="setup-hint">OpenRouter works in-browser with one key.</p>
           </div>
 
           <div class="quick-actions" id="quick-actions"></div>
           <div class="template-section" id="template-section">
-            <h3 class="section-label">Prompt templates</h3>
+            <h3 class="section-label">Templates</h3>
             <div class="template-grid" id="template-grid"></div>
           </div>
         </div>
@@ -124,18 +101,14 @@
       <div class="input-area" id="input-area">
         <div class="cost-estimate" id="cost-estimate" hidden></div>
         <div class="input-container">
-          <textarea id="message-input" placeholder="Send a message..." rows="1" autocomplete="off"></textarea>
+          <textarea id="message-input" placeholder="Message…" rows="1" autocomplete="off"></textarea>
           <div class="input-actions">
             <span class="char-count" id="char-count"></span>
-            <button class="btn-send" id="send-btn" title="Send (Enter)" disabled>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            </button>
-            <button class="btn-stop" id="stop-btn" title="Stop generating" style="display:none">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-            </button>
+            <button type="button" class="btn-send" id="send-btn" disabled>Send</button>
+            <button type="button" class="btn-stop" id="stop-btn" style="display:none">Stop</button>
           </div>
         </div>
-        <p class="input-hint">Enter to send · Shift+Enter new line · <kbd>?</kbd> shortcuts</p>
+        <p class="input-hint">Enter to send · Shift+Enter for new line</p>
       </div>
     </main>
 
@@ -145,14 +118,11 @@
       </div>
 
       <div class="settings-body">
-        <div class="security-banner">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          <span>API keys are stored locally in your browser. Never sent to our servers.</span>
-        </div>
+        <p class="security-banner">Keys are stored locally. Never sent to our servers.</p>
 
         <div class="anthropic-banner" id="anthropic-banner" hidden>
-          <strong>Anthropic requires a CORS proxy</strong> in the browser, or use
-          <button type="button" class="link-btn" id="switch-openrouter-btn">OpenRouter</button> instead.
+          Anthropic needs a CORS proxy in the browser, or use
+          <button type="button" class="link-btn" id="switch-openrouter-btn">OpenRouter</button>.
         </div>
 
         <details class="settings-group" open>
@@ -161,7 +131,7 @@
             <div class="settings-section">
               <label class="settings-label" for="provider-select">Provider</label>
               <select id="provider-select" class="settings-select">
-                <option value="">Select a provider...</option>
+                <option value="">Select provider…</option>
                 <option value="openrouter">OpenRouter (recommended)</option>
                 <option value="openai">OpenAI</option>
                 <option value="anthropic">Anthropic</option>
@@ -175,21 +145,17 @@
             <div class="settings-section">
               <div class="label-row">
                 <label class="settings-label" for="api-key-input">API key</label>
-                <a class="settings-link" id="provider-docs-link" href="#" target="_blank" rel="noopener" hidden>Get API key ↗</a>
+                <a class="settings-link" id="provider-docs-link" href="#" target="_blank" rel="noopener" hidden>Get key</a>
               </div>
               <div class="api-key-row">
-                <div class="api-key-input-wrap">
-                  <input type="password" id="api-key-input" class="settings-input" placeholder="Enter your API key..." />
-                  <button class="btn-icon btn-eye" id="toggle-key-visibility" aria-label="Show/hide key">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                  </button>
-                </div>
-                <button class="btn btn-test" id="test-key-btn">Verify key</button>
+                <input type="password" id="api-key-input" class="settings-input" placeholder="Paste API key…" />
+                <button type="button" class="btn-text" id="toggle-key-visibility">Show</button>
+                <button type="button" class="btn btn-test" id="test-key-btn">Verify</button>
               </div>
               <div class="key-status" id="key-status"></div>
               <div class="cors-proxy-row" id="cors-proxy-row" style="display:none">
                 <label class="settings-label settings-label-small">CORS proxy URL</label>
-                <input type="text" id="cors-proxy-input" class="settings-input" placeholder="https://your-cors-proxy.com/" />
+                <input type="text" id="cors-proxy-input" class="settings-input" placeholder="https://…" />
               </div>
             </div>
 
@@ -197,11 +163,9 @@
               <label class="settings-label" for="model-select">Model</label>
               <div class="model-select-row">
                 <select id="model-select" class="settings-select" disabled>
-                  <option value="">Set API key first...</option>
+                  <option value="">Add API key first…</option>
                 </select>
-                <button class="btn-icon btn-refresh" id="refresh-models-btn" title="Refresh models" disabled>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
-                </button>
+                <button type="button" class="btn-text" id="refresh-models-btn" disabled>Refresh</button>
               </div>
               <p class="settings-hint" id="model-hint"></p>
             </div>
@@ -209,7 +173,7 @@
             <div class="settings-section">
               <label class="settings-label">Compare models</label>
               <div class="toggle-row">
-                <span class="toggle-label-text">Run same prompt on multiple models</span>
+                <span class="toggle-label-text">Same prompt, multiple models</span>
                 <label class="toggle-switch">
                   <input type="checkbox" id="compare-mode-toggle" />
                   <span class="toggle-slider"></span>
@@ -232,7 +196,7 @@
 
             <div class="settings-section">
               <label class="settings-label" for="system-prompt">System prompt</label>
-              <textarea id="system-prompt" class="settings-textarea" rows="3" placeholder="You are a helpful assistant..."></textarea>
+              <textarea id="system-prompt" class="settings-textarea" rows="3" placeholder="You are a helpful assistant…"></textarea>
             </div>
 
             <div class="settings-section">
@@ -254,9 +218,9 @@
               </div>
               <div class="reasoning-effort-row" id="reasoning-effort-row" style="display:none">
                 <div class="effort-buttons">
-                  <button class="effort-btn" data-effort="low">Low</button>
-                  <button class="effort-btn active" data-effort="medium">Medium</button>
-                  <button class="effort-btn" data-effort="high">High</button>
+                  <button type="button" class="effort-btn" data-effort="low">Low</button>
+                  <button type="button" class="effort-btn active" data-effort="medium">Medium</button>
+                  <button type="button" class="effort-btn" data-effort="high">High</button>
                 </div>
               </div>
             </div>
@@ -267,7 +231,7 @@
           <summary class="settings-group-title">Advanced</summary>
           <div class="settings-group-body">
             <div class="settings-section">
-              <label class="settings-label" for="max-tokens-input">Max output tokens</label>
+              <label class="settings-label" for="max-tokens-input">Max tokens</label>
               <input type="number" id="max-tokens-input" class="settings-input" value="4096" min="1" max="200000" />
             </div>
             <div class="settings-section">
@@ -302,10 +266,10 @@
         </details>
 
         <details class="settings-group">
-          <summary class="settings-group-title">Data &amp; about</summary>
+          <summary class="settings-group-title">Data</summary>
           <div class="settings-group-body">
             <div class="settings-section">
-              <button type="button" class="btn btn-ghost btn-block" id="export-all-btn">Export all chats</button>
+              <button type="button" class="btn btn-ghost btn-block" id="export-all-btn">Export chats</button>
               <button type="button" class="btn btn-ghost btn-block" id="import-chats-btn">Import chats</button>
               <input type="file" id="import-chats-file" accept=".json" hidden />
               <button type="button" class="btn btn-ghost btn-block" id="export-settings-btn">Export settings</button>
@@ -319,17 +283,8 @@
     <div class="overlay" id="overlay"></div>
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
-    <button type="button" class="edge-toggle edge-toggle-left" id="sidebar-edge-toggle" aria-label="Toggle sidebar" title="Toggle chat list" aria-expanded="true">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>
-    <button type="button" class="edge-toggle edge-toggle-right" id="settings-edge-toggle" aria-label="Toggle settings" title="Toggle settings" aria-expanded="true">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-    </button>
-
-    <div class="edge-hint" id="edge-hint">
-      <span>Use edge tabs to collapse panels</span>
-      <button type="button" class="edge-hint-close" aria-label="Dismiss">×</button>
-    </div>
+    <button type="button" class="edge-toggle edge-toggle-left" id="sidebar-edge-toggle" aria-label="Toggle chats" aria-expanded="true">‹</button>
+    <button type="button" class="edge-toggle edge-toggle-right" id="settings-edge-toggle" aria-label="Toggle settings" aria-expanded="true">›</button>
   </div>
 
   <script type="module" src="/src/main.js"></script>

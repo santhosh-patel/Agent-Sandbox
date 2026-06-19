@@ -137,19 +137,11 @@ export class SidebarUI {
         const snippet = this.getSearchSnippet(chat, query);
 
         item.innerHTML = `
-          <svg class="chat-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
           <div class="chat-item-content">
             <span class="chat-item-text">${this.highlightMatch(this.escapeHtml(chat.title), query)}</span>
             <span class="chat-item-meta">${snippet || meta}</span>
           </div>
-          <button class="chat-item-delete" aria-label="Delete chat" title="Delete chat">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="3 6 5 6 21 6"></polyline>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-          </button>
+          <button type="button" class="chat-item-delete" aria-label="Delete">Delete</button>
         `;
 
         item.addEventListener('click', (e) => {
