@@ -1711,45 +1711,9 @@ body.has-messages .bg-gradient {
 
 .setup-hint { font-size: 0.75rem; color: var(--text-tertiary); margin-top: 12px; }
 
-.section-label {
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
-  margin-bottom: 10px;
-  text-transform: none;
-}
+.setup-step-num { display: none; }
 
-.template-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  max-width: 520px;
-  width: 100%;
-}
-
-.template-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 12px 8px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  transition: all var(--transition);
-}
-
-.template-card:hover {
-  border-color: var(--accent);
-  color: var(--text-primary);
-}
-
-.template-icon { font-size: 1.2rem; }
-.template-cat { font-size: 0.65rem; color: var(--text-tertiary); }
-
-.empty-state {
+.typing-text {
   padding: 20px;
   text-align: center;
   color: var(--text-tertiary);
@@ -1763,6 +1727,13 @@ body.has-messages .bg-gradient {
   padding: 8px 12px 4px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.empty-state {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 0.8rem;
 }
 
 .chat-item-content {

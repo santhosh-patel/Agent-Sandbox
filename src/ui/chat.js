@@ -1,7 +1,7 @@
 import { state } from '../state.js';
 import { renderMarkdown } from './markdown.js';
 import { PROVIDERS } from '../providers/registry.js';
-import { QUICK_ACTIONS, PROMPT_TEMPLATES } from '../data/templates.js';
+import { QUICK_ACTIONS } from '../data/templates.js';
 import { showConfirm } from './modal.js';
 
 export class ChatUI {
@@ -10,7 +10,6 @@ export class ChatUI {
     this.welcomeContainer = document.getElementById('welcome');
     this.setupCard = document.getElementById('setup-card');
     this.quickActionsEl = document.getElementById('quick-actions');
-    this.templateGrid = document.getElementById('template-grid');
     this.headerProviderBadge = null;
     this.headerProviderName = document.getElementById('header-provider');
     this.headerModel = document.getElementById('header-model');
@@ -63,7 +62,6 @@ export class ChatUI {
     });
 
     this.renderQuickActions();
-    this.renderTemplates();
 
     state.on('chat-switched', () => this.render());
     state.on('chat-cleared', () => this.render());
@@ -97,39 +95,6 @@ export class ChatUI {
           input.dispatchEvent(new Event('input'));
           const sendBtn = document.getElementById('send-btn');
           if (sendBtn && !sendBtn.disabled) sendBtn.click();
-        }
-      });
-    });
-  }
-
-  renderTemplates() {
-    if (!this.templateGrid) return;
-    this.templateGrid.innerHTML = PROMPT_TEMPLATES.map(t => `
-      <button type="button" class="template-card" data-id="${t.id}">
-        <span class="template-label">${t.label}</span>
-        <span class="template-cat">${t.category}</span>
-      </button>
-    `).join('');
-
-    this.templateGrid.querySelectorAll('.template-card').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const template = PROMPT_TEMPLATES.find(t => t.id === btn.dataset.id);
-        if (!template) return;
-        let text = template.prompt;
-        for (const v of template.variables) {
-          const val = window.prompt(`Enter ${v}:`, v === 'code' ? 'paste code here' : '');
-          if (!val) return;
-          text = text.replace(`{{${v}}}`, val);
-        }
-        if (!state.isConfigured()) {
-          if (this.onOpenSettings) this.onOpenSettings();
-          return;
-        }
-        const input = document.getElementById('message-input');
-        if (input) {
-          input.value = text;
-          input.dispatchEvent(new Event('input'));
-          input.focus();
         }
       });
     });

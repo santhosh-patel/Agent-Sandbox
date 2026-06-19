@@ -60,7 +60,6 @@ class StateManager {
           settings: { ...defaultSettings, ...parsed.settings },
           apiKeys: parsed.apiKeys || {},
           usage: parsed.usage || { daily: {}, total: { requests: 0, tokens: 0, cost: 0 } },
-          customTemplates: parsed.customTemplates || [],
         };
       }
     } catch (e) {
@@ -72,7 +71,6 @@ class StateManager {
       settings: { ...defaultSettings },
       apiKeys: {},
       usage: { daily: {}, total: { requests: 0, tokens: 0, cost: 0 } },
-      customTemplates: [],
     };
   }
 
@@ -104,7 +102,6 @@ class StateManager {
   get activeChat() { return this._state.activeChat; }
   get apiKeys() { return this._state.apiKeys; }
   get usage() { return this._state.usage; }
-  get customTemplates() { return this._state.customTemplates; }
 
   getActiveChat() {
     return this._state.chats[this._state.activeChat] || null;
@@ -369,17 +366,10 @@ class StateManager {
     }
   }
 
-  addCustomTemplate(template) {
-    this._state.customTemplates.push({ ...template, id: createId() });
-    this._saveState();
-    this._emit('templates-changed', this._state.customTemplates);
-  }
-
   clearAllData() {
     this._state.chats = {};
     this._state.apiKeys = {};
     this._state.usage = { daily: {}, total: { requests: 0, tokens: 0, cost: 0 } };
-    this._state.customTemplates = [];
     this._state.settings = { ...defaultSettings };
     const chat = createChat();
     this._state.chats[chat.id] = chat;
