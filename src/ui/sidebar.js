@@ -110,36 +110,6 @@ export class SidebarUI {
       .replace(/"/g, '&quot;');
   }
 
-  exportChats() {
-    const dataStr = state.exportAll();
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-
-    const exportFileDefaultName = `ai-playground-chats-${new Date().toISOString().slice(0,10)}.json`;
-
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-    this.showToast('Chats exported successfully');
-  }
-
-  handleImport(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const success = state.importChats(event.target.result);
-      if (success) {
-        this.showToast('Conversations imported successfully');
-      } else {
-        this.showToast('Failed to import conversations. Check file format.', true);
-      }
-      this.importFile.value = ''; // Reset input
-    };
-    reader.readAsText(file);
-  }
-
   showToast(message, isError = false) {
     const toast = document.createElement('div');
     toast.className = 'toast visible';

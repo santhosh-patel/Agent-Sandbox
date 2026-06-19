@@ -215,31 +215,6 @@ class StateManager {
     this._saveState();
     this._emit('chat-cleared', chatId);
   }
-
-  // --- Export / Import ---
-  exportAll() {
-    return JSON.stringify({
-      version: 1,
-      exportedAt: new Date().toISOString(),
-      chats: this._state.chats,
-    }, null, 2);
-  }
-
-  importChats(jsonStr) {
-    try {
-      const data = JSON.parse(jsonStr);
-      if (data.chats) {
-        Object.assign(this._state.chats, data.chats);
-        this._saveState();
-        this._emit('chats-imported');
-        return true;
-      }
-      return false;
-    } catch (e) {
-      console.error('Import failed:', e);
-      return false;
-    }
-  }
 }
 
 export const state = new StateManager();
