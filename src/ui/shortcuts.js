@@ -27,6 +27,7 @@ export class ShortcutsUI {
     }
 
     if (e.key === 'Escape') {
+      if (document.querySelector('.help-panel.visible')) return;
       if (this.panel?.classList.contains('visible')) {
         this.closePanel();
         return;

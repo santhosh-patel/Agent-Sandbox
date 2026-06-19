@@ -4,6 +4,7 @@ import { ChatUI } from './ui/chat.js';
 import { InputUI } from './ui/input.js';
 import { SettingsUI } from './ui/settings.js';
 import { ShortcutsUI } from './ui/shortcuts.js';
+import { HelpUI } from './ui/help.js';
 import { PromptLibraryUI } from './ui/prompt-library.js';
 import { AttachmentManager } from './ui/attachments.js';
 import { createProvider, estimateCost } from './providers/registry.js';
@@ -23,6 +24,7 @@ class App {
     this.inputUI = null;
     this.settingsUI = null;
     this.shortcutsUI = null;
+    this.helpUI = null;
     this.promptLibraryUI = null;
     this.attachments = null;
     this.lastPrompt = '';
@@ -61,6 +63,8 @@ class App {
       onEscape: () => this.handleStop(),
     });
 
+    this.helpUI = new HelpUI();
+
     document.getElementById('sidebar-toggle')?.addEventListener('click', () => {
       this.sidebarUI.toggleSidebar();
     });
@@ -78,7 +82,10 @@ class App {
       this.settingsUI.expandPanel();
     });
     document.getElementById('topnav-help-btn')?.addEventListener('click', () => {
-      this.shortcutsUI.togglePanel();
+      this.helpUI.togglePanel();
+    });
+    document.getElementById('sidebar-help-btn')?.addEventListener('click', () => {
+      this.helpUI.togglePanel();
     });
 
     this.bindProviderChips();
