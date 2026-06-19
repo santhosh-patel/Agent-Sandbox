@@ -1,4 +1,5 @@
 import { state } from '../state.js';
+import { showConfirm } from './modal.js';
 
 export class SidebarUI {
   constructor() {
@@ -8,6 +9,7 @@ export class SidebarUI {
     this.sidebar = document.getElementById('sidebar');
     this.sidebarOverlay = document.getElementById('sidebar-overlay');
     this.edgeToggle = document.getElementById('sidebar-edge-toggle');
+    this.resetLayoutBtn = document.getElementById('reset-layout-btn');
 
     this.init();
   }
@@ -25,16 +27,33 @@ export class SidebarUI {
       this.edgeToggle.addEventListener('click', () => this.toggleSidebar());
     }
 
+    if (this.resetLayoutBtn) {
+      this.resetLayoutBtn.addEventListener('click', () => this.resetLayout());
+    }
+
     const collapsed = localStorage.getItem('sidebar-collapsed') === 'true';
     this.setCollapsed(collapsed);
 
-    // Subscribe to state updates
     state.on('chat-created', () => this.render());
     state.on('chat-deleted', () => this.render());
     state.on('chat-switched', () => this.render());
+    state.on('chat-renamed', () => this.render());
     state.on('message-added', () => this.render());
+    state.on('chats-imported', () => this.render());
+    state.on('data-cleared', () => this.render());
 
     this.render();
+  }
+
+  resetLayout() {
+    localStorage.setItem('sidebar-collapsed', 'false');
+    localStorage.setItem('settings-collapsed', 'false');
+    this.setCollapsed(false);
+    document.body.classList.remove('settings-collapsed');
+    const settingsPanel = document.getElementById('settings-panel');
+    if (settingsPanel) settingsPanel.classList.remove('collapsed');
+    const edgeRight = document.getElementById('settings-edge-toggle');
+    if (edgeRight) edgeRight.setAttribute('aria-expanded', 'true');
   }
 
   openMobileSidebar() {
@@ -64,16 +83,16 @@ export class SidebarUI {
   }
 
   expandSidebar() {
-    if (this.isMobile()) {
-      this.openMobileSidebar();
-    } else {
-      this.setCollapsed(false);
-    }
+    if (this.isMobile()) this.openMobileSidebar();
+    else this.setCollapsed(false);
   }
 
   setCollapsed(collapsed) {
     this.sidebar.classList.toggle('collapsed', collapsed);
     document.body.classList.toggle('sidebar-collapsed', collapsed);
+    if (this.edgeToggle) {
+      this.edgeToggle.setAttribute('aria-expanded', String(!collapsed));
+    }
     localStorage.setItem('sidebar-collapsed', collapsed);
   }
 
@@ -81,77 +100,121 @@ export class SidebarUI {
     const activeChatId = state.activeChat;
     const query = this.chatSearchInput.value.toLowerCase().trim();
     const chats = state.getChatList();
+    const settings = state.settings;
 
     this.chatListContainer.innerHTML = '';
 
     const filteredChats = chats.filter(chat => {
+      if (!query) return true;
       return chat.title.toLowerCase().includes(query) ||
         chat.messages.some(m => m.content.toLowerCase().includes(query));
     });
 
     if (filteredChats.length === 0) {
       this.chatListContainer.innerHTML = `
-        <div style="padding: 20px; text-align: center; color: var(--text-tertiary); font-size: 0.8rem;">
-          No chats found
+        <div class="empty-state">
+          <p>No chats found</p>
         </div>
       `;
       return;
     }
 
-    filteredChats.forEach(chat => {
-      const item = document.createElement('div');
-      item.className = `chat-item ${chat.id === activeChatId ? 'active' : ''}`;
-      item.setAttribute('data-id', chat.id);
+    const groups = this.groupChatsByDate(filteredChats);
 
-      item.innerHTML = `
-        <svg class="chat-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-        </svg>
-        <span class="chat-item-text">${this.escapeHtml(chat.title)}</span>
-        <button class="chat-item-delete" aria-label="Delete chat" title="Delete chat">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+    groups.forEach(group => {
+      const label = document.createElement('div');
+      label.className = 'chat-group-label';
+      label.textContent = group.label;
+      this.chatListContainer.appendChild(label);
+
+      group.chats.forEach(chat => {
+        const item = document.createElement('div');
+        item.className = `chat-item ${chat.id === activeChatId ? 'active' : ''}`;
+        item.setAttribute('data-id', chat.id);
+
+        const msgCount = chat.messages.length;
+        const meta = `${settings.model || 'No model'} · ${msgCount} msg${msgCount !== 1 ? 's' : ''}`;
+        const snippet = this.getSearchSnippet(chat, query);
+
+        item.innerHTML = `
+          <svg class="chat-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
-        </button>
-      `;
+          <div class="chat-item-content">
+            <span class="chat-item-text">${this.highlightMatch(this.escapeHtml(chat.title), query)}</span>
+            <span class="chat-item-meta">${snippet || meta}</span>
+          </div>
+          <button class="chat-item-delete" aria-label="Delete chat" title="Delete chat">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        `;
 
-      item.addEventListener('click', (e) => {
-        if (e.target.closest('.chat-item-delete')) return;
-        state.setActiveChat(chat.id);
-        this.closeMobileSidebar();
+        item.addEventListener('click', (e) => {
+          if (e.target.closest('.chat-item-delete')) return;
+          state.setActiveChat(chat.id);
+          this.closeMobileSidebar();
+        });
+
+        item.querySelector('.chat-item-delete').addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const ok = await showConfirm({
+            title: 'Delete chat',
+            message: 'Delete this conversation permanently?',
+            confirmText: 'Delete',
+            destructive: true,
+          });
+          if (ok) state.deleteChat(chat.id);
+        });
+
+        this.chatListContainer.appendChild(item);
       });
-
-      const deleteBtn = item.querySelector('.chat-item-delete');
-      deleteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (confirm('Are you sure you want to delete this conversation?')) {
-          state.deleteChat(chat.id);
-        }
-      });
-
-      this.chatListContainer.appendChild(item);
     });
   }
 
+  groupChatsByDate(chats) {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const groups = { Today: [], Yesterday: [], Older: [] };
+    chats.forEach(chat => {
+      const d = new Date(chat.updatedAt);
+      const chatDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      if (chatDay >= today) groups.Today.push(chat);
+      else if (chatDay >= yesterday) groups.Yesterday.push(chat);
+      else groups.Older.push(chat);
+    });
+
+    return Object.entries(groups)
+      .filter(([, list]) => list.length > 0)
+      .map(([label, list]) => ({ label, chats: list }));
+  }
+
+  getSearchSnippet(chat, query) {
+    if (!query) return '';
+    const match = chat.messages.find(m => m.content.toLowerCase().includes(query));
+    if (!match) return '';
+    const idx = match.content.toLowerCase().indexOf(query);
+    const start = Math.max(0, idx - 20);
+    const snippet = match.content.slice(start, start + 60);
+    return this.highlightMatch(this.escapeHtml(snippet), query);
+  }
+
+  highlightMatch(text, query) {
+    if (!query) return text;
+    const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(re, '<mark>$1</mark>');
+  }
+
   escapeHtml(text) {
-    return text
+    return String(text)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
-  }
-
-  showToast(message, isError = false) {
-    const toast = document.createElement('div');
-    toast.className = 'toast visible';
-    if (isError) toast.style.borderColor = 'var(--error)';
-    toast.innerText = message;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-      toast.classList.remove('visible');
-      setTimeout(() => toast.remove(), 300);
-    }, 3000);
   }
 }

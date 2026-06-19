@@ -1,0 +1,30 @@
+export const PARAMETER_PRESETS = {
+  creative: {
+    label: 'Creative',
+    description: 'Higher temperature, more varied output',
+    temperature: 1.2,
+    topP: 0.95,
+    frequencyPenalty: 0.3,
+    presencePenalty: 0.3,
+    reasoningMode: false,
+  },
+  precise: {
+    label: 'Precise',
+    description: 'Low temperature, focused responses',
+    temperature: 0.3,
+    topP: 0.9,
+    frequencyPenalty: 0,
+    presencePenalty: 0,
+    reasoningMode: false,
+  },
+  coding: {
+    label: 'Coding',
+    description: 'Balanced for code generation',
+    temperature: 0.2,
+    topP: 0.95,
+    frequencyPenalty: 0,
+    presencePenalty: 0,
+    reasoningMode: true,
+    reasoningEffort: 'medium',
+  },
+};
