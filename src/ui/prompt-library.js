@@ -2,6 +2,7 @@ import { state } from '../state.js';
 import { showPrompt } from './modal.js';
 import { showConfirm } from './modal.js';
 import { showToast } from './toast.js';
+import { iconHtml } from './icons.js';
 
 const PREVIEW_LENGTH = 160;
 
@@ -138,7 +139,7 @@ export class PromptLibraryUI {
     if (all.length === 0) {
       this.listEl.innerHTML = `
         <div class="prompt-library-empty">
-          <div class="prompt-library-empty-icon" aria-hidden="true">📝</div>
+          <div class="prompt-library-empty-icon" aria-hidden="true">${iconHtml('fileText', { size: 32, className: 'icon icon-prompt-empty' })}</div>
           <h3>No prompts yet</h3>
           <p>Save prompts from the input bar or create one to reuse across chats.</p>
           <button type="button" class="btn btn-primary prompt-library-empty-cta" id="prompt-library-empty-add">Create first prompt</button>
@@ -173,14 +174,14 @@ export class PromptLibraryUI {
     return `
       <article class="prompt-library-card" data-id="${p.id}">
         <div class="prompt-library-card-top">
-          <div class="prompt-library-card-icon" aria-hidden="true">✦</div>
+          <div class="prompt-library-card-icon" aria-hidden="true">${iconHtml('sparkles', { size: 18, className: 'icon' })}</div>
           <div class="prompt-library-card-meta">
             <h3 class="prompt-library-label">${this.escape(p.label)}</h3>
             ${tags ? `<div class="prompt-library-tags">${tags}</div>` : ''}
           </div>
           <div class="prompt-library-card-menu">
-            <button type="button" class="btn-icon btn-sm prompt-edit-btn" data-id="${p.id}" title="Edit" aria-label="Edit prompt">✎</button>
-            <button type="button" class="btn-icon btn-sm prompt-delete-btn" data-id="${p.id}" title="Delete" aria-label="Delete prompt">🗑</button>
+            <button type="button" class="btn-icon btn-sm prompt-edit-btn" data-id="${p.id}" title="Edit" aria-label="Edit prompt">${iconHtml('pencil', { size: 15, className: 'icon' })}</button>
+            <button type="button" class="btn-icon btn-sm prompt-delete-btn" data-id="${p.id}" title="Delete" aria-label="Delete prompt">${iconHtml('trash', { size: 15, className: 'icon' })}</button>
           </div>
         </div>
         <p class="prompt-library-preview">${this.escape(preview)}</p>

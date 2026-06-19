@@ -2154,7 +2154,14 @@
   border-radius: var(--radius-md);
   background: var(--accent-soft);
   color: var(--accent);
-  font-size: 0.9rem;
+}
+
+.prompt-library-card-menu .btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
 }
 
 .prompt-library-card-meta {
@@ -2200,13 +2207,7 @@
   opacity: 1;
 }
 
-.prompt-library-card-menu .btn-icon {
-  width: 32px;
-  height: 32px;
-  font-size: 0.85rem;
-}
-
-.prompt-library-preview {
+.prompt-library-card-meta {
   margin: 0;
   font-size: 0.8125rem;
   line-height: 1.6;
@@ -2252,9 +2253,19 @@
 }
 
 .prompt-library-empty-icon {
-  font-size: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
   margin-bottom: 8px;
-  opacity: 0.85;
+  border-radius: var(--radius-lg);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.prompt-library-empty-icon .icon {
+  opacity: 0.9;
 }
 
 .prompt-library-empty h3 {
