@@ -28,3 +28,24 @@ export const PARAMETER_PRESETS = {
     reasoningEffort: 'medium',
   },
 };
+
+export const SYSTEM_PROMPT_PRESETS = {
+  concise: {
+    label: 'Concise',
+    description: 'Short, direct answers with no filler',
+    prompt:
+      'You are a helpful assistant. Give direct, brief answers. Use short sentences and bullet points when helpful. Skip preamble, repetition, and unnecessary detail. Prefer the minimum text needed to answer clearly.',
+  },
+  explanatory: {
+    label: 'Explanatory',
+    description: 'Clear, thorough explanations with examples',
+    prompt:
+      'You are a helpful assistant. Explain concepts clearly and thoroughly. Break complex ideas into steps, define terms when needed, and use concrete examples. Prioritize understanding over brevity.',
+  },
+  storytelling: {
+    label: 'Storytelling',
+    description: 'Narrative voice with analogies and vivid framing',
+    prompt:
+      'You are a helpful assistant with a narrative voice. When appropriate, frame answers as stories, analogies, or vivid scenarios. Use engaging language and a clear arc — setup, development, and conclusion — while staying accurate and helpful.',
+  },
+};

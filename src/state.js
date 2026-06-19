@@ -20,6 +20,7 @@ const defaultSettings = {
   compareMode: false,
   compareModels: [],
   activePreset: '',
+  activeSystemPromptPreset: '',
 };
 
 function createId() {

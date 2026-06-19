@@ -1,6 +1,6 @@
 import { state } from '../state.js';
 import { PROVIDERS, createProvider } from '../providers/registry.js';
-import { PARAMETER_PRESETS } from '../data/presets.js';
+import { PARAMETER_PRESETS, SYSTEM_PROMPT_PRESETS } from '../data/presets.js';
 import { getModelHint } from '../data/model-hints.js';
 import { showConfirm } from './modal.js';
 
@@ -29,6 +29,7 @@ export class SettingsUI {
     this.compareModelsRow = document.getElementById('compare-models-row');
     this.compareModelChecks = document.getElementById('compare-model-checks');
     this.presetButtons = document.getElementById('preset-buttons');
+    this.systemPromptPresets = document.getElementById('system-prompt-presets');
     this.systemPrompt = document.getElementById('system-prompt');
     this.reasoningToggle = document.getElementById('reasoning-toggle');
     this.reasoningEffortRow = document.getElementById('reasoning-effort-row');
@@ -77,7 +78,13 @@ export class SettingsUI {
     });
 
     this.systemPrompt.addEventListener('input', () => {
-      state.updateSettings({ systemPrompt: this.systemPrompt.value });
+      const value = this.systemPrompt.value;
+      const activeKey = this.getMatchingSystemPromptPreset(value);
+      state.updateSettings({
+        systemPrompt: value,
+        activeSystemPromptPreset: activeKey,
+      });
+      this.updateSystemPromptPresetButtons(activeKey);
     });
 
     this.reasoningToggle.addEventListener('change', () => {
@@ -104,6 +111,7 @@ export class SettingsUI {
     });
 
     this.renderPresets();
+    this.renderSystemPromptPresets();
     this.bindDataButtons();
 
     state.on('usage-updated', () => this.renderUsageStats());
@@ -137,6 +145,40 @@ export class SettingsUI {
         });
         this.loadStateValues();
       });
+    });
+  }
+
+  renderSystemPromptPresets() {
+    if (!this.systemPromptPresets) return;
+    this.systemPromptPresets.innerHTML = Object.entries(SYSTEM_PROMPT_PRESETS).map(([key, p]) => `
+      <button type="button" class="preset-btn" data-system-prompt-preset="${key}" title="${p.description}">${p.label}</button>
+    `).join('');
+
+    this.systemPromptPresets.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const preset = SYSTEM_PROMPT_PRESETS[btn.dataset.systemPromptPreset];
+        if (!preset) return;
+        state.updateSettings({
+          systemPrompt: preset.prompt,
+          activeSystemPromptPreset: btn.dataset.systemPromptPreset,
+        });
+        this.systemPrompt.value = preset.prompt;
+        this.updateSystemPromptPresetButtons(btn.dataset.systemPromptPreset);
+      });
+    });
+  }
+
+  getMatchingSystemPromptPreset(value) {
+    const trimmed = value.trim();
+    if (!trimmed) return '';
+    const match = Object.entries(SYSTEM_PROMPT_PRESETS).find(([, p]) => p.prompt === trimmed);
+    return match ? match[0] : '';
+  }
+
+  updateSystemPromptPresetButtons(activeKey) {
+    if (!this.systemPromptPresets) return;
+    this.systemPromptPresets.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.systemPromptPreset === activeKey);
     });
   }
 
@@ -226,6 +268,9 @@ export class SettingsUI {
     this.apiKeyInput.value = settings.provider ? state.getApiKey(settings.provider) : '';
     this.testKeyBtn.disabled = !this.apiKeyInput.value;
     this.systemPrompt.value = settings.systemPrompt || '';
+    this.updateSystemPromptPresetButtons(
+      settings.activeSystemPromptPreset || this.getMatchingSystemPromptPreset(settings.systemPrompt || ''),
+    );
     this.reasoningToggle.checked = !!settings.reasoningMode;
     this.reasoningEffortRow.style.display = settings.reasoningMode ? 'block' : 'none';
     this.compareModeToggle.checked = !!settings.compareMode;
