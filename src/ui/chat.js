@@ -2,6 +2,7 @@ import { state } from '../state.js';
 import { renderMarkdown } from './markdown.js';
 import { PROVIDERS } from '../providers/registry.js';
 import { QUICK_ACTIONS } from '../data/templates.js';
+import { messageAvatarHtml } from './icons.js';
 
 export class ChatUI {
   constructor(onRegenerate, onRetry, onOpenSettings, onFollowUp) {
@@ -295,6 +296,7 @@ export class ChatUI {
     `;
 
     el.innerHTML = `
+      ${messageAvatarHtml(msg.role)}
       <div class="message-body">
         <div class="message-content">
           ${thinkingHtml}
@@ -372,6 +374,7 @@ export class ChatUI {
     const wrap = document.createElement('div');
     wrap.className = 'typing-indicator-wrap message assistant';
     wrap.innerHTML = `
+      ${messageAvatarHtml('assistant')}
       <div class="message-body">
         <div class="message-content typing-bubble">
           <span class="typing-text">Thinking…</span>

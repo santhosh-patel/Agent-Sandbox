@@ -666,15 +666,18 @@
 
 .message,
 .typing-indicator-wrap {
-  flex-direction: column;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
   width: auto;
-  max-width: min(78%, 640px);
+  max-width: min(82%, 680px);
   margin: 0;
   padding: 0;
   align-self: flex-start;
 }
 
 .message.user {
+  flex-direction: row-reverse;
   align-self: flex-end;
 }
 
@@ -688,11 +691,18 @@
   display: none;
 }
 
+.message-avatar {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-sm);
+}
+
 .message.user .message-body {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  width: 100%;
+  width: auto;
+  max-width: 100%;
 }
 
 .message.assistant .message-body,
@@ -700,7 +710,8 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  width: 100%;
+  width: auto;
+  max-width: 100%;
 }
 
 .message.user .message-content {

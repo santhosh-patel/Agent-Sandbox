@@ -12,6 +12,7 @@ const SVG = {
   sparkles: '<path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>',
   search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
   message: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
 };
 
 export function iconHtml(name, { size = 16, className = 'icon' } = {}) {
@@ -22,4 +23,11 @@ export function iconHtml(name, { size = 16, className = 'icon' } = {}) {
 
 export function modKeyLabel() {
   return navigator.platform?.includes('Mac') ? 'Cmd' : 'Ctrl';
+}
+
+export function messageAvatarHtml(role) {
+  if (role === 'assistant') {
+    return `<div class="message-avatar message-avatar--ai" aria-hidden="true"><img src="/icon.png" alt="" width="32" height="32" /></div>`;
+  }
+  return `<div class="message-avatar message-avatar--user" aria-hidden="true">${iconHtml('user', { size: 18, className: 'icon' })}</div>`;
 }
