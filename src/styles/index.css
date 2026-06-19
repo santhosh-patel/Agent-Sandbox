@@ -610,7 +610,7 @@ body {
 }
 
 .message-avatar--user {
-  color: var(--text-on-accent);
+  color: var(--avatar-user-icon, var(--text-primary));
   background: var(--glass-user-bg);
   border: 1px solid var(--glass-user-border);
 }
@@ -2310,6 +2310,7 @@ kbd {
 }
 
 .btn-icon:focus-visible,
+.panel-collapse-btn:focus-visible,
 .edge-toggle:focus-visible,
 .btn:focus-visible,
 .preset-btn:focus-visible {

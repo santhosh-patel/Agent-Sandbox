@@ -14,6 +14,7 @@ export class SettingsUI {
     this.panel = document.getElementById('settings-panel');
     this.overlay = document.getElementById('overlay');
     this.edgeToggle = document.getElementById('settings-edge-toggle');
+    this.collapseBtn = document.getElementById('settings-collapse-btn');
     this.mobileToggle = document.getElementById('settings-toggle-mobile');
     this.settingsCloseBtn = document.getElementById('settings-close-btn');
 
@@ -60,6 +61,11 @@ export class SettingsUI {
     if (this.mobileToggle) this.mobileToggle.addEventListener('click', () => this.togglePanel());
     if (this.settingsCloseBtn) this.settingsCloseBtn.addEventListener('click', () => this.collapsePanel());
     if (this.edgeToggle) this.edgeToggle.addEventListener('click', () => this.togglePanel());
+    if (this.collapseBtn) {
+      this.collapseBtn.addEventListener('click', () => {
+        if (!this.isOverlayMode()) this.collapsePanel();
+      });
+    }
     this.overlay.addEventListener('click', () => this.collapsePanel());
 
     this.providerSelect.addEventListener('change', () => this.handleProviderChange());
@@ -266,7 +272,16 @@ export class SettingsUI {
   setCollapsed(collapsed) {
     this.panel.classList.toggle('collapsed', collapsed);
     document.body.classList.toggle('settings-collapsed', collapsed);
-    if (this.edgeToggle) this.edgeToggle.setAttribute('aria-expanded', String(!collapsed));
+    const label = collapsed ? 'Expand settings' : 'Collapse settings';
+    if (this.edgeToggle) {
+      this.edgeToggle.setAttribute('aria-expanded', String(!collapsed));
+      this.edgeToggle.setAttribute('aria-label', label);
+      this.edgeToggle.title = label;
+    }
+    if (this.collapseBtn) {
+      this.collapseBtn.setAttribute('aria-label', label);
+      this.collapseBtn.title = label;
+    }
     if (this.overlay) this.overlay.classList.toggle('visible', !collapsed && this.isOverlayMode());
     localStorage.setItem('settings-collapsed', collapsed);
   }

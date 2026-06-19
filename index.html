@@ -45,6 +45,9 @@
           <img src="/icon.png" alt="" class="app-icon" width="32" height="32" />
           <span class="logo-text">Playground</span>
         </div>
+        <button type="button" class="panel-collapse-btn" id="sidebar-collapse-btn" aria-label="Collapse sidebar" title="Collapse sidebar">
+          <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
       </div>
 
       <button type="button" class="btn btn-new-chat" id="new-chat-btn">
@@ -188,6 +191,9 @@
     <aside class="settings-panel" id="settings-panel">
       <div class="settings-header">
         <h2>Settings</h2>
+        <button type="button" class="panel-collapse-btn" id="settings-collapse-btn" aria-label="Collapse settings" title="Collapse settings">
+          <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
         <button type="button" class="btn-text settings-close-btn" id="settings-close-btn" aria-label="Close settings">Close</button>
       </div>
 
@@ -399,10 +405,10 @@
       <button type="button" class="btn-text" id="pwa-dismiss-btn">Not now</button>
     </div>
 
-    <button type="button" class="edge-toggle edge-toggle-left" id="sidebar-edge-toggle" aria-label="Toggle chats" aria-expanded="true">
+    <button type="button" class="edge-toggle edge-toggle-left" id="sidebar-edge-toggle" aria-label="Collapse sidebar" aria-expanded="true" title="Collapse sidebar">
       <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
     </button>
-    <button type="button" class="edge-toggle edge-toggle-right" id="settings-edge-toggle" aria-label="Toggle settings" aria-expanded="true">
+    <button type="button" class="edge-toggle edge-toggle-right" id="settings-edge-toggle" aria-label="Collapse settings" aria-expanded="true" title="Collapse settings">
       <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
     </button>
   </div>

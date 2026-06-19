@@ -13,6 +13,7 @@ export class SidebarUI {
     this.sidebar = document.getElementById('sidebar');
     this.sidebarOverlay = document.getElementById('sidebar-overlay');
     this.edgeToggle = document.getElementById('sidebar-edge-toggle');
+    this.collapseBtn = document.getElementById('sidebar-collapse-btn');
     this.filterTabs = document.getElementById('sidebar-filters');
     this.foldersEl = document.getElementById('sidebar-folders');
 
@@ -30,6 +31,11 @@ export class SidebarUI {
     this.sidebarOverlay.addEventListener('click', () => this.closeMobileSidebar());
     if (this.edgeToggle) {
       this.edgeToggle.addEventListener('click', () => this.toggleSidebar());
+    }
+    if (this.collapseBtn) {
+      this.collapseBtn.addEventListener('click', () => {
+        if (!this.isMobile()) this.setCollapsed(true);
+      });
     }
 
     document.getElementById('new-folder-btn')?.addEventListener('click', () => this.createFolder());
@@ -152,8 +158,15 @@ export class SidebarUI {
   setCollapsed(collapsed) {
     this.sidebar.classList.toggle('collapsed', collapsed);
     document.body.classList.toggle('sidebar-collapsed', collapsed);
+    const label = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
     if (this.edgeToggle) {
       this.edgeToggle.setAttribute('aria-expanded', String(!collapsed));
+      this.edgeToggle.setAttribute('aria-label', label);
+      this.edgeToggle.title = label;
+    }
+    if (this.collapseBtn) {
+      this.collapseBtn.setAttribute('aria-label', label);
+      this.collapseBtn.title = label;
     }
     localStorage.setItem('sidebar-collapsed', collapsed);
   }
