@@ -122,12 +122,29 @@ export class ChatUI {
     let metaHtml = '';
     if (isAssistant && (msg.latency || msg.tokens || msg.cost)) {
       const parts = [];
-      if (msg.latency) parts.push(`<span class="meta-item">⏱ ${msg.latency}s</span>`);
+      if (msg.latency) {
+        parts.push(`
+          <span class="meta-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            ${msg.latency}s
+          </span>
+        `);
+      }
       if (msg.tokens) {
-        parts.push(`<span class="meta-item">📊 ${msg.tokens.total_tokens || msg.tokens} tokens</span>`);
+        parts.push(`
+          <span class="meta-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            ${msg.tokens.total_tokens || msg.tokens} tokens
+          </span>
+        `);
       }
       if (msg.cost !== undefined && msg.cost !== null) {
-        parts.push(`<span class="meta-item">💰 $${msg.cost.toFixed(5)}</span>`);
+        parts.push(`
+          <span class="meta-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            $${msg.cost.toFixed(5)}
+          </span>
+        `);
       }
       if (parts.length > 0) {
         metaHtml = `<div class="message-meta">${parts.join('')}</div>`;
