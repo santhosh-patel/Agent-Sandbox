@@ -64,7 +64,7 @@ export class HelpUI {
               </p>
               <div class="help-callout help-callout--tip">
                 <strong>Tip</strong>
-                <p>OpenRouter is the fastest way to get started — one API key unlocks dozens of models in the browser.</p>
+                <p>Pick any supported provider in Settings, add your API key, and choose a model — you can switch providers anytime without losing chat history.</p>
               </div>
             </section>
 
@@ -73,7 +73,7 @@ export class HelpUI {
               <ol class="help-doc-steps">
                 <li>
                   <span class="help-step-title">Choose a provider</span>
-                  <p>Open <strong>Settings</strong> from the top nav or sidebar. Select a provider — we recommend <strong>OpenRouter</strong> for in-browser access.</p>
+                  <p>Open <strong>Settings</strong> from the top nav or sidebar and select the provider you want to use.</p>
                 </li>
                 <li>
                   <span class="help-step-title">Add your API key</span>
@@ -99,7 +99,7 @@ export class HelpUI {
                     <tr><th>Provider</th><th>Best for</th></tr>
                   </thead>
                   <tbody>
-                    <tr><td><strong>OpenRouter</strong></td><td>One key, many models — works in-browser</td></tr>
+                    <tr><td><strong>OpenRouter</strong></td><td>Access many models through one API key</td></tr>
                     <tr><td><strong>OpenAI</strong></td><td>GPT-4o, o-series, vision models</td></tr>
                     <tr><td><strong>Anthropic</strong></td><td>Claude — may need a CORS proxy in browser</td></tr>
                     <tr><td><strong>Google Gemini</strong></td><td>Fast multimodal models</td></tr>
@@ -204,7 +204,7 @@ export class HelpUI {
               <h3>Troubleshooting</h3>
               <dl class="help-doc-faq">
                 <dt>API key verification fails</dt>
-                <dd>Check the key is correct and has credits. For Anthropic in-browser, set a CORS proxy URL in Settings or switch to OpenRouter.</dd>
+                <dd>Check the key is correct and has credits. For Anthropic in-browser, set a CORS proxy URL in Settings.</dd>
                 <dt>No models in dropdown</dt>
                 <dd>Click <strong>Refresh</strong> after verifying your key. Some providers require a valid key before listing models.</dd>
                 <dt>Streaming stops or errors mid-response</dt>
