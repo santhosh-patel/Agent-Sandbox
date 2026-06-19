@@ -15,6 +15,7 @@ export function registerPWA() {
     showInstallBanner();
   });
 
+  
   document.getElementById('pwa-install-btn')?.addEventListener('click', async () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
