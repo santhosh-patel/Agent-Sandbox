@@ -5,9 +5,6 @@ export class SidebarUI {
     this.chatListContainer = document.getElementById('chat-list');
     this.newChatBtn = document.getElementById('new-chat-btn');
     this.chatSearchInput = document.getElementById('chat-search');
-    this.exportAllBtn = document.getElementById('export-all-btn');
-    this.importBtn = document.getElementById('import-btn');
-    this.importFile = document.getElementById('import-file');
     this.sidebar = document.getElementById('sidebar');
     this.sidebarOverlay = document.getElementById('sidebar-overlay');
     this.sidebarClose = document.getElementById('sidebar-close');
@@ -23,11 +20,6 @@ export class SidebarUI {
 
     this.chatSearchInput.addEventListener('input', () => this.render());
 
-    this.exportAllBtn.addEventListener('click', () => this.exportChats());
-    
-    this.importBtn.addEventListener('click', () => this.importFile.click());
-    this.importFile.addEventListener('change', (e) => this.handleImport(e));
-
     this.sidebarOverlay.addEventListener('click', () => this.closeMobileSidebar());
     if (this.sidebarClose) {
       this.sidebarClose.addEventListener('click', () => this.closeMobileSidebar());
@@ -37,7 +29,6 @@ export class SidebarUI {
     state.on('chat-created', () => this.render());
     state.on('chat-deleted', () => this.render());
     state.on('chat-switched', () => this.render());
-    state.on('chats-imported', () => this.render());
     state.on('message-added', () => this.render()); // To update dynamic title or order
 
     this.render();
