@@ -10,7 +10,6 @@ export class SidebarUI {
     this.sidebar = document.getElementById('sidebar');
     this.sidebarOverlay = document.getElementById('sidebar-overlay');
     this.edgeToggle = document.getElementById('sidebar-edge-toggle');
-    this.resetLayoutBtn = document.getElementById('reset-layout-btn');
 
     this.init();
   }
@@ -26,10 +25,6 @@ export class SidebarUI {
     this.sidebarOverlay.addEventListener('click', () => this.closeMobileSidebar());
     if (this.edgeToggle) {
       this.edgeToggle.addEventListener('click', () => this.toggleSidebar());
-    }
-
-    if (this.resetLayoutBtn) {
-      this.resetLayoutBtn.addEventListener('click', () => this.resetLayout());
     }
 
     const collapsed = localStorage.getItem('sidebar-collapsed') === 'true';
@@ -48,17 +43,6 @@ export class SidebarUI {
     state.on('data-cleared', () => this.render());
 
     this.render();
-  }
-
-  resetLayout() {
-    localStorage.setItem('sidebar-collapsed', 'false');
-    localStorage.setItem('settings-collapsed', 'false');
-    this.setCollapsed(false);
-    document.body.classList.remove('settings-collapsed');
-    const settingsPanel = document.getElementById('settings-panel');
-    if (settingsPanel) settingsPanel.classList.remove('collapsed');
-    const edgeRight = document.getElementById('settings-edge-toggle');
-    if (edgeRight) edgeRight.setAttribute('aria-expanded', 'true');
   }
 
   openMobileSidebar() {
