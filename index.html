@@ -1,13 +1,282 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>test-playground</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Playground — Test Any LLM Instantly</title>
+  <meta name="description" content="A premium AI playground to test OpenAI, Anthropic, Gemini, Groq, DeepSeek and more with your own API keys. No signup required." />
+  <meta name="theme-color" content="#1a1625" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/styles/index.css" />
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="bg-gradient">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+  </div>
+
+  <div id="app">
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+      <button class="btn-icon" id="sidebar-toggle" aria-label="Toggle sidebar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span class="mobile-header-title">AI Playground</span>
+      <button class="btn-icon" id="settings-toggle-mobile" aria-label="Settings">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+      </button>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-icon">✦</span>
+          <span class="logo-text">AI Playground</span>
+        </div>
+        <button class="btn-icon sidebar-close-btn" id="sidebar-close" aria-label="Close sidebar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <button class="btn btn-new-chat" id="new-chat-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Chat
+      </button>
+
+      <div class="sidebar-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="chat-search" placeholder="Search chats..." />
+      </div>
+
+      <div class="chat-list" id="chat-list">
+        <!-- Chat items rendered dynamically -->
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="btn-sidebar" id="export-all-btn" title="Export all chats">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export
+        </button>
+        <button class="btn-sidebar" id="import-btn" title="Import chats">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Import
+        </button>
+        <input type="file" id="import-file" accept=".json" style="display:none" />
+        <button class="btn-sidebar" id="theme-toggle-btn" title="Toggle theme">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="theme-icon"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+          <span id="theme-label">Dark</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Chat Area -->
+    <main class="main" id="main">
+      <!-- Chat Header -->
+      <div class="chat-header" id="chat-header">
+        <div class="chat-header-left">
+          <div class="provider-badge" id="provider-badge">
+            <span class="provider-dot"></span>
+            <span id="header-provider">No Provider</span>
+          </div>
+          <span class="header-separator">·</span>
+          <span class="header-model" id="header-model">Select a model</span>
+        </div>
+        <div class="chat-header-right">
+          <button class="btn-icon" id="clear-chat-btn" title="Clear chat">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          </button>
+          <button class="btn-icon" id="settings-toggle" title="Settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages Area -->
+      <div class="messages" id="messages">
+        <!-- Welcome State -->
+        <div class="welcome" id="welcome">
+          <div class="welcome-icon">✦</div>
+          <h1 class="welcome-title">AI Playground</h1>
+          <p class="welcome-subtitle">Test any LLM model instantly with your own API keys.<br/>No signup required. 100% client-side.</p>
+          <div class="quick-actions">
+            <button class="quick-action" data-prompt="Explain quantum computing in simple terms">
+              <span class="quick-action-icon">🔬</span>
+              <span>Explain quantum computing</span>
+            </button>
+            <button class="quick-action" data-prompt="Write a Python function to find the longest palindromic substring">
+              <span class="quick-action-icon">💻</span>
+              <span>Write a coding challenge</span>
+            </button>
+            <button class="quick-action" data-prompt="Compare REST vs GraphQL vs gRPC with pros and cons">
+              <span class="quick-action-icon">⚖️</span>
+              <span>Compare API architectures</span>
+            </button>
+            <button class="quick-action" data-prompt="Create a creative short story about an AI that discovers music">
+              <span class="quick-action-icon">✍️</span>
+              <span>Write a creative story</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="input-area" id="input-area">
+        <div class="input-container">
+          <textarea id="message-input" placeholder="Send a message..." rows="1" autocomplete="off"></textarea>
+          <div class="input-actions">
+            <span class="char-count" id="char-count"></span>
+            <button class="btn-send" id="send-btn" title="Send message (Enter)" disabled>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+            <button class="btn-stop" id="stop-btn" title="Stop generating" style="display:none">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+            </button>
+          </div>
+        </div>
+        <p class="input-hint">Enter to send · Shift+Enter for new line</p>
+      </div>
+    </main>
+
+    <!-- Settings Panel -->
+    <aside class="settings-panel" id="settings-panel">
+      <div class="settings-header">
+        <h2>Settings</h2>
+        <button class="btn-icon" id="settings-close" aria-label="Close settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="settings-body">
+        <!-- Provider Section -->
+        <div class="settings-section">
+          <label class="settings-label">Provider</label>
+          <select id="provider-select" class="settings-select">
+            <option value="">Select a provider...</option>
+            <option value="openai">OpenAI</option>
+            <option value="anthropic">Anthropic</option>
+            <option value="gemini">Google Gemini</option>
+            <option value="openrouter">OpenRouter</option>
+            <option value="groq">Groq</option>
+            <option value="deepseek">DeepSeek</option>
+          </select>
+        </div>
+
+        <!-- API Key Section -->
+        <div class="settings-section">
+          <label class="settings-label">API Key</label>
+          <div class="api-key-row">
+            <div class="api-key-input-wrap">
+              <input type="password" id="api-key-input" class="settings-input" placeholder="Enter your API key..." />
+              <button class="btn-icon btn-eye" id="toggle-key-visibility" aria-label="Show/hide key">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <button class="btn btn-test" id="test-key-btn">Test</button>
+          </div>
+          <div class="key-status" id="key-status"></div>
+          <!-- Anthropic CORS Proxy -->
+          <div class="cors-proxy-row" id="cors-proxy-row" style="display:none">
+            <label class="settings-label settings-label-small">CORS Proxy URL <span class="label-hint">(required for Anthropic)</span></label>
+            <input type="text" id="cors-proxy-input" class="settings-input" placeholder="https://your-cors-proxy.com/" />
+            <p class="settings-hint">Anthropic doesn't support browser CORS. Use a proxy or try OpenRouter instead.</p>
+          </div>
+        </div>
+
+        <!-- Model Section -->
+        <div class="settings-section">
+          <label class="settings-label">Model</label>
+          <div class="model-select-row">
+            <select id="model-select" class="settings-select" disabled>
+              <option value="">Set API key first...</option>
+            </select>
+            <button class="btn-icon btn-refresh" id="refresh-models-btn" title="Refresh models" disabled>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- System Prompt Section -->
+        <div class="settings-section">
+          <label class="settings-label">System Prompt</label>
+          <textarea id="system-prompt" class="settings-textarea" rows="3" placeholder="You are a helpful assistant..."></textarea>
+        </div>
+
+        <!-- Reasoning Section -->
+        <div class="settings-section">
+          <label class="settings-label">Reasoning Mode</label>
+          <div class="toggle-row">
+            <span class="toggle-label-text">Extended Thinking</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="reasoning-toggle" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="reasoning-effort-row" id="reasoning-effort-row" style="display:none">
+            <label class="settings-label settings-label-small">Reasoning Effort</label>
+            <div class="effort-buttons">
+              <button class="effort-btn" data-effort="low">Low</button>
+              <button class="effort-btn active" data-effort="medium">Medium</button>
+              <button class="effort-btn" data-effort="high">High</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Temperature -->
+        <div class="settings-section">
+          <div class="slider-header">
+            <label class="settings-label">Temperature</label>
+            <span class="slider-value" id="temperature-value">0.7</span>
+          </div>
+          <input type="range" id="temperature-slider" class="settings-slider" min="0" max="2" step="0.1" value="0.7" />
+        </div>
+
+        <!-- Max Output Tokens -->
+        <div class="settings-section">
+          <label class="settings-label">Max Output Tokens</label>
+          <input type="number" id="max-tokens-input" class="settings-input" placeholder="4096" value="4096" min="1" max="200000" />
+        </div>
+
+        <!-- Top P -->
+        <div class="settings-section">
+          <div class="slider-header">
+            <label class="settings-label">Top P</label>
+            <span class="slider-value" id="top-p-value">1.0</span>
+          </div>
+          <input type="range" id="top-p-slider" class="settings-slider" min="0" max="1" step="0.05" value="1" />
+        </div>
+
+        <!-- Frequency Penalty -->
+        <div class="settings-section">
+          <div class="slider-header">
+            <label class="settings-label">Frequency Penalty</label>
+            <span class="slider-value" id="freq-penalty-value">0.0</span>
+          </div>
+          <input type="range" id="freq-penalty-slider" class="settings-slider" min="-2" max="2" step="0.1" value="0" />
+        </div>
+
+        <!-- Presence Penalty -->
+        <div class="settings-section">
+          <div class="slider-header">
+            <label class="settings-label">Presence Penalty</label>
+            <span class="slider-value" id="pres-penalty-value">0.0</span>
+          </div>
+          <input type="range" id="pres-penalty-slider" class="settings-slider" min="-2" max="2" step="0.1" value="0" />
+        </div>
+      </div>
+    </aside>
+
+    <!-- Settings Overlay -->
+    <div class="overlay" id="overlay"></div>
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
 </html>
