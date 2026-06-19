@@ -91,6 +91,10 @@
   --float-shadow: var(--input-float-shadow);
   --float-shadow-lift: var(--input-float-shadow-focus);
 
+  --scrollbar-thumb: rgba(61, 57, 41, 0.14);
+  --scrollbar-thumb-hover: rgba(61, 57, 41, 0.28);
+  --scrollbar-thumb-active: rgba(106, 171, 104, 0.45);
+
   --sidebar-width: 260px;
   --settings-width: 360px;
   --topnav-height: 64px;
@@ -190,6 +194,10 @@
     0 20px 48px rgba(0, 0, 0, 0.2);
   --float-shadow: var(--input-float-shadow);
   --float-shadow-lift: var(--input-float-shadow-focus);
+
+  --scrollbar-thumb: rgba(255, 248, 235, 0.12);
+  --scrollbar-thumb-hover: rgba(255, 248, 235, 0.24);
+  --scrollbar-thumb-active: rgba(143, 201, 141, 0.42);
 }
 
 /* ---- Gradient background ---- */
@@ -533,6 +541,7 @@
   padding: 32px var(--content-padding);
   align-items: stretch;
   gap: 16px;
+  overscroll-behavior: contain;
 }
 
 .welcome {
