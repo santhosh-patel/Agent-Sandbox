@@ -49,3 +49,32 @@ export const SYSTEM_PROMPT_PRESETS = {
       'You are a helpful assistant with a narrative voice. When appropriate, frame answers as stories, analogies, or vivid scenarios. Use engaging language and a clear arc — setup, development, and conclusion — while staying accurate and helpful.',
   },
 };
+
+/** Combined profiles for minimal settings UI */
+export const RESPONSE_PROFILES = {
+  balanced: {
+    label: 'Balanced',
+    temperature: 0.7,
+    topP: 1.0,
+    frequencyPenalty: 0,
+    presencePenalty: 0,
+    reasoningMode: false,
+    reasoningEffort: 'medium',
+    systemPrompt: SYSTEM_PROMPT_PRESETS.concise.prompt,
+  },
+  creative: {
+    label: 'Creative',
+    ...PARAMETER_PRESETS.creative,
+    systemPrompt: SYSTEM_PROMPT_PRESETS.storytelling.prompt,
+  },
+  precise: {
+    label: 'Precise',
+    ...PARAMETER_PRESETS.precise,
+    systemPrompt: SYSTEM_PROMPT_PRESETS.concise.prompt,
+  },
+  coding: {
+    label: 'Coding',
+    ...PARAMETER_PRESETS.coding,
+    systemPrompt: 'You are an expert programmer. Write clean, correct code with brief explanations when helpful.',
+  },
+};

@@ -1,6 +1,6 @@
 import { state } from '../state.js';
 import { PROVIDERS, createProvider } from '../providers/registry.js';
-import { PARAMETER_PRESETS, SYSTEM_PROMPT_PRESETS } from '../data/presets.js';
+import { RESPONSE_PROFILES } from '../data/presets.js';
 import { getModelHint } from '../data/model-hints.js';
 import { showConfirm } from './modal.js';
 import { showToast } from './toast.js';
@@ -18,6 +18,7 @@ export class SettingsUI {
     this.mobileToggle = document.getElementById('settings-toggle-mobile');
     this.settingsCloseBtn = document.getElementById('settings-close-btn');
 
+    this.settingsStatus = document.getElementById('settings-status');
     this.providerSelect = document.getElementById('provider-select');
     this.providerDescription = document.getElementById('provider-description');
     this.providerDocsLink = document.getElementById('provider-docs-link');
@@ -27,7 +28,6 @@ export class SettingsUI {
     this.keyStatus = document.getElementById('key-status');
     this.corsProxyRow = document.getElementById('cors-proxy-row');
     this.corsProxyInput = document.getElementById('cors-proxy-input');
-    this.anthropicBanner = document.getElementById('anthropic-banner');
     this.switchOpenRouterBtn = document.getElementById('switch-openrouter-btn');
     this.modelSelect = document.getElementById('model-select');
     this.modelHint = document.getElementById('model-hint');
@@ -36,22 +36,9 @@ export class SettingsUI {
     this.compareModelsRow = document.getElementById('compare-models-row');
     this.compareModelChecks = document.getElementById('compare-model-checks');
     this.compareModelsHint = document.getElementById('compare-models-hint');
-    this.lastModelList = [];
-    this.presetButtons = document.getElementById('preset-buttons');
-    this.systemPromptPresets = document.getElementById('system-prompt-presets');
+    this.profileSelect = document.getElementById('profile-select');
     this.systemPrompt = document.getElementById('system-prompt');
-    this.reasoningToggle = document.getElementById('reasoning-toggle');
-    this.reasoningEffortRow = document.getElementById('reasoning-effort-row');
-    this.temperatureSlider = document.getElementById('temperature-slider');
-    this.temperatureInput = document.getElementById('temperature-input');
-    this.maxTokensInput = document.getElementById('max-tokens-input');
-    this.topPSlider = document.getElementById('top-p-slider');
-    this.topPInput = document.getElementById('top-p-input');
-    this.freqPenaltySlider = document.getElementById('freq-penalty-slider');
-    this.freqPenaltyInput = document.getElementById('freq-penalty-input');
-    this.presPenaltySlider = document.getElementById('pres-penalty-slider');
-    this.presPenaltyInput = document.getElementById('pres-penalty-input');
-    this.usageStats = document.getElementById('usage-stats');
+    this.lastModelList = [];
 
     this.availableModels = [];
     this.init();
@@ -79,6 +66,7 @@ export class SettingsUI {
     this.modelSelect.addEventListener('change', () => {
       state.updateSettings({ model: this.modelSelect.value });
       this.modelHint.textContent = getModelHint(this.modelSelect.value);
+      this.updateSettingsStatus();
     });
 
     this.compareModeToggle?.addEventListener('change', () => {
@@ -92,45 +80,16 @@ export class SettingsUI {
       this.handleProviderChange();
     });
 
+    this.profileSelect?.addEventListener('change', () => this.applyProfile(this.profileSelect.value));
+
     this.systemPrompt.addEventListener('input', () => {
-      const value = this.systemPrompt.value;
-      const activeKey = this.getMatchingSystemPromptPreset(value);
-      state.updateSettings({
-        systemPrompt: value,
-        activeSystemPromptPreset: activeKey,
-      });
-      this.updateSystemPromptPresetButtons(activeKey);
+      state.updateSettings({ systemPrompt: this.systemPrompt.value });
     });
 
-    this.reasoningToggle.addEventListener('change', () => {
-      const enabled = this.reasoningToggle.checked;
-      this.reasoningEffortRow.style.display = enabled ? 'block' : 'none';
-      state.updateSettings({ reasoningMode: enabled });
-    });
-
-    document.querySelectorAll('.effort-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.effort-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        state.updateSettings({ reasoningEffort: btn.getAttribute('data-effort') });
-      });
-    });
-
-    this.bindSliderPair(this.temperatureSlider, this.temperatureInput, 'temperature');
-    this.bindSliderPair(this.topPSlider, this.topPInput, 'topP');
-    this.bindSliderPair(this.freqPenaltySlider, this.freqPenaltyInput, 'frequencyPenalty');
-    this.bindSliderPair(this.presPenaltySlider, this.presPenaltyInput, 'presencePenalty');
-
-    this.maxTokensInput.addEventListener('input', () => {
-      state.updateSettings({ maxTokens: parseInt(this.maxTokensInput.value, 10) || 4096 });
-    });
-
-    this.renderPresets();
-    this.renderSystemPromptPresets();
     this.bindDataButtons();
 
-    state.on('usage-updated', () => this.renderUsageStats());
-    state.on('settings-changed', () => this.renderUsageStats());
+    state.on('settings-changed', () => this.updateSettingsStatus());
+    state.on('usage-updated', () => this.updateSettingsStatus());
 
     this.loadStateValues();
 
@@ -144,73 +103,26 @@ export class SettingsUI {
     });
   }
 
-  renderPresets() {
-    if (!this.presetButtons) return;
-    this.presetButtons.innerHTML = Object.entries(PARAMETER_PRESETS).map(([key, p]) => `
-      <button type="button" class="preset-btn" data-preset="${key}" title="${p.description}">${p.label}</button>
-    `).join('');
-
-    this.presetButtons.querySelectorAll('.preset-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const preset = PARAMETER_PRESETS[btn.dataset.preset];
-        if (!preset) return;
-        state.updateSettings({
-          temperature: preset.temperature,
-          topP: preset.topP,
-          frequencyPenalty: preset.frequencyPenalty,
-          presencePenalty: preset.presencePenalty,
-          reasoningMode: preset.reasoningMode || false,
-          reasoningEffort: preset.reasoningEffort || 'medium',
-          activePreset: btn.dataset.preset,
-        });
-        this.loadStateValues();
-      });
+  applyProfile(key) {
+    const profile = RESPONSE_PROFILES[key];
+    if (!profile) return;
+    state.updateSettings({
+      responseProfile: key,
+      temperature: profile.temperature,
+      topP: profile.topP,
+      frequencyPenalty: profile.frequencyPenalty,
+      presencePenalty: profile.presencePenalty,
+      reasoningMode: profile.reasoningMode || false,
+      reasoningEffort: profile.reasoningEffort || 'medium',
+      systemPrompt: profile.systemPrompt,
     });
-  }
-
-  renderSystemPromptPresets() {
-    if (!this.systemPromptPresets) return;
-    this.systemPromptPresets.innerHTML = Object.entries(SYSTEM_PROMPT_PRESETS).map(([key, p]) => `
-      <button type="button" class="preset-btn" data-system-prompt-preset="${key}" title="${p.description}">${p.label}</button>
-    `).join('');
-
-    this.systemPromptPresets.querySelectorAll('.preset-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const preset = SYSTEM_PROMPT_PRESETS[btn.dataset.systemPromptPreset];
-        if (!preset) return;
-        state.updateSettings({
-          systemPrompt: preset.prompt,
-          activeSystemPromptPreset: btn.dataset.systemPromptPreset,
-        });
-        this.systemPrompt.value = preset.prompt;
-        this.updateSystemPromptPresetButtons(btn.dataset.systemPromptPreset);
-      });
-    });
-  }
-
-  getMatchingSystemPromptPreset(value) {
-    const trimmed = value.trim();
-    if (!trimmed) return '';
-    const match = Object.entries(SYSTEM_PROMPT_PRESETS).find(([, p]) => p.prompt === trimmed);
-    return match ? match[0] : '';
-  }
-
-  updateSystemPromptPresetButtons(activeKey) {
-    if (!this.systemPromptPresets) return;
-    this.systemPromptPresets.querySelectorAll('.preset-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.systemPromptPreset === activeKey);
-    });
+    this.systemPrompt.value = profile.systemPrompt;
   }
 
   bindDataButtons() {
     document.getElementById('export-all-btn')?.addEventListener('click', () => {
       const data = state.exportAllChats();
       this.downloadFile('ai-playground-chats.json', data);
-    });
-
-    document.getElementById('export-settings-btn')?.addEventListener('click', () => {
-      const data = state.exportSettings();
-      this.downloadFile('ai-playground-settings.json', data);
     });
 
     const importFile = document.getElementById('import-chats-file');
@@ -286,18 +198,6 @@ export class SettingsUI {
     localStorage.setItem('settings-collapsed', collapsed);
   }
 
-  bindSliderPair(slider, input, key) {
-    if (!slider || !input) return;
-    slider.addEventListener('input', () => {
-      input.value = slider.value;
-      state.updateSettings({ [key]: parseFloat(slider.value) });
-    });
-    input.addEventListener('change', () => {
-      slider.value = input.value;
-      state.updateSettings({ [key]: parseFloat(input.value) });
-    });
-  }
-
   loadStateValues() {
     const settings = state.settings;
     this.providerSelect.value = settings.provider || '';
@@ -305,35 +205,32 @@ export class SettingsUI {
     this.apiKeyInput.value = settings.provider ? state.getApiKey(settings.provider) : '';
     this.testKeyBtn.disabled = !this.apiKeyInput.value;
     this.systemPrompt.value = settings.systemPrompt || '';
-    this.updateSystemPromptPresetButtons(
-      settings.activeSystemPromptPreset || this.getMatchingSystemPromptPreset(settings.systemPrompt || ''),
-    );
-    this.reasoningToggle.checked = !!settings.reasoningMode;
-    this.reasoningEffortRow.style.display = settings.reasoningMode ? 'block' : 'none';
+    if (this.profileSelect) {
+      this.profileSelect.value = settings.responseProfile || 'balanced';
+    }
     this.compareModeToggle.checked = !!settings.compareMode;
     this.compareModelsRow.hidden = !settings.compareMode;
 
-    document.querySelectorAll('.effort-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.getAttribute('data-effort') === settings.reasoningEffort);
-    });
-
-    this.temperatureSlider.value = settings.temperature;
-    this.temperatureInput.value = settings.temperature;
-    this.maxTokensInput.value = settings.maxTokens;
-    this.topPSlider.value = settings.topP;
-    this.topPInput.value = settings.topP;
-    this.freqPenaltySlider.value = settings.frequencyPenalty;
-    this.freqPenaltyInput.value = settings.frequencyPenalty;
-    this.presPenaltySlider.value = settings.presencePenalty;
-    this.presPenaltyInput.value = settings.presencePenalty;
-
-    document.querySelectorAll('.preset-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.preset === settings.activePreset);
-    });
-
     this.updateProviderUI();
     this.fetchModels(false);
-    this.renderUsageStats();
+    this.updateSettingsStatus();
+  }
+
+  updateSettingsStatus() {
+    if (!this.settingsStatus) return;
+    const settings = state.settings;
+    const provider = settings.provider ? (PROVIDERS[settings.provider]?.name || settings.provider) : 'No provider';
+    const model = settings.model || 'No model';
+    const hasKey = settings.provider && !!state.getApiKey(settings.provider);
+    const keyLabel = hasKey ? 'Key saved' : 'No key';
+
+    this.settingsStatus.innerHTML = `
+      <span class="settings-status-item">${provider}</span>
+      <span class="settings-status-sep" aria-hidden="true">·</span>
+      <span class="settings-status-item">${model}</span>
+      <span class="settings-status-sep" aria-hidden="true">·</span>
+      <span class="settings-status-item settings-status-item--${hasKey ? 'ok' : 'warn'}">${keyLabel}</span>
+    `;
   }
 
   updateProviderUI() {
@@ -349,8 +246,9 @@ export class SettingsUI {
       this.providerDocsLink.hidden = true;
     }
 
-    this.corsProxyRow.style.display = info?.needsCorsProxy ? 'block' : 'none';
-    this.anthropicBanner.hidden = provider !== 'anthropic';
+    if (this.corsProxyRow) {
+      this.corsProxyRow.hidden = !info?.needsCorsProxy;
+    }
   }
 
   handleProviderChange() {
@@ -362,6 +260,7 @@ export class SettingsUI {
     state.updateSettings({ provider, model: '' });
     this.updateProviderUI();
     this.fetchModels(false);
+    this.updateSettingsStatus();
   }
 
   handleKeyInput() {
@@ -369,6 +268,7 @@ export class SettingsUI {
     const key = this.apiKeyInput.value.trim();
     this.testKeyBtn.disabled = !key;
     if (provider) state.setApiKey(provider, key);
+    this.updateSettingsStatus();
   }
 
   toggleKeyVisibility() {
@@ -444,7 +344,7 @@ export class SettingsUI {
       const adapter = createProvider(providerName, key, state.settings.corsProxyUrl);
       this.availableModels = await adapter.listModels();
       this.renderModelOptions(this.availableModels);
-    } catch (e) {
+    } catch {
       const adapter = createProvider(providerName, '', state.settings.corsProxyUrl);
       this.availableModels = adapter.getDefaultModels();
       this.renderModelOptions(this.availableModels);
@@ -479,6 +379,7 @@ export class SettingsUI {
     this.modelHint.textContent = getModelHint(this.modelSelect.value);
     this.lastModelList = models;
     this.renderCompareModelChecks(models);
+    this.updateSettingsStatus();
   }
 
   renderCompareModelChecks(models = this.lastModelList) {
@@ -488,7 +389,7 @@ export class SettingsUI {
       state.updateSettings({ compareModels: selected });
     }
 
-    this.compareModelChecks.innerHTML = models.slice(0, 12).map(m => {
+    this.compareModelChecks.innerHTML = models.map(m => {
       const isChecked = selected.includes(m.id);
       const atLimit = selected.length >= MAX_COMPARE_MODELS && !isChecked;
       return `
@@ -501,8 +402,8 @@ export class SettingsUI {
 
     if (this.compareModelsHint) {
       this.compareModelsHint.textContent = selected.length
-        ? `${selected.length} of ${MAX_COMPARE_MODELS} models selected`
-        : `Select up to ${MAX_COMPARE_MODELS} models to compare`;
+        ? `${selected.length} of ${MAX_COMPARE_MODELS} selected`
+        : `Pick up to ${MAX_COMPARE_MODELS} models`;
     }
 
     this.compareModelChecks.querySelectorAll('input').forEach(input => {
@@ -518,17 +419,5 @@ export class SettingsUI {
         this.renderCompareModelChecks(models);
       });
     });
-  }
-
-  renderUsageStats() {
-    if (!this.usageStats) return;
-    const usage = state.getUsageStats();
-    const today = new Date().toISOString().slice(0, 10);
-    const day = usage.daily[today] || { requests: 0, tokens: 0, cost: 0 };
-
-    this.usageStats.innerHTML = `
-      <div class="usage-row"><span>Today</span><span>${day.requests} reqs, ${day.tokens} tokens, $${day.cost.toFixed(4)}</span></div>
-      <div class="usage-row"><span>All time</span><span>${usage.total.requests} reqs, ${usage.total.tokens} tokens, $${usage.total.cost.toFixed(4)}</span></div>
-    `;
   }
 }

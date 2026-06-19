@@ -194,174 +194,106 @@
       </div>
 
       <div class="settings-body">
-        <div class="anthropic-banner" id="anthropic-banner" hidden>
-          Anthropic needs a CORS proxy in the browser, or use
-          <button type="button" class="link-btn" id="switch-openrouter-btn">OpenRouter</button>.
-        </div>
+        <div class="settings-status" id="settings-status" aria-live="polite"></div>
 
-        <details class="settings-group" open>
-          <summary class="settings-group-title">Connection</summary>
-          <div class="settings-group-body">
-            <div class="settings-section">
-              <label class="settings-label" for="provider-select">Provider</label>
-              <select id="provider-select" class="settings-select">
-                <option value="">Select provider…</option>
-                <option value="openrouter">OpenRouter (recommended)</option>
-                <option value="openai">OpenAI</option>
-                <option value="anthropic">Anthropic</option>
-                <option value="gemini">Google Gemini</option>
-                <option value="groq">Groq</option>
-                <option value="deepseek">DeepSeek</option>
+        <section class="settings-block">
+          <h3 class="settings-block-title">Setup</h3>
+
+          <div class="settings-section">
+            <label class="settings-label" for="provider-select">Provider</label>
+            <select id="provider-select" class="settings-select">
+              <option value="">Select provider…</option>
+              <option value="openrouter">OpenRouter (recommended)</option>
+              <option value="openai">OpenAI</option>
+              <option value="anthropic">Anthropic</option>
+              <option value="gemini">Google Gemini</option>
+              <option value="groq">Groq</option>
+              <option value="deepseek">DeepSeek</option>
+            </select>
+            <p class="settings-hint" id="provider-description"></p>
+          </div>
+
+          <div class="settings-section">
+            <div class="label-row">
+              <label class="settings-label" for="api-key-input">API key</label>
+              <a class="settings-link" id="provider-docs-link" href="#" target="_blank" rel="noopener" hidden>Get key</a>
+            </div>
+            <div class="api-key-row">
+              <input type="password" id="api-key-input" class="settings-input" placeholder="Paste API key…" autocomplete="off" />
+              <button type="button" class="btn-icon btn-eye-toggle" id="toggle-key-visibility" aria-label="Show API key" title="Show API key">
+                <svg class="eye-icon eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <svg class="eye-icon eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              </button>
+              <button type="button" class="btn btn-test" id="test-key-btn">Verify</button>
+            </div>
+            <div class="key-status" id="key-status"></div>
+            <div class="cors-proxy-row" id="cors-proxy-row" hidden>
+              <label class="settings-label settings-label-small" for="cors-proxy-input">CORS proxy</label>
+              <input type="text" id="cors-proxy-input" class="settings-input" placeholder="https://…" />
+              <p class="settings-hint">Required for Anthropic in the browser, or <button type="button" class="link-btn" id="switch-openrouter-btn">use OpenRouter</button>.</p>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <label class="settings-label" for="model-select">Model</label>
+            <div class="model-select-row">
+              <select id="model-select" class="settings-select" disabled>
+                <option value="">Add API key first…</option>
               </select>
-              <p class="settings-hint" id="provider-description"></p>
+              <button type="button" class="btn-text" id="refresh-models-btn" disabled title="Refresh model list">↻</button>
             </div>
+            <p class="settings-hint" id="model-hint"></p>
+          </div>
 
-            <div class="settings-section">
-              <div class="label-row">
-                <label class="settings-label" for="api-key-input">API key</label>
-                <a class="settings-link" id="provider-docs-link" href="#" target="_blank" rel="noopener" hidden>Get key</a>
-              </div>
-              <div class="api-key-row">
-                <input type="password" id="api-key-input" class="settings-input" placeholder="Paste API key…" />
-                <button type="button" class="btn-icon btn-eye-toggle" id="toggle-key-visibility" aria-label="Show API key" title="Show API key">
-                  <svg class="eye-icon eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                  <svg class="eye-icon eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                    <line x1="1" y1="1" x2="23" y2="23" />
-                  </svg>
-                </button>
-                <button type="button" class="btn btn-test" id="test-key-btn">Verify</button>
-              </div>
-              <div class="key-status" id="key-status"></div>
-              <div class="cors-proxy-row" id="cors-proxy-row" style="display:none">
-                <label class="settings-label settings-label-small">CORS proxy URL</label>
-                <input type="text" id="cors-proxy-input" class="settings-input" placeholder="https://…" />
-              </div>
+          <div class="settings-section">
+            <div class="toggle-row">
+              <span class="toggle-label-text">Compare models</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="compare-mode-toggle" />
+                <span class="toggle-slider"></span>
+              </label>
             </div>
-
-            <div class="settings-section">
-              <label class="settings-label" for="model-select">Model</label>
-              <div class="model-select-row">
-                <select id="model-select" class="settings-select" disabled>
-                  <option value="">Add API key first…</option>
-                </select>
-                <button type="button" class="btn-text" id="refresh-models-btn" disabled>Refresh</button>
-              </div>
-              <p class="settings-hint" id="model-hint"></p>
-            </div>
-
-            <div class="settings-section">
-              <label class="settings-label">Compare models</label>
-              <div class="toggle-row">
-                <span class="toggle-label-text">Same prompt, multiple models</span>
-                <label class="toggle-switch">
-                  <input type="checkbox" id="compare-mode-toggle" />
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-              <div id="compare-models-row" class="compare-models-row" hidden>
-                <p class="settings-hint" id="compare-models-hint">Select up to 3 models to compare</p>
-                <div class="compare-model-checks" id="compare-model-checks"></div>
-              </div>
+            <div id="compare-models-row" class="compare-models-row" hidden>
+              <p class="settings-hint" id="compare-models-hint">Pick up to 3 models</p>
+              <div class="compare-model-checks" id="compare-model-checks"></div>
             </div>
           </div>
-        </details>
+        </section>
 
-        <details class="settings-group" open>
-          <summary class="settings-group-title">Behavior</summary>
-          <div class="settings-group-body">
-            <div class="settings-section">
-              <label class="settings-label">Parameter presets</label>
-              <div class="preset-buttons" id="preset-buttons"></div>
-            </div>
+        <section class="settings-block">
+          <h3 class="settings-block-title">Response</h3>
 
-            <div class="settings-section">
-              <label class="settings-label" for="system-prompt">System prompt</label>
-              <div class="preset-buttons" id="system-prompt-presets"></div>
-              <textarea id="system-prompt" class="settings-textarea" rows="3" placeholder="You are a helpful assistant…"></textarea>
-            </div>
-
-            <div class="settings-section">
-              <div class="slider-header">
-                <label class="settings-label">Temperature</label>
-                <input type="number" class="slider-input" id="temperature-input" min="0" max="2" step="0.1" />
-              </div>
-              <input type="range" id="temperature-slider" class="settings-slider" min="0" max="2" step="0.1" value="0.7" />
-            </div>
-
-            <div class="settings-section">
-              <label class="settings-label">Reasoning</label>
-              <div class="toggle-row">
-                <span class="toggle-label-text">Extended thinking</span>
-                <label class="toggle-switch">
-                  <input type="checkbox" id="reasoning-toggle" />
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-              <div class="reasoning-effort-row" id="reasoning-effort-row" style="display:none">
-                <div class="effort-buttons">
-                  <button type="button" class="effort-btn" data-effort="low">Low</button>
-                  <button type="button" class="effort-btn active" data-effort="medium">Medium</button>
-                  <button type="button" class="effort-btn" data-effort="high">High</button>
-                </div>
-              </div>
-            </div>
+          <div class="settings-section">
+            <label class="settings-label" for="profile-select">Style</label>
+            <select id="profile-select" class="settings-select">
+              <option value="balanced">Balanced</option>
+              <option value="creative">Creative</option>
+              <option value="precise">Precise</option>
+              <option value="coding">Coding</option>
+            </select>
           </div>
-        </details>
 
-        <details class="settings-group">
-          <summary class="settings-group-title">Advanced</summary>
-          <div class="settings-group-body">
-            <div class="settings-section">
-              <label class="settings-label" for="max-tokens-input">Max tokens</label>
-              <input type="number" id="max-tokens-input" class="settings-input" value="4096" min="1" max="200000" />
-            </div>
-            <div class="settings-section">
-              <div class="slider-header">
-                <label class="settings-label">Top P</label>
-                <input type="number" class="slider-input" id="top-p-input" min="0" max="1" step="0.05" />
-              </div>
-              <input type="range" id="top-p-slider" class="settings-slider" min="0" max="1" step="0.05" value="1" />
-            </div>
-            <div class="settings-section">
-              <div class="slider-header">
-                <label class="settings-label">Frequency penalty</label>
-                <input type="number" class="slider-input" id="freq-penalty-input" min="-2" max="2" step="0.1" />
-              </div>
-              <input type="range" id="freq-penalty-slider" class="settings-slider" min="-2" max="2" step="0.1" value="0" />
-            </div>
-            <div class="settings-section">
-              <div class="slider-header">
-                <label class="settings-label">Presence penalty</label>
-                <input type="number" class="slider-input" id="pres-penalty-input" min="-2" max="2" step="0.1" />
-              </div>
-              <input type="range" id="pres-penalty-slider" class="settings-slider" min="-2" max="2" step="0.1" value="0" />
-            </div>
+          <div class="settings-section">
+            <label class="settings-label" for="system-prompt">System prompt</label>
+            <textarea id="system-prompt" class="settings-textarea" rows="3" placeholder="Instructions for the model…"></textarea>
           </div>
-        </details>
+        </section>
 
-        <details class="settings-group">
-          <summary class="settings-group-title">Usage</summary>
-          <div class="settings-group-body">
-            <div class="usage-stats" id="usage-stats"></div>
+        <section class="settings-block settings-block--data">
+          <h3 class="settings-block-title">Data</h3>
+          <div class="settings-data-actions">
+            <button type="button" class="btn btn-ghost btn-block" id="export-all-btn">Export chats</button>
+            <button type="button" class="btn btn-ghost btn-block" id="import-chats-btn">Import chats</button>
+            <input type="file" id="import-chats-file" accept=".json" hidden />
+            <button type="button" class="btn btn-danger btn-block" id="clear-all-data-btn">Clear all data</button>
           </div>
-        </details>
-
-        <details class="settings-group">
-          <summary class="settings-group-title">Data</summary>
-          <div class="settings-group-body">
-            <div class="settings-section">
-              <button type="button" class="btn btn-ghost btn-block" id="export-all-btn">Export chats</button>
-              <button type="button" class="btn btn-ghost btn-block" id="import-chats-btn">Import chats</button>
-              <input type="file" id="import-chats-file" accept=".json" hidden />
-              <button type="button" class="btn btn-ghost btn-block" id="export-settings-btn">Export settings</button>
-              <button type="button" class="btn btn-danger btn-block" id="clear-all-data-btn">Clear all data</button>
-            </div>
-          </div>
-        </details>
+        </section>
       </div>
     </aside>
 

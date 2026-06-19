@@ -2065,54 +2065,57 @@ body.settings-collapsed .edge-toggle-right svg {
   font-size: inherit;
 }
 
-.settings-group {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  margin-bottom: 12px;
-  background: var(--bg-elevated);
-  box-shadow: var(--shadow-sm);
-}
-
-.settings-group-title {
-  padding: 14px 16px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  cursor: pointer;
-  list-style: none;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-.settings-group-body { padding: 4px 16px 16px; }
-
-.preset-buttons {
+.settings-status {
   display: flex;
-  gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 10px;
-}
-
-.preset-btn {
-  padding: 7px 14px;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
   border: 1px solid var(--border);
-  border-radius: var(--radius-full);
-  background: var(--bg-primary);
+  box-shadow: var(--float-shadow, var(--shadow-sm));
+  font-size: 0.78rem;
   color: var(--text-secondary);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition);
+  line-height: 1.4;
 }
 
-.preset-btn:hover,
-.preset-btn.active {
-  border-color: var(--accent);
-  color: var(--text-primary);
-  background: var(--accent-soft);
+.settings-status-item--ok { color: var(--success, #2d8a4e); }
+.settings-status-item--warn { color: var(--warning, #b8860b); }
+.settings-status-sep { opacity: 0.45; }
+
+.settings-block {
+  margin-bottom: 20px;
 }
 
-.settings-group-title::-webkit-details-marker { display: none; }
+.settings-block-title {
+  margin: 0 0 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, var(--text-secondary));
+}
+
+.settings-block--data .settings-data-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-block--data .btn-block {
+  margin-bottom: 0;
+}
+
+.compare-model-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 160px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
 
 .label-row {
   display: flex;
@@ -2129,12 +2132,6 @@ body.settings-collapsed .edge-toggle-right svg {
 }
 
 .compare-models-row { margin-top: 10px; }
-
-.compare-model-checks {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
 
 .compare-check {
   display: flex;

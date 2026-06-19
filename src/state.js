@@ -21,6 +21,7 @@ const defaultSettings = {
   compareModels: [],
   activePreset: '',
   activeSystemPromptPreset: '',
+  responseProfile: 'balanced',
 };
 
 function createId() {
