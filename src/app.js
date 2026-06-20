@@ -64,11 +64,10 @@ window.addEventListener('DOMContentLoaded', () => {
   onRoute(updateNavPills);
   registerPWA();
 
-  document.getElementById('topnav-usage-btn')?.addEventListener('click', () => {
+  document.getElementById('topnav-usage-nav-btn')?.addEventListener('click', () => {
     import('./ui/help-base.js').then(m => m.openUsageWindow());
   });
-  document.getElementById('topnav-rag-btn')?.addEventListener('click', () => navigate('/rag'));
-  document.getElementById('topnav-chat-btn')?.addEventListener('click', () => navigate('/'));
+  document.getElementById('topnav-status-btn')?.addEventListener('click', () => navigate('/rag'));
 });
 
 export { navigate };
