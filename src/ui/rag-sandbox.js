@@ -1,5 +1,5 @@
 import { ragState } from '../rag/rag-state.js';
-import { RAG_PROVIDERS, EMBEDDING_PROVIDERS, CHAT_PROVIDERS, ALL_PROVIDER_IDS } from '../rag/rag-providers.js';
+import { RAG_PROVIDERS, EMBEDDING_PROVIDERS, CHAT_PROVIDERS } from '../rag/rag-providers.js';
 import { chunkText } from '../rag/chunker.js';
 import { createEmbeddings, validateApiKey, listChatModels, estimateEmbeddingCost } from '../rag/embeddings.js';
 import { searchChunks, buildContext, formatRagPrompt } from '../rag/retriever.js';
@@ -83,7 +83,7 @@ export class RagSandboxUI {
     ragState.on('message-updated', () => this.renderMessages());
     ragState.on('messages-cleared', () => this.renderMessages());
     ragState.on('usage-changed', () => this.renderUsage());
-    ragState.on('apikey-changed', () => this.renderApiKeys());
+    ragState.on('apikey-changed', () => this.syncKeyFields());
   }
 
   bindMobilePanels() {
@@ -123,7 +123,7 @@ export class RagSandboxUI {
       const provider = document.getElementById('rag-embedding-provider').value;
       ragState.updateSettings({ embeddingProvider: provider });
       this.populateEmbeddingModels(provider);
-      this.renderApiKeys();
+      this.syncEmbedKeyField();
     });
     bind('rag-embedding-model', () => {
       ragState.updateSettings({ embeddingModel: document.getElementById('rag-embedding-model').value });
@@ -132,7 +132,7 @@ export class RagSandboxUI {
       const provider = document.getElementById('rag-chat-provider').value;
       ragState.updateSettings({ chatProvider: provider });
       this.populateChatModels(provider);
-      this.renderApiKeys();
+      this.syncChatKeyField();
     });
     bind('rag-chat-model', () => {
       ragState.updateSettings({ chatModel: document.getElementById('rag-chat-model').value });
@@ -176,17 +176,20 @@ export class RagSandboxUI {
     document.getElementById('rag-test-chat-key-btn')?.addEventListener('click', () => this.testApiKey('chat'));
     document.getElementById('rag-refresh-chat-models-btn')?.addEventListener('click', () => this.fetchChatModels());
 
-    ALL_PROVIDER_IDS.forEach(id => {
-      const input = document.getElementById(`rag-key-${id}`);
-      if (input) {
-        input.addEventListener('input', () => ragState.setApiKey(id, input.value.trim()));
-      }
-      const toggle = document.getElementById(`rag-key-toggle-${id}`);
-      if (toggle) {
-        toggle.addEventListener('click', () => {
-          input.type = input.type === 'password' ? 'text' : 'password';
-        });
-      }
+    const embedKeyInput = document.getElementById('rag-embedding-key-input');
+    embedKeyInput?.addEventListener('input', () => {
+      ragState.setApiKey(ragState.settings.embeddingProvider, embedKeyInput.value.trim());
+    });
+    document.getElementById('rag-embedding-key-toggle')?.addEventListener('click', () => {
+      embedKeyInput.type = embedKeyInput.type === 'password' ? 'text' : 'password';
+    });
+
+    const chatKeyInput = document.getElementById('rag-chat-key-input');
+    chatKeyInput?.addEventListener('input', () => {
+      ragState.setApiKey(ragState.settings.chatProvider, chatKeyInput.value.trim());
+    });
+    document.getElementById('rag-chat-key-toggle')?.addEventListener('click', () => {
+      chatKeyInput.type = chatKeyInput.type === 'password' ? 'text' : 'password';
     });
   }
 
@@ -266,7 +269,67 @@ export class RagSandboxUI {
     const tempVal = document.getElementById('rag-temp-value');
     if (tempVal) tempVal.textContent = s.temperature.toFixed(1);
 
-    this.renderApiKeys();
+    this.syncKeyFields();
+  }
+
+  getKeyPlaceholder(provider) {
+    const placeholders = {
+      openai: 'sk-…',
+      anthropic: 'sk-ant-…',
+      gemini: 'AI…',
+      openrouter: 'sk-or-…',
+      groq: 'gsk_…',
+      deepseek: 'sk-…',
+      mistral: '…',
+      cohere: '…',
+      voyage: 'pa-…',
+    };
+    return placeholders[provider] || 'Paste API key…';
+  }
+
+  syncEmbedKeyField() {
+    const provider = ragState.settings.embeddingProvider;
+    const config = RAG_PROVIDERS[provider];
+    const input = document.getElementById('rag-embedding-key-input');
+    const docsLink = document.getElementById('rag-embed-docs-link');
+
+    if (input && !input.matches(':focus')) {
+      input.value = ragState.getApiKey(provider);
+      input.placeholder = this.getKeyPlaceholder(provider);
+    }
+    if (docsLink) {
+      if (config?.docsUrl) {
+        docsLink.href = config.docsUrl;
+        docsLink.hidden = false;
+      } else {
+        docsLink.hidden = true;
+      }
+    }
+  }
+
+  syncChatKeyField() {
+    const provider = ragState.settings.chatProvider;
+    const config = RAG_PROVIDERS[provider];
+    const input = document.getElementById('rag-chat-key-input');
+    const docsLink = document.getElementById('rag-chat-docs-link');
+
+    if (input && !input.matches(':focus')) {
+      input.value = ragState.getApiKey(provider);
+      input.placeholder = this.getKeyPlaceholder(provider);
+    }
+    if (docsLink) {
+      if (config?.docsUrl) {
+        docsLink.href = config.docsUrl;
+        docsLink.hidden = false;
+      } else {
+        docsLink.hidden = true;
+      }
+    }
+  }
+
+  syncKeyFields() {
+    this.syncEmbedKeyField();
+    this.syncChatKeyField();
   }
 
   populateProviderSelects() {
@@ -324,24 +387,10 @@ export class RagSandboxUI {
         showToast(`Loaded ${models.length} models`);
       }
     } catch (e) {
-      showToast(e.message, true);
+      showToast(e.message, { isError: true });
     } finally {
       if (btn) btn.disabled = false;
     }
-  }
-
-  renderApiKeys() {
-    ALL_PROVIDER_IDS.forEach(id => {
-      const input = document.getElementById(`rag-key-${id}`);
-      if (input && !input.matches(':focus')) {
-        input.value = ragState.getApiKey(id);
-      }
-      const status = document.getElementById(`rag-key-status-${id}`);
-      if (status) {
-        status.textContent = ragState.hasApiKey(id) ? '●' : '';
-        status.classList.toggle('has-key', ragState.hasApiKey(id));
-      }
-    });
   }
 
   renderMessages() {
