@@ -42,10 +42,6 @@ async function mountRag() {
     const helpUI = new RagHelpUI();
     document.getElementById('rag-topnav-help-btn')?.addEventListener('click', () => helpUI.togglePanel());
     document.getElementById('rag-mobile-help-btn')?.addEventListener('click', () => helpUI.togglePanel());
-    document.getElementById('rag-topnav-chat-btn')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      navigate('/');
-    });
     document.getElementById('rag-back-pill')?.addEventListener('click', (e) => {
       e.preventDefault();
       navigate('/');
