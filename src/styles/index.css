@@ -2531,9 +2531,10 @@ kbd {
 
 .rag-input-container {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: flex-end;
   gap: 10px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
@@ -2547,10 +2548,12 @@ kbd {
 }
 
 .rag-input-container textarea {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
+  width: auto;
   border: none;
   background: transparent;
-  padding: 0;
+  padding: 6px 0;
   font-family: var(--font-sans);
   font-size: 0.9375rem;
   line-height: 1.5;
@@ -2565,16 +2568,56 @@ kbd {
   color: var(--text-tertiary);
 }
 
-.rag-input-actions {
+.rag-send-btn {
+  flex-shrink: 0;
   display: flex;
-  justify-content: flex-end;
-  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: var(--text-on-accent);
+  cursor: pointer;
+  transition: background var(--transition), opacity var(--transition);
 }
 
-.rag-input-actions .btn-send {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.rag-send-btn .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.rag-send-btn:not(:disabled):hover {
+  background: var(--accent-hover);
+}
+
+.rag-send-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: var(--surface);
+  color: var(--text-tertiary);
+  border-color: var(--border);
+}
+
+.rag-stop-btn {
+  flex-shrink: 0;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--error-border, var(--error));
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--error);
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.rag-stop-btn:hover {
+  background: var(--error-soft);
 }
 
 .rag-mobile-tabs {

@@ -3201,6 +3201,19 @@
   background: var(--surface-hover);
 }
 
+.rag-send-btn {
+  box-shadow: none;
+}
+
+.rag-send-btn:not(:disabled):hover {
+  transform: none;
+}
+
+.rag-input-container {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
 /* RAG layout polish */
 .rag-center {
   background: var(--bg-primary);
