@@ -348,6 +348,9 @@
 
 .status-pill-arrow {
   flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-left: 2px;
   color: var(--text-tertiary);
   transition:
     color var(--transition),
@@ -360,10 +363,6 @@
 
 .status-pill:hover .status-pill-arrow--out {
   transform: translate(2px, -2px);
-}
-
-.status-pill:hover .status-pill-arrow--back {
-  transform: translate(-2px, -2px);
 }
 
 .status-pill-text {
