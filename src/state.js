@@ -2,6 +2,9 @@
 // State Manager — Reactive state with localStorage persistence
 // ========================================
 
+import { credentials } from './shared/credentials.js';
+import { createId } from './shared/id.js';
+
 const STORAGE_KEY = 'ai-playground-state';
 
 const defaultSettings = {
@@ -27,10 +30,6 @@ const defaultSettings = {
   assistantName: 'Maya',
 };
 
-function createId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-}
-
 function createChat(title = 'New Chat') {
   return {
     id: createId(),
@@ -46,6 +45,7 @@ function createChat(title = 'New Chat') {
     archived: false,
     folderId: '',
     titleManuallySet: false,
+    settings: null,
   };
 }
 
@@ -79,7 +79,11 @@ class StateManager {
         return {
           activeChat: parsed.activeChat || '',
           chats,
-          settings: { ...defaultSettings, ...parsed.settings },
+          settings: {
+            ...defaultSettings,
+            ...parsed.settings,
+            corsProxyUrl: credentials.getCorsProxyUrl() || parsed.settings?.corsProxyUrl || '',
+          },
           apiKeys: parsed.apiKeys || {},
           usage: parsed.usage || { daily: {}, total: { requests: 0, tokens: 0, cost: 0 } },
           folders: parsed.folders || [],
@@ -281,27 +285,51 @@ class StateManager {
     return chat.messages.reduce((sum, m) => sum + (m.cost || 0), 0);
   }
 
+  updateChatSettings(chatId, partial) {
+    const chat = this._state.chats[chatId];
+    if (!chat) return;
+    chat.settings = { ...(chat.settings || {}), ...partial };
+    if (Object.keys(chat.settings).length === 0) chat.settings = null;
+    chat.updatedAt = Date.now();
+    this._saveState();
+    this._emit('chat-updated', chatId);
+  }
+
+  clearChatSettings(chatId) {
+    const chat = this._state.chats[chatId];
+    if (!chat) return;
+    chat.settings = null;
+    this._saveState();
+    this._emit('chat-updated', chatId);
+  }
+
+  getChatSettings(chatId) {
+    return this._state.chats[chatId]?.settings || null;
+  }
+
   updateSettings(partial) {
     this._state.settings = { ...this._state.settings, ...partial };
+    if (partial.corsProxyUrl !== undefined) {
+      credentials.setCorsProxyUrl(partial.corsProxyUrl);
+    }
+    if (partial.provider || partial.model) {
+      credentials.updateSharedDefaults({
+        chatProvider: this._state.settings.provider,
+        chatModel: this._state.settings.model,
+      });
+    }
     this._saveState();
     this._emit('settings-changed', this._state.settings);
   }
 
   setApiKey(provider, key) {
-    this._state.apiKeys[provider] = key ? btoa('aipg_' + key) : '';
+    credentials.setApiKey(provider, key);
     this._saveState();
     this._emit('apikey-changed', { provider, hasKey: !!key });
   }
 
   getApiKey(provider) {
-    const encoded = this._state.apiKeys[provider];
-    if (!encoded) return '';
-    try {
-      const decoded = atob(encoded);
-      return decoded.startsWith('aipg_') ? decoded.slice(5) : decoded;
-    } catch {
-      return '';
-    }
+    return credentials.getApiKey(provider);
   }
 
   setActiveChat(chatId) {

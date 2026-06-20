@@ -84,7 +84,9 @@ export class PromptLibraryUI {
       confirmText: 'Save',
     });
     if (!prompt?.trim()) return;
-    state.addPrompt({ label: label.trim(), prompt: prompt.trim() });
+    const tagsRaw = await showPrompt({ title: 'Tags (optional)', placeholder: 'coding, review', confirmText: 'Save', cancelText: 'Skip' });
+    const tags = tagsRaw?.trim() ? tagsRaw.split(/[,;]/).map(t => t.trim()).filter(Boolean) : [];
+    state.addPrompt({ label: label.trim(), prompt: prompt.trim(), tags });
     showToast('Prompt saved');
     this.open();
     this.render();
@@ -195,12 +197,19 @@ export class PromptLibraryUI {
 
   bindCardEvents() {
     this.listEl.querySelectorAll('.prompt-library-use').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const entry = state.promptLibrary.find(p => p.id === btn.dataset.id);
-        if (entry && this.onUsePrompt) {
-          this.onUsePrompt(entry.prompt);
-          this.close();
+        if (!entry || !this.onUsePrompt) return;
+        let prompt = entry.prompt;
+        const vars = [...prompt.matchAll(/\{\{(\w+)\}\}/g)].map(m => m[1]);
+        const unique = [...new Set(vars)];
+        for (const v of unique) {
+          const val = await showPrompt({ title: `Value for {{${v}}}`, placeholder: v });
+          if (val == null) return;
+          prompt = prompt.replace(new RegExp(`\\{\\{${v}\\}\\}`, 'g'), val);
         }
+        this.onUsePrompt(prompt);
+        this.close();
       });
     });
 

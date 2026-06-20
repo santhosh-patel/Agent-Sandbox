@@ -82,6 +82,30 @@ export class ChatUI {
 
     this.render();
     this.updateAssistantBranding();
+    this.bindSetupCard();
+  }
+
+  bindSetupCard() {
+    if (!this.setupCard) return;
+    const dismissed = localStorage.getItem('onboarding-dismissed') === '1';
+    this.setupCard.hidden = dismissed && state.isConfigured();
+
+    document.getElementById('setup-open-settings-btn')?.addEventListener('click', () => {
+      if (this.onOpenSettings) this.onOpenSettings();
+    });
+    document.getElementById('setup-openrouter-btn')?.addEventListener('click', () => {
+      state.updateSettings({ provider: 'openrouter' });
+      const select = document.getElementById('provider-select');
+      if (select) {
+        select.value = 'openrouter';
+        select.dispatchEvent(new Event('change'));
+      }
+      if (this.onOpenSettings) this.onOpenSettings();
+    });
+    document.getElementById('setup-dismiss-btn')?.addEventListener('click', () => {
+      localStorage.setItem('onboarding-dismissed', '1');
+      this.setupCard.hidden = true;
+    });
   }
 
   updateAssistantBranding() {
@@ -124,14 +148,22 @@ export class ChatUI {
 
   renderQuickActions() {
     if (!this.quickActionsEl) return;
-    this.quickActionsEl.innerHTML = QUICK_ACTIONS.map(a => `
-      <button class="quick-action" data-prompt="${this.escapeAttr(a.prompt)}" type="button">
+    const compareAction = { prompt: '', label: 'Compare models', action: 'compare' };
+    const actions = [...QUICK_ACTIONS, compareAction];
+    this.quickActionsEl.innerHTML = actions.map(a => `
+      <button class="quick-action" data-prompt="${this.escapeAttr(a.prompt)}" data-action="${a.action || ''}" type="button">
         <span>${a.label}</span>
       </button>
     `).join('');
 
     this.quickActionsEl.querySelectorAll('.quick-action').forEach(btn => {
       btn.addEventListener('click', () => {
+        if (btn.dataset.action === 'compare') {
+          state.updateSettings({ compareMode: true });
+          if (this.onOpenSettings) this.onOpenSettings();
+          showToast('Compare mode enabled — pick models in settings');
+          return;
+        }
         if (!state.isConfigured()) {
           if (this.onOpenSettings) this.onOpenSettings();
           return;
@@ -373,18 +405,22 @@ export class ChatUI {
 
   updateSetupCard() {
     if (!this.setupCard) return;
-    const issues = state.getSetupIssues();
-    const stepsEl = this.setupCard.querySelector('.setup-steps');
+    const dismissed = localStorage.getItem('onboarding-dismissed') === '1';
+    const configured = state.isConfigured();
+    this.setupCard.hidden = dismissed && configured;
+
+    const stepsEl = this.setupCard.querySelector('#setup-steps') || this.setupCard.querySelector('.setup-steps');
     if (!stepsEl) return;
     const steps = [
-      { label: 'Choose a provider', done: !!state.settings.provider },
-      { label: 'Add your API key', done: state.settings.provider === 'openrouter' || !!state.getApiKey(state.settings.provider) },
-      { label: 'Pick a model', done: !!state.settings.model },
+      { id: 'provider', label: 'Choose a provider', done: !!state.settings.provider },
+      { id: 'key', label: 'Add your API key', done: state.settings.provider === 'openrouter' || !!state.getApiKey(state.settings.provider) },
+      { id: 'model', label: 'Pick a model and send a message', done: !!state.settings.model },
     ];
     stepsEl.innerHTML = steps.map(s =>
-      `<li class="${s.done ? 'setup-step--done' : 'setup-step--pending'}">${s.label}${s.done ? ' ✓' : ''}</li>`,
+      `<li data-step="${s.id}" class="${s.done ? 'setup-step--done' : 'setup-step--pending'}">${s.label}${s.done ? ' ✓' : ''}</li>`,
     ).join('');
     const hint = this.setupCard.querySelector('.setup-hint');
+    const issues = state.getSetupIssues();
     if (hint) {
       hint.textContent = issues.length
         ? `Next: ${issues[0]}`
@@ -415,7 +451,32 @@ export class ChatUI {
       this.showRegenerateMenu(e.currentTarget, index);
     });
 
+    el.querySelector('.inspect-msg-btn')?.addEventListener('click', () => {
+      this.showMessageInspector(msg, index);
+    });
+
     this.bindErrorActions(el, index);
+  }
+
+  showMessageInspector(msg, index) {
+    const chat = state.getActiveChat();
+    const settings = state.settings;
+    const lines = [
+      `Model: ${msg.model || settings.model || '—'}`,
+      `Profile: ${settings.responseProfile || 'balanced'}`,
+      msg.latency != null ? `Latency: ${msg.latency}s` : null,
+      msg.cost != null ? `Cost (est.): $${msg.cost.toFixed(5)}` : null,
+      msg.tokens ? `Tokens: ${msg.tokens.prompt_tokens || 0} prompt / ${msg.tokens.completion_tokens || 0} completion` : null,
+      `History messages before this: ${index}`,
+    ].filter(Boolean);
+    showPrompt({
+      title: 'Message inspector',
+      message: lines.join('\n'),
+      defaultValue: lines.join('\n'),
+      multiline: true,
+      confirmText: 'Close',
+      cancelText: 'Close',
+    });
   }
 
   prepareRegenerate(index) {
@@ -647,6 +708,7 @@ export class ChatUI {
           : `<span class="regen-actions">
               <button type="button" class="msg-action-btn regen-msg-btn">Regenerate</button>
               <button type="button" class="msg-action-btn regen-as-msg-btn" aria-label="Regenerate as" title="Regenerate as…">▾</button>
+              <button type="button" class="msg-action-btn inspect-msg-btn">Inspect</button>
             </span>`}
       </div>
     `;

@@ -10,6 +10,11 @@ import { showToast } from './toast.js';
 import { showConfirm, showPrompt } from './modal.js';
 import { iconHtml } from './icons.js';
 import { isMobile, isTablet, onViewportChange } from './breakpoints.js';
+import { RagEvalUI } from './rag-eval.js';
+import { estimateStorageBytes, formatBytes } from '../rag/rag-db.js';
+import { credentials } from '../shared/credentials.js';
+import { openUsageWindow } from './help-base.js';
+import { bindThemeToggle } from '../shared/theme.js';
 
 export class RagSandboxUI {
   constructor() {
@@ -27,13 +32,70 @@ export class RagSandboxUI {
 
   init() {
     if (!this.root || !this.sidebar) return;
+    ragState.applySharedDefaults();
+    ragState.initFromDb().then(() => {
+      this.renderCollections();
+      this.renderDocuments();
+      this.renderStorageMeter();
+    });
     this.bindEvents();
     this.bindLayout();
+    this.bindSetupCard();
+    bindThemeToggle('rag-theme-btn', 'rag-theme-icon');
     this.renderCollections();
     this.renderDocuments();
     this.renderSettings();
     this.renderMessages();
     this.renderUsage();
+    this.evalUI = new RagEvalUI();
+    this.renderStorageMeter();
+  }
+
+  bindSetupCard() {
+    const card = document.getElementById('rag-setup-card');
+    if (!card) return;
+    const update = () => {
+      const dismissed = localStorage.getItem('rag-onboarding-dismissed') === '1';
+      card.hidden = dismissed && ragState.getSetupIssues().length === 0;
+      const stepsEl = document.getElementById('rag-setup-steps');
+      if (stepsEl) {
+        const issues = ragState.getSetupIssues();
+        const allSteps = [
+          'Select embedding provider & model',
+          'Add embedding API key',
+          'Select chat provider & model',
+          'Add chat API key',
+        ];
+        stepsEl.innerHTML = allSteps.map((label, i) => {
+          const done = issues.length <= allSteps.length - 1 - i || (i === 0 && !issues.includes('Select an embedding provider'));
+          return `<li class="${issues.includes(label.split('&')[0].trim()) || (i < allSteps.length - issues.length) ? 'setup-step--pending' : 'setup-step--done'}">${label}</li>`;
+        }).join('');
+      }
+    };
+    update();
+    ragState.on('settings-changed', update);
+    ragState.on('apikey-changed', update);
+    document.getElementById('rag-setup-settings-btn')?.addEventListener('click', () => this.expandSettingsPanel());
+    document.getElementById('rag-import-keys-btn')?.addEventListener('click', () => {
+      ragState.applySharedDefaults();
+      const providers = credentials.getConfiguredProviders();
+      showToast(providers.length ? `Found keys for: ${providers.join(', ')}` : 'No saved keys found');
+      update();
+    });
+    document.getElementById('rag-setup-dismiss-btn')?.addEventListener('click', () => {
+      localStorage.setItem('rag-onboarding-dismissed', '1');
+      card.hidden = true;
+    });
+  }
+
+  async renderStorageMeter() {
+    const el = document.getElementById('rag-storage-meter');
+    if (!el) return;
+    const collection = ragState.getActiveCollection();
+    const docCount = collection?.documents?.length || 0;
+    const chunkCount = collection ? ragState.getAllChunks(collection.id).length : 0;
+    const bytes = await estimateStorageBytes();
+    el.textContent = `${docCount} docs · ${chunkCount} chunks · ${formatBytes(bytes)}`;
   }
 
   bindEvents() {
@@ -85,7 +147,10 @@ export class RagSandboxUI {
       this.renderDocuments();
       this.renderMessages();
     });
-    ragState.on('documents-changed', () => this.renderDocuments());
+    ragState.on('documents-changed', () => {
+      this.renderDocuments();
+      this.renderStorageMeter();
+    });
     ragState.on('settings-changed', () => this.renderSettings());
     ragState.on('message-added', () => this.renderMessages());
     ragState.on('message-updated', () => this.renderMessages());
@@ -581,11 +646,12 @@ export class RagSandboxUI {
       ? (usage.latency.reduce((a, b) => a + b, 0) / usage.latency.length).toFixed(2)
       : '—';
     el.innerHTML = `
-      <span>${usage.requests} requests</span>
+      <span role="button" tabindex="0" class="rag-usage-clickable" title="Open usage dashboard">${usage.requests} requests</span>
       <span>${usage.tokens.toLocaleString()} tokens</span>
       <span>$${usage.cost.toFixed(4)}</span>
       <span>${avgLatency}s avg</span>
     `;
+    el.querySelector('.rag-usage-clickable')?.addEventListener('click', () => openUsageWindow());
   }
 
   async handleNewCollection() {

@@ -2685,3 +2685,56 @@ a.rag-back-pill {
   }
 }
 
+#playground-view[hidden],
+#rag-view[hidden] {
+  display: none !important;
+}
+
+.sidebar-section-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sidebar-folder-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 12px 8px;
+}
+
+.folder-tab {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.setup-step--done { color: var(--accent); }
+.setup-step--pending { opacity: 0.85; }
+.setup-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+.usage-page-body { background: var(--bg-primary); min-height: 100vh; }
+.usage-page { max-width: 720px; margin: 0 auto; padding: 24px; }
+.usage-page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.usage-page-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.usage-empty { color: var(--text-secondary); font-size: 0.85rem; }
+
+.rag-storage-meter {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  padding: 8px 16px;
+}
+
+.rag-eval-table { width: 100%; font-size: 0.75rem; border-collapse: collapse; margin-top: 8px; }
+.rag-eval-table th,
+.rag-eval-table td { padding: 4px 6px; border-bottom: 1px solid var(--border); text-align: left; }
+.rag-eval-pass { background: rgba(106, 171, 104, 0.08); }
+.rag-eval-fail { background: rgba(217, 112, 112, 0.08); }
+
+.rag-usage-clickable { cursor: pointer; text-decoration: underline; }
+.search-scope-btn { margin-top: 4px; }
+.settings-usage-link { margin-bottom: 12px; }
+.settings-advanced summary { cursor: pointer; list-style: none; }
+.settings-advanced summary::-webkit-details-marker { display: none; }

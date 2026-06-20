@@ -6,6 +6,7 @@ import { showConfirm } from './modal.js';
 import { showToast } from './toast.js';
 import { isMobile, isTablet, onViewportChange, closeMobileSidebar } from './breakpoints.js';
 import { iconHtml } from './icons.js';
+import { openUsageWindow } from './help-base.js';
 
 const MAX_COMPARE_MODELS = 3;
 
@@ -116,6 +117,33 @@ export class SettingsUI {
     });
 
     this.bindDataButtons();
+
+    document.getElementById('settings-usage-btn')?.addEventListener('click', () => openUsageWindow());
+    document.getElementById('temperature-input')?.addEventListener('change', (e) => {
+      state.updateSettings({ temperature: parseFloat(e.target.value) });
+    });
+    document.getElementById('max-tokens-input')?.addEventListener('change', (e) => {
+      state.updateSettings({ maxTokens: parseInt(e.target.value, 10) });
+    });
+    document.getElementById('reasoning-mode-toggle')?.addEventListener('change', (e) => {
+      state.updateSettings({ reasoningMode: e.target.checked });
+    });
+    document.getElementById('per-chat-settings-toggle')?.addEventListener('change', (e) => {
+      const chat = state.getActiveChat();
+      if (!chat) return;
+      if (e.target.checked) {
+        state.updateChatSettings(chat.id, {
+          provider: state.settings.provider,
+          model: state.settings.model,
+          systemPrompt: state.settings.systemPrompt,
+          temperature: state.settings.temperature,
+        });
+      } else {
+        state.clearChatSettings(chat.id);
+      }
+    });
+
+    state.on('chat-switched', () => this.syncPerChatToggle());
 
     state.on('settings-changed', () => this.updateSettingsStatus());
     state.on('usage-updated', () => this.updateSettingsStatus());
@@ -243,7 +271,11 @@ export class SettingsUI {
     }
     this.compareModeToggle.checked = !!settings.compareMode;
     this.compareModelsRow.hidden = !settings.compareMode;
+    document.getElementById('temperature-input') && (document.getElementById('temperature-input').value = settings.temperature ?? 0.7);
+    document.getElementById('max-tokens-input') && (document.getElementById('max-tokens-input').value = settings.maxTokens ?? 4096);
+    document.getElementById('reasoning-mode-toggle') && (document.getElementById('reasoning-mode-toggle').checked = !!settings.reasoningMode);
 
+    this.syncPerChatToggle();
     this.updateProviderUI();
     this.fetchModels(false);
     this.updateSettingsStatus();
@@ -276,8 +308,15 @@ export class SettingsUI {
       <span class="settings-status-sep" aria-hidden="true">·</span>
       <span class="settings-status-item settings-status-item--${hasKey ? 'ok' : 'warn'}">${keyLabel}</span>
       <span class="settings-status-sep" aria-hidden="true">·</span>
-      <span class="settings-status-item">${costLabel}</span>
+      <span class="settings-status-item">${costLabel} (est.)</span>
     `;
+  }
+
+  syncPerChatToggle() {
+    const toggle = document.getElementById('per-chat-settings-toggle');
+    if (!toggle) return;
+    const chat = state.getActiveChat();
+    toggle.checked = !!(chat?.settings);
   }
 
   updateFavoriteButton() {

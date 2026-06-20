@@ -3,12 +3,11 @@
 // ========================================
 
 import { DEFAULT_RAG_SETTINGS, ALL_PROVIDER_IDS } from './rag-providers.js';
+import { credentials } from '../shared/credentials.js';
+import { createId } from '../shared/id.js';
+import { saveCollectionToDb, loadAllCollectionsFromDb, migrateCollectionsToDb, deleteCollectionFromDb } from './rag-db.js';
 
 const STORAGE_KEY = 'rag-sandbox-state';
-
-function createId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-}
 
 function createCollection(name = 'New Collection') {
   return {
@@ -51,10 +50,16 @@ class RagStateManager {
         return {
           collections: parsed.collections || [],
           activeCollectionId: parsed.activeCollectionId || '',
-          settings: { ...DEFAULT_RAG_SETTINGS, ...parsed.settings },
+          settings: {
+            ...DEFAULT_RAG_SETTINGS,
+            ...parsed.settings,
+            corsProxyUrl: credentials.getCorsProxyUrl() || parsed.settings?.corsProxyUrl || '',
+          },
           apiKeys: parsed.apiKeys || {},
           messages: parsed.messages || [],
           usage: parsed.usage || { tokens: 0, cost: 0, requests: 0, latency: [] },
+          evalSets: parsed.evalSets || {},
+          evalRuns: parsed.evalRuns || [],
         };
       }
     } catch (e) {
@@ -68,12 +73,47 @@ class RagStateManager {
       apiKeys: {},
       messages: [],
       usage: { tokens: 0, cost: 0, requests: 0, latency: [] },
+      evalSets: {},
+      evalRuns: [],
     };
+  }
+
+  async initFromDb() {
+    try {
+      const dbCollections = await loadAllCollectionsFromDb();
+      if (dbCollections.length) {
+        for (const dbCol of dbCollections) {
+          const idx = this._state.collections.findIndex(c => c.id === dbCol.id);
+          if (idx >= 0) {
+            this._state.collections[idx] = dbCol;
+          } else {
+            this._state.collections.push(dbCol);
+          }
+        }
+      } else if (this._state.collections.some(c => c.documents?.length)) {
+        await migrateCollectionsToDb(this._state.collections);
+      }
+      this._saveState();
+      this._emit('collections-changed');
+    } catch (e) {
+      console.warn('IDB init failed:', e);
+    }
+  }
+
+  async _persistCollectionsToDb() {
+    try {
+      for (const col of this._state.collections) {
+        await saveCollectionToDb(col);
+      }
+    } catch (e) {
+      console.warn('IDB save failed:', e);
+    }
   }
 
   _saveState() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this._state));
+      this._persistCollectionsToDb();
     } catch (e) {
       console.warn('Failed to save RAG state:', e);
     }
@@ -124,6 +164,7 @@ class RagStateManager {
     const idx = this._state.collections.findIndex(c => c.id === id);
     if (idx === -1) return;
     this._state.collections.splice(idx, 1);
+    deleteCollectionFromDb(id).catch(() => {});
     if (this._state.activeCollectionId === id) {
       this._state.activeCollectionId = this._state.collections[0]?.id || '';
     }
@@ -207,29 +248,37 @@ class RagStateManager {
 
   updateSettings(updates) {
     this._state.settings = { ...this._state.settings, ...updates };
+    if (updates.corsProxyUrl !== undefined) {
+      credentials.setCorsProxyUrl(updates.corsProxyUrl);
+    }
+    if (updates.chatProvider || updates.chatModel) {
+      credentials.updateSharedDefaults({
+        chatProvider: this._state.settings.chatProvider,
+        chatModel: this._state.settings.chatModel,
+      });
+    }
+    if (updates.embeddingProvider || updates.embeddingModel) {
+      credentials.updateSharedDefaults({
+        embeddingProvider: this._state.settings.embeddingProvider,
+        embeddingModel: this._state.settings.embeddingModel,
+      });
+    }
     this._saveState();
     this._emit('settings-changed', this._state.settings);
   }
 
   setApiKey(provider, key) {
-    this._state.apiKeys[provider] = key ? btoa('rag_' + key) : '';
+    credentials.setApiKey(provider, key);
     this._saveState();
     this._emit('apikey-changed', { provider, hasKey: !!key });
   }
 
   getApiKey(provider) {
-    const encoded = this._state.apiKeys[provider];
-    if (!encoded) return '';
-    try {
-      const decoded = atob(encoded);
-      return decoded.startsWith('rag_') ? decoded.slice(4) : decoded;
-    } catch {
-      return '';
-    }
+    return credentials.getApiKey(provider);
   }
 
   hasApiKey(provider) {
-    return !!this.getApiKey(provider);
+    return credentials.hasApiKey(provider);
   }
 
   addMessage(message) {
@@ -321,6 +370,53 @@ class RagStateManager {
     if (!s.chatModel) issues.push('Select a chat model');
     if (!this.hasApiKey(s.chatProvider)) issues.push('Add chat API key');
     return issues;
+  }
+
+  getEvalSet(collectionId) {
+    return this._state.evalSets[collectionId] || { id: createId(), name: 'Default eval set', questions: [] };
+  }
+
+  saveEvalSet(collectionId, evalSet) {
+    this._state.evalSets[collectionId] = evalSet;
+    this._saveState();
+    this._emit('eval-changed', { collectionId });
+  }
+
+  addEvalQuestion(collectionId, query, expectedKeywords = '', notes = '') {
+    const set = this.getEvalSet(collectionId);
+    set.questions.push({ id: createId(), query, expectedKeywords, notes });
+    this.saveEvalSet(collectionId, set);
+  }
+
+  removeEvalQuestion(collectionId, questionId) {
+    const set = this.getEvalSet(collectionId);
+    set.questions = set.questions.filter(q => q.id !== questionId);
+    this.saveEvalSet(collectionId, set);
+  }
+
+  addEvalRun(run) {
+    this._state.evalRuns.unshift({ ...run, id: createId(), createdAt: Date.now() });
+    if (this._state.evalRuns.length > 20) this._state.evalRuns.length = 20;
+    this._saveState();
+    this._emit('eval-run-added', run);
+  }
+
+  getEvalRuns(collectionId) {
+    return this._state.evalRuns.filter(r => r.collectionId === collectionId);
+  }
+
+  applySharedDefaults() {
+    const defaults = credentials.getSharedDefaults();
+    const updates = {};
+    if (defaults.chatProvider && !this._state.settings.chatProvider) {
+      updates.chatProvider = defaults.chatProvider;
+      updates.chatModel = defaults.chatModel || this._state.settings.chatModel;
+    }
+    if (defaults.embeddingProvider && !this._state.settings.embeddingProvider) {
+      updates.embeddingProvider = defaults.embeddingProvider;
+      updates.embeddingModel = defaults.embeddingModel || this._state.settings.embeddingModel;
+    }
+    if (Object.keys(updates).length) this.updateSettings(updates);
   }
 }
 

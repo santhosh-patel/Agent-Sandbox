@@ -5,6 +5,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: 'index.html',
+        usage: 'usage.html',
         rag: 'rag.html',
       },
     },

@@ -4,6 +4,7 @@ import { isMobile, onViewportChange, closeSettingsPanel } from './breakpoints.js
 import { downloadMarkdown, copyShareLink, downloadShareHtml } from '../export.js';
 import { showToast } from './toast.js';
 import { PROVIDERS } from '../providers/registry.js';
+import { openUsageWindow } from './help-base.js';
 
 export class SidebarUI {
   constructor() {
@@ -16,6 +17,9 @@ export class SidebarUI {
     this.collapseBtn = document.getElementById('sidebar-collapse-btn');
     this.menuBtn = document.getElementById('topnav-menu-btn');
     this.filterTabs = document.getElementById('sidebar-filters');
+    this.folderTabs = document.getElementById('sidebar-folder-tabs');
+    this.newFolderBtn = document.getElementById('new-folder-btn');
+    this.searchScope = 'full';
 
     this.init();
   }
@@ -27,6 +31,13 @@ export class SidebarUI {
     });
 
     this.chatSearchInput.addEventListener('input', () => this.render());
+
+    document.getElementById('search-scope-btn')?.addEventListener('click', () => {
+      this.searchScope = this.searchScope === 'full' ? 'title' : 'full';
+      const btn = document.getElementById('search-scope-btn');
+      if (btn) btn.textContent = this.searchScope === 'full' ? 'All' : 'Title';
+      this.render();
+    });
 
     this.sidebarOverlay.addEventListener('click', () => this.closeMobileSidebar());
     if (this.edgeToggle) {
@@ -45,9 +56,15 @@ export class SidebarUI {
       btn.addEventListener('click', () => {
         state.setSidebarFilter(btn.dataset.filter);
         this.filterTabs.querySelectorAll('[data-filter]').forEach(b => b.classList.toggle('active', b === btn));
+        this.folderTabs?.querySelectorAll('[data-folder]').forEach(b => b.classList.remove('active'));
         this.render();
       });
     });
+
+    this.newFolderBtn?.addEventListener('click', () => this.handleNewFolder());
+    document.getElementById('sidebar-usage-btn')?.addEventListener('click', () => openUsageWindow());
+
+    this.renderFolderTabs();
 
     const collapsed = localStorage.getItem('sidebar-collapsed') === 'true';
     this.setCollapsed(collapsed);
@@ -65,8 +82,77 @@ export class SidebarUI {
     state.on('chats-imported', () => this.render());
     state.on('data-cleared', () => this.render());
     state.on('sidebar-filter-changed', () => this.render());
+    state.on('folders-changed', () => {
+      this.renderFolderTabs();
+      this.render();
+    });
 
     this.render();
+  }
+
+  async handleNewFolder() {
+    const name = await showPrompt({ title: 'New folder', defaultValue: 'New Folder' });
+    if (name?.trim()) {
+      const folder = state.createFolder(name.trim());
+      state.setSidebarFilter(folder.id);
+      this.renderFolderTabs();
+      this.render();
+    }
+  }
+
+  renderFolderTabs() {
+    if (!this.folderTabs) return;
+    const filter = state.sidebarFilter;
+    this.folderTabs.innerHTML = state.folders.map(f => `
+      <button type="button" class="filter-tab folder-tab ${filter === f.id ? 'active' : ''}" data-folder="${f.id}">
+        ${this.escapeHtml(f.name)}
+      </button>
+    `).join('');
+
+    this.folderTabs.querySelectorAll('[data-folder]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.setSidebarFilter(btn.dataset.folder);
+        this.filterTabs?.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+        this.folderTabs.querySelectorAll('[data-folder]').forEach(b => b.classList.toggle('active', b === btn));
+        this.render();
+      });
+      btn.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        this.showFolderMenu(btn.dataset.folder, btn);
+      });
+    });
+  }
+
+  async showFolderMenu(folderId, anchor) {
+    const folder = state.folders.find(f => f.id === folderId);
+    if (!folder) return;
+    const existing = document.querySelector('.folder-context-menu');
+    existing?.remove();
+    const menu = document.createElement('div');
+    menu.className = 'chat-context-menu folder-context-menu';
+    menu.innerHTML = `
+      <button type="button" data-action="rename">Rename</button>
+      <button type="button" data-action="delete">Delete</button>
+    `;
+    document.body.appendChild(menu);
+    const rect = anchor.getBoundingClientRect();
+    menu.style.top = `${rect.bottom + 4}px`;
+    menu.style.left = `${rect.left}px`;
+    const close = () => menu.remove();
+    setTimeout(() => document.addEventListener('click', close, { once: true }), 0);
+    menu.querySelector('[data-action="rename"]')?.addEventListener('click', async () => {
+      const name = await showPrompt({ title: 'Rename folder', defaultValue: folder.name });
+      if (name?.trim()) state.renameFolder(folderId, name.trim());
+      close();
+    });
+    menu.querySelector('[data-action="delete"]')?.addEventListener('click', async () => {
+      const ok = await showConfirm({ title: 'Delete folder', message: 'Chats will be moved out of this folder.', confirmText: 'Delete', destructive: true });
+      if (ok) {
+        state.deleteFolder(folderId);
+        if (state.sidebarFilter === folderId) state.setSidebarFilter('all');
+      }
+      close();
+    });
   }
 
   openMobileSidebar() {
@@ -143,6 +229,9 @@ export class SidebarUI {
 
     const filteredChats = chats.filter(chat => {
       if (!query) return true;
+      if (this.searchScope === 'title') {
+        return chat.title.toLowerCase().includes(query);
+      }
       return chat.title.toLowerCase().includes(query) ||
         chat.messages.some(m => m.content?.toLowerCase().includes(query));
     });

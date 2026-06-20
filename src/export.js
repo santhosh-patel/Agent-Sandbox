@@ -110,30 +110,39 @@ export function downloadShareHtml(chat) {
 }
 
 export function buildShareLink(chat) {
-  const payload = {
+  const baseMessages = chat.messages.filter(m => !m.compareId).map(m => ({
+    role: m.role,
+    content: m.content,
+    model: m.model,
+    images: m.images?.map(img => ({ dataUrl: img.dataUrl })),
+  }));
+  let messages = baseMessages;
+  let strippedImages = false;
+  let payload = {
     title: chat.title,
     assistantName: state.getAssistantName(),
-    messages: chat.messages.filter(m => !m.compareId).map(m => ({
-      role: m.role,
-      content: m.content,
-      model: m.model,
-      images: m.images?.map(img => ({ dataUrl: img.dataUrl })),
-    })),
+    messages,
     exportedAt: Date.now(),
   };
-  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-  const base = `${window.location.origin}/share.html`;
-  const url = `${base}#${encoded}`;
-  if (url.length > 8000) return { url: null, tooLarge: true };
-  return { url, tooLarge: false };
+  let encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  let url = `${window.location.origin}/share.html#${encoded}`;
+  if (url.length > 8000 && baseMessages.some(m => m.images?.length)) {
+    strippedImages = true;
+    messages = baseMessages.map(m => ({ role: m.role, content: m.content, model: m.model }));
+    payload = { ...payload, messages };
+    encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    url = `${window.location.origin}/share.html#${encoded}`;
+  }
+  if (url.length > 8000) return { url: null, tooLarge: true, strippedImages };
+  return { url, tooLarge: false, strippedImages };
 }
 
 export function copyShareLink(chat) {
-  const { url, tooLarge } = buildShareLink(chat);
+  const { url, tooLarge, strippedImages } = buildShareLink(chat);
   if (tooLarge || !url) {
     downloadShareHtml(chat);
-    return { copied: false, downloaded: true };
+    return { copied: false, downloaded: true, reason: 'too_large' };
   }
   navigator.clipboard.writeText(url);
-  return { copied: true, downloaded: false, url };
+  return { copied: true, downloaded: false, url, strippedImages };
 }
