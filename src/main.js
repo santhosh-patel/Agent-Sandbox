@@ -16,6 +16,8 @@ import { showToast } from './ui/toast.js';
 import { setMarkdownTheme } from './ui/markdown.js';
 import { registerPWA } from './pwa.js';
 
+const RAG_URL = '/rag.html';
+
 class App {
   constructor() {
     this.abortController = null;
@@ -78,7 +80,7 @@ class App {
       this.settingsUI.expandPanel();
     });
     document.getElementById('topnav-status-btn')?.addEventListener('click', () => {
-      this.settingsUI.expandPanel();
+      window.open(RAG_URL, '_blank', 'noopener,noreferrer');
     });
     document.getElementById('input-settings-btn')?.addEventListener('click', () => {
       this.settingsUI.expandPanel();
@@ -94,17 +96,20 @@ class App {
     });
 
     this.bindProviderChips();
-    this.bindThemePicker();
+    this.bindThemeToggle();
 
     this.applyTheme(state.settings.theme || 'light');
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
       if (state.settings.theme === 'system') {
         this.applyTheme('system');
       }
     });
 
     state.on('settings-changed', (settings) => {
-      if (settings.theme) this.applyTheme(settings.theme);
+      if (settings.theme) {
+        this.applyTheme(settings.theme);
+        this.updateThemeToggleButton(settings.theme);
+      }
       if (settings.provider) this.updateProviderChips();
     });
 
@@ -156,21 +161,44 @@ class App {
     return settings;
   }
 
-  bindThemePicker() {
-    document.querySelectorAll('[data-theme-choice]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const theme = btn.dataset.themeChoice;
-        state.updateSettings({ theme });
-        this.applyTheme(theme);
-        document.querySelectorAll('[data-theme-choice]').forEach(b => {
-          b.classList.toggle('active', b.dataset.themeChoice === theme);
-        });
-      });
-    });
-    const theme = state.settings.theme || 'light';
-    document.querySelectorAll('[data-theme-choice]').forEach(b => {
-      b.classList.toggle('active', b.dataset.themeChoice === theme);
-    });
+  bindThemeToggle() {
+    const btn = document.getElementById('topnav-theme-btn');
+    if (!btn) return;
+    btn.addEventListener('click', () => this.toggleTheme());
+    this.updateThemeToggleButton(state.settings.theme || 'light');
+  }
+
+  toggleTheme() {
+    const current = state.settings.theme || 'light';
+    let resolved = current;
+    if (current === 'system') {
+      resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    const next = resolved === 'dark' ? 'light' : 'dark';
+    state.updateSettings({ theme: next });
+    this.applyTheme(next);
+    this.updateThemeToggleButton(next);
+  }
+
+  updateThemeToggleButton(theme) {
+    const btn = document.getElementById('topnav-theme-btn');
+    if (!btn) return;
+
+    let active = theme;
+    if (theme === 'system') {
+      active = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    const isDark = active === 'dark';
+    btn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+    btn.title = isDark ? 'Light mode' : 'Dark mode';
+
+    const iconEl = document.getElementById('topnav-theme-icon');
+    if (iconEl) {
+      const iconName = isDark ? 'sun' : 'moon';
+      iconEl.outerHTML = iconHtml(iconName, { className: 'icon', size: 18 })
+        .replace('<svg', '<svg id="topnav-theme-icon"');
+    }
   }
 
   applyTheme(theme) {
@@ -180,18 +208,6 @@ class App {
     }
     document.documentElement.setAttribute('data-theme', activeTheme);
     setMarkdownTheme(activeTheme);
-
-    const label = document.getElementById('theme-label');
-    if (label) {
-      label.textContent = theme === 'system' ? 'System theme' : (activeTheme === 'dark' ? 'Dark mode' : 'Light mode');
-    }
-
-    const themeIcon = document.getElementById('theme-icon');
-    if (themeIcon) {
-      const iconName = activeTheme === 'dark' ? 'moon' : 'sun';
-      themeIcon.outerHTML = iconHtml(iconName, { className: 'icon icon-theme' })
-        .replace('<svg', '<svg id="theme-icon"');
-    }
   }
 
   handleFollowUpSend(prompt) {

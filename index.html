@@ -73,11 +73,6 @@
           <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
           Help
         </button>
-        <div class="theme-picker" role="group" aria-label="Theme">
-          <button type="button" class="theme-choice-btn" data-theme-choice="light" title="Light">☀</button>
-          <button type="button" class="theme-choice-btn" data-theme-choice="dark" title="Dark">☾</button>
-          <button type="button" class="theme-choice-btn" data-theme-choice="system" title="System">◐</button>
-        </div>
       </div>
 
       <div class="sidebar-section-label">Filter</div>
@@ -107,9 +102,12 @@
           <button type="button" class="topnav-pill" id="topnav-help-btn">Help</button>
         </nav>
         <div class="topnav-right">
-          <button type="button" class="status-pill" id="topnav-status-btn" aria-label="Open settings">
+          <button type="button" class="topnav-theme-btn" id="topnav-theme-btn" aria-label="Switch to dark mode" title="Dark mode">
+            <svg class="icon" id="topnav-theme-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+          </button>
+          <button type="button" class="status-pill" id="topnav-status-btn" aria-label="Open RAG Sandbox">
             <img src="/icon.png" alt="" class="status-pill-icon" width="24" height="24" />
-            <span class="status-pill-text" id="topnav-status-text">Configure model</span>
+            <span class="status-pill-text">RAG Sandbox</span>
           </button>
         </div>
       </header>
@@ -303,14 +301,6 @@
             <label class="settings-label" for="assistant-name-input">Assistant name</label>
             <input type="text" id="assistant-name-input" class="settings-input" placeholder="Maya" maxlength="32" autocomplete="off" />
             <p class="settings-hint">Shown in the welcome message and chat exports.</p>
-          </div>
-          <div class="settings-section">
-            <span class="settings-label">Theme</span>
-            <div class="theme-picker settings-theme-picker" role="group" aria-label="Theme">
-              <button type="button" class="theme-choice-btn" data-theme-choice="light" title="Light">☀</button>
-              <button type="button" class="theme-choice-btn" data-theme-choice="dark" title="Dark">☾</button>
-              <button type="button" class="theme-choice-btn" data-theme-choice="system" title="System">◐</button>
-            </div>
           </div>
         </section>
 

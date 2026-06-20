@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>RAG Sandbox</title>
+  <meta name="description" content="Test RAG pipelines with your own API keys. Client-side only." />
+  <meta name="theme-color" content="#faf6ed" />
+  <link rel="icon" type="image/png" href="/icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/styles/index.css" />
+  <link rel="stylesheet" href="/src/styles/sorin-theme.css" />
+</head>
+<body class="rag-app-body">
+  <div class="bg-gradient" id="bg-gradient"></div>
+  <div id="rag-app" class="rag-app">
+    <header class="rag-topbar">
+      <div class="rag-topbar-brand">
+        <img src="/icon.png" alt="" class="app-icon" width="28" height="28" />
+        <h1>RAG Sandbox</h1>
+      </div>
+      <a href="/" class="btn-text rag-back-link">← AI Playground</a>
+    </header>
+    <div id="rag-sandbox-view" class="rag-sandbox">
+          <aside class="rag-left-sidebar" id="rag-left-sidebar">
+            <div class="rag-sidebar-header">
+              <h2>Knowledge Bases</h2>
+              <button type="button" class="btn-icon rag-icon-btn" id="rag-new-collection-btn" title="New collection" aria-label="New collection">+</button>
+            </div>
+            <div class="rag-collections-list" id="rag-collections-list"></div>
+            <div class="rag-sidebar-section">
+              <div class="rag-documents-header">
+                <h2>Documents</h2>
+                <div class="rag-sidebar-actions">
+                  <button type="button" class="btn-text btn-sm" id="rag-import-collection-btn">Import</button>
+                  <button type="button" class="btn-text btn-sm" id="rag-export-collection-btn">Export</button>
+                  <button type="button" class="btn-text btn-sm" id="rag-reindex-btn">Reindex</button>
+                </div>
+              </div>
+              <div class="rag-documents-body">
+                <div class="rag-upload-zone" id="rag-upload-zone">
+                  <input type="file" id="rag-file-input" accept=".pdf,.docx,.txt,.md,.markdown" multiple hidden />
+                  <button type="button" class="rag-upload-btn" id="rag-upload-btn">
+                    <span>Upload documents</span>
+                    <span class="rag-upload-hint">PDF, DOCX, TXT, Markdown</span>
+                  </button>
+                </div>
+                <div class="rag-documents-list" id="rag-documents-list"></div>
+              </div>
+            </div>
+          </aside>
+
+          <div class="rag-center">
+            <div class="rag-center-header">
+              <h2>RAG Chat</h2>
+              <div class="rag-center-actions">
+                <div class="rag-usage-stats" id="rag-usage-stats"></div>
+                <button type="button" class="btn-text btn-sm" id="rag-clear-chat-btn">Clear chat</button>
+              </div>
+            </div>
+            <div class="rag-messages" id="rag-messages">
+              <div class="rag-welcome" id="rag-welcome">
+                <img src="/icon.png" alt="" width="56" height="56" class="rag-welcome-icon" />
+                <h3>Test your RAG pipeline</h3>
+                <p>Upload documents, configure chunking and embeddings, then chat with your knowledge base. All API keys stay in your browser.</p>
+              </div>
+            </div>
+            <div class="rag-input-area">
+              <textarea id="rag-message-input" placeholder="Ask a question about your documents…" rows="2"></textarea>
+              <div class="rag-input-actions">
+                <button type="button" class="btn-send" id="rag-send-btn">Send</button>
+                <button type="button" class="btn-stop" id="rag-stop-btn" style="display:none">Stop</button>
+              </div>
+            </div>
+          </div>
+
+          <aside class="rag-right-sidebar" id="rag-right-sidebar">
+            <div class="rag-settings-header">
+              <h2>Pipeline Settings</h2>
+            </div>
+            <div class="rag-settings-body">
+              <section class="settings-block">
+                <h3 class="settings-block-title">API Keys</h3>
+                <p class="settings-hint rag-keys-hint">Keys are stored locally in your browser only.</p>
+                <div class="rag-api-keys-list" id="rag-api-keys-list">
+                  <div class="rag-provider-key" data-provider="openai">
+                    <label class="settings-label">OpenAI</label>
+                    <div class="api-key-row">
+                      <input type="password" id="rag-key-openai" class="settings-input" placeholder="sk-…" autocomplete="off" />
+                      <button type="button" class="btn-icon" id="rag-key-toggle-openai" aria-label="Show key">👁</button>
+                      <span class="rag-key-indicator" id="rag-key-status-openai"></span>
+                    </div>
+                  </div>
+                  <div class="rag-provider-key" data-provider="anthropic">
+                    <label class="settings-label">Anthropic</label>
+                    <div class="api-key-row">
+                      <input type="password" id="rag-key-anthropic" class="settings-input" placeholder="sk-ant-…" autocomplete="off" />
+                      <button type="button" class="btn-icon" id="rag-key-toggle-anthropic" aria-label="Show key">👁</button>
+                      <span class="rag-key-indicator" id="rag-key-status-anthropic"></span>
+                    </div>
+                  </div>
+                  <div class="rag-provider-key" data-provider="gemini">
+                    <label class="settings-label">Google Gemini</label>
+                    <div class="api-key-row">
+                      <input type="password" id="rag-key-gemini" class="settings-input" placeholder="AI…" autocomplete="off" />
+                      <button type="button" class="btn-icon" id="rag-key-toggle-gemini" aria-label="Show key">👁</button>
+                      <span class="rag-key-indicator" id="rag-key-status-gemini"></span>
+                    </div>
+                  </div>
+                  <div class="rag-provider-key" data-provider="openrouter">
+                    <label class="settings-label">OpenRouter</label>
+                    <div class="api-key-row">
+                      <input type="password" id="rag-key-openrouter" class="settings-input" placeholder="sk-or-…" autocomplete="off" />
+                      <button type="button" class="btn-icon" id="rag-key-toggle-openrouter" aria-label="Show key">👁</button>
+                      <span class="rag-key-indicator" id="rag-key-status-openrouter"></span>
+                    </div>
+                  </div>
+                  <div class="rag-provider-key" data-provider="groq">
+                    <label class="settings-label">Groq</label>
+                    <div class="api-key-row">
+                      <input type="password" id="rag-key-groq" class="settings-input" placeholder="gsk_…" autocomplete="off" />
+                      <button type="button" class="btn-icon" id="rag-key-toggle-groq" aria-label="Show key">👁</button>
+                      <span class="rag-key-indicator" id="rag-key-status-groq"></span>
+                    </div>
+                  </div>
+                  <div class="rag-provider-key" data-provider="deepseek">
+                    <label class="settings-label">DeepSeek</label>
+                    <div class="api-key-row">
+                      <input type="password" id="rag-key-deepseek" class="settings-input" placeholder="sk-…" autocomplete="off" />
+                      <button type="button" class="btn-icon" id="rag-key-toggle-deepseek" aria-label="Show key">👁</button>
+                      <span class="rag-key-indicator" id="rag-key-status-deepseek"></span>
+                    </div>
+                  </div>
+                  <div class="rag-provider-key" data-provider="mistral">
+                    <label class="settings-label">Mistral</label>
+                    <div class="api-key-row">
+                      <input type="password" id="rag-key-mistral" class="settings-input" placeholder="…" autocomplete="off" />
+                      <button type="button" class="btn-icon" id="rag-key-toggle-mistral" aria-label="Show key">👁</button>
+                      <span class="rag-key-indicator" id="rag-key-status-mistral"></span>
+                    </div>
+                  </div>
+                  <div class="rag-provider-key" data-provider="cohere">
+                    <label class="settings-label">Cohere</label>
+                    <div class="api-key-row">
+                      <input type="password" id="rag-key-cohere" class="settings-input" placeholder="…" autocomplete="off" />
+                      <button type="button" class="btn-icon" id="rag-key-toggle-cohere" aria-label="Show key">👁</button>
+                      <span class="rag-key-indicator" id="rag-key-status-cohere"></span>
+                    </div>
+                  </div>
+                  <div class="rag-provider-key" data-provider="voyage">
+                    <label class="settings-label">Voyage AI</label>
+                    <div class="api-key-row">
+                      <input type="password" id="rag-key-voyage" class="settings-input" placeholder="pa-…" autocomplete="off" />
+                      <button type="button" class="btn-icon" id="rag-key-toggle-voyage" aria-label="Show key">👁</button>
+                      <span class="rag-key-indicator" id="rag-key-status-voyage"></span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="settings-block">
+                <h3 class="settings-block-title">Embeddings</h3>
+                <div class="settings-section">
+                  <label class="settings-label" for="rag-embedding-provider">Provider</label>
+                  <select id="rag-embedding-provider" class="settings-select"></select>
+                </div>
+                <div class="settings-section">
+                  <label class="settings-label" for="rag-embedding-model">Model</label>
+                  <select id="rag-embedding-model" class="settings-select"></select>
+                  <button type="button" class="btn btn-test btn-sm" id="rag-test-embed-key-btn">Test key</button>
+                  <div class="rag-key-test-status" id="rag-embed-key-status"></div>
+                </div>
+              </section>
+
+              <section class="settings-block">
+                <h3 class="settings-block-title">Chat Model</h3>
+                <div class="settings-section">
+                  <label class="settings-label" for="rag-chat-provider">Provider</label>
+                  <select id="rag-chat-provider" class="settings-select"></select>
+                </div>
+                <div class="settings-section">
+                  <label class="settings-label" for="rag-chat-model">Model</label>
+                  <div class="model-select-row">
+                    <select id="rag-chat-model" class="settings-select"></select>
+                    <button type="button" class="btn-text" id="rag-refresh-chat-models-btn" title="Refresh models">↻</button>
+                  </div>
+                  <button type="button" class="btn btn-test btn-sm" id="rag-test-chat-key-btn">Test key</button>
+                  <div class="rag-key-test-status" id="rag-chat-key-status"></div>
+                </div>
+              </section>
+
+              <section class="settings-block">
+                <h3 class="settings-block-title">Chunking</h3>
+                <div class="settings-section">
+                  <label class="settings-label" for="rag-chunk-size">Chunk size</label>
+                  <input type="number" id="rag-chunk-size" class="settings-input" min="100" max="4000" step="50" />
+                </div>
+                <div class="settings-section">
+                  <label class="settings-label" for="rag-chunk-overlap">Overlap</label>
+                  <input type="number" id="rag-chunk-overlap" class="settings-input" min="0" max="500" step="10" />
+                </div>
+                <div class="settings-section">
+                  <label class="settings-label" for="rag-chunk-strategy">Strategy</label>
+                  <select id="rag-chunk-strategy" class="settings-select">
+                    <option value="recursive">Recursive</option>
+                    <option value="sentence">Sentence</option>
+                    <option value="fixed">Fixed</option>
+                  </select>
+                </div>
+              </section>
+
+              <section class="settings-block">
+                <h3 class="settings-block-title">Retrieval</h3>
+                <div class="settings-section">
+                  <label class="settings-label" for="rag-top-k">Top K <span id="rag-top-k-value"></span></label>
+                  <input type="range" id="rag-top-k" min="1" max="20" step="1" />
+                </div>
+                <div class="settings-section">
+                  <label class="settings-label" for="rag-similarity-threshold">Similarity threshold <span id="rag-threshold-value">0.30</span></label>
+                  <input type="range" id="rag-similarity-threshold" min="0" max="1" step="0.05" />
+                </div>
+                <div class="settings-section">
+                  <label class="settings-label" for="rag-search-strategy">Search strategy</label>
+                  <select id="rag-search-strategy" class="settings-select">
+                    <option value="cosine">Cosine similarity</option>
+                    <option value="dot">Dot product</option>
+                    <option value="euclidean">Euclidean distance</option>
+                  </select>
+                </div>
+              </section>
+
+              <section class="settings-block">
+                <h3 class="settings-block-title">Prompts</h3>
+                <div class="settings-section">
+                  <label class="settings-label" for="rag-system-prompt">System prompt</label>
+                  <textarea id="rag-system-prompt" class="settings-textarea" rows="3"></textarea>
+                </div>
+                <div class="settings-section">
+                  <label class="settings-label" for="rag-rag-prompt">RAG prompt template</label>
+                  <textarea id="rag-rag-prompt" class="settings-textarea" rows="4" placeholder="Use {context} and {question}"></textarea>
+                </div>
+              </section>
+
+              <section class="settings-block">
+                <h3 class="settings-block-title">Advanced</h3>
+                <div class="settings-section">
+                  <label class="settings-label" for="rag-temperature">Temperature <span id="rag-temp-value">0.3</span></label>
+                  <input type="range" id="rag-temperature" min="0" max="2" step="0.1" />
+                </div>
+                <div class="settings-section">
+                  <label class="settings-label" for="rag-max-tokens">Max tokens</label>
+                  <input type="number" id="rag-max-tokens" class="settings-input" min="256" max="32000" step="256" />
+                </div>
+              </section>
+            </div>
+          </aside>
+        </div>
+
+  </div>
+  <script type="module" src="/src/rag-main.js"></script>
+</body>
+</html>

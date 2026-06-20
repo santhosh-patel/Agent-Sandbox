@@ -23,7 +23,6 @@ export class ChatUI {
     this.mobileProvider = document.getElementById('mobile-provider');
     this.mobileModel = document.getElementById('mobile-model');
     this.mobileStatusBar = document.getElementById('mobile-status-bar');
-    this.topnavStatusText = document.getElementById('topnav-status-text');
     this.srAnnouncer = document.getElementById('sr-announcer');
     this.welcomeAssistantName = document.getElementById('welcome-assistant-name');
 
@@ -166,15 +165,11 @@ export class ChatUI {
 
       if (this.mobileProvider) this.mobileProvider.textContent = providerInfo.name;
       if (this.mobileModel) this.mobileModel.textContent = settings.model || 'Select model';
-      if (this.topnavStatusText) {
-        this.topnavStatusText.textContent = `${providerInfo.name}, ${settings.model || 'Select model'}`;
-      }
     } else {
       this.headerProviderName.textContent = 'No provider';
       this.headerModel.textContent = 'Select model';
       if (this.mobileProvider) this.mobileProvider.textContent = 'No provider';
       if (this.mobileModel) this.mobileModel.textContent = 'Select model';
-      if (this.topnavStatusText) this.topnavStatusText.textContent = 'Configure model';
     }
 
     const cost = chat ? state.getSessionCost(chat.id) : 0;
