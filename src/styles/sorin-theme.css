@@ -2379,6 +2379,11 @@
     display: none;
   }
 
+  .rag-app-body .topnav,
+  .rag-app-body .topnav-right {
+    display: flex;
+  }
+
   .mobile-header {
     display: flex;
     align-items: center;

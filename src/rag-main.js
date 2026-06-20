@@ -1,4 +1,5 @@
 import { RagSandboxUI } from './ui/rag-sandbox.js';
+import { HelpUI } from './ui/help.js';
 import { setMarkdownTheme } from './ui/markdown.js';
 import { iconHtml } from './ui/icons.js';
 
@@ -76,5 +77,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (loadTheme() === 'system') applyTheme('system');
   });
   bindThemeToggle();
+  const helpUI = new HelpUI();
+  document.getElementById('rag-topnav-help-btn')?.addEventListener('click', () => helpUI.togglePanel());
   new RagSandboxUI();
 });

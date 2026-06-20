@@ -20,8 +20,11 @@ export class RagSandboxUI {
 
   init() {
     if (!this.view) return;
+    this.appEl = document.getElementById('rag-app');
+    this.panelMq = window.matchMedia('(max-width: 1100px)');
     this.bindEvents();
-    this.bindMobilePanels();
+    this.bindTopnav();
+    this.restoreSidebarState();
     this.renderCollections();
     this.renderDocuments();
     this.renderSettings();
@@ -87,30 +90,78 @@ export class RagSandboxUI {
     ragState.on('apikey-changed', () => this.syncKeyFields());
   }
 
-  bindMobilePanels() {
-    const tabs = document.querySelectorAll('.rag-mobile-tab');
-    const sandbox = this.view;
-    if (!tabs.length || !sandbox) return;
+  bindTopnav() {
+    const menuBtn = document.getElementById('rag-topnav-menu-btn');
+    const settingsBtn = document.getElementById('rag-topnav-settings-btn');
 
-    const setPanel = (panel) => {
-      sandbox.dataset.ragPanel = panel;
-      tabs.forEach(tab => {
-        const active = tab.dataset.ragPanel === panel;
-        tab.classList.toggle('active', active);
-        tab.setAttribute('aria-current', active ? 'page' : 'false');
-      });
-    };
+    menuBtn?.addEventListener('click', () => this.toggleLeftSidebar());
+    settingsBtn?.addEventListener('click', () => this.toggleRightSidebar());
 
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => setPanel(tab.dataset.ragPanel));
+    this.panelMq.addEventListener('change', () => {
+      if (!this.isMobileLayout()) this.restoreSidebarState();
+      this.updateTopnavState();
     });
+    this.updateTopnavState();
+  }
 
-    const mq = window.matchMedia('(max-width: 1100px)');
-    const syncPanel = () => {
-      if (mq.matches) setPanel(sandbox.dataset.ragPanel || 'chat');
-    };
-    mq.addEventListener('change', syncPanel);
-    syncPanel();
+  isMobileLayout() {
+    return this.panelMq.matches;
+  }
+
+  setMobilePanel(panel) {
+    if (!this.view) return;
+    this.view.dataset.ragPanel = panel;
+    this.updateTopnavState();
+  }
+
+  toggleLeftSidebar() {
+    if (this.isMobileLayout()) {
+      const panel = this.view.dataset.ragPanel || 'chat';
+      this.setMobilePanel(panel === 'knowledge' ? 'chat' : 'knowledge');
+      return;
+    }
+
+    if (!this.appEl) return;
+    this.appEl.classList.toggle('rag-left-closed');
+    localStorage.setItem('rag-left-closed', this.appEl.classList.contains('rag-left-closed'));
+    this.updateTopnavState();
+  }
+
+  toggleRightSidebar() {
+    if (this.isMobileLayout()) {
+      const panel = this.view.dataset.ragPanel || 'chat';
+      this.setMobilePanel(panel === 'settings' ? 'chat' : 'settings');
+      return;
+    }
+
+    if (!this.appEl) return;
+    this.appEl.classList.toggle('rag-right-closed');
+    localStorage.setItem('rag-right-closed', this.appEl.classList.contains('rag-right-closed'));
+    this.updateTopnavState();
+  }
+
+  restoreSidebarState() {
+    if (!this.appEl || this.isMobileLayout()) return;
+    if (localStorage.getItem('rag-left-closed') === 'true') this.appEl.classList.add('rag-left-closed');
+    if (localStorage.getItem('rag-right-closed') === 'true') this.appEl.classList.add('rag-right-closed');
+    this.updateTopnavState();
+  }
+
+  updateTopnavState() {
+    const menuBtn = document.getElementById('rag-topnav-menu-btn');
+    const settingsBtn = document.getElementById('rag-topnav-settings-btn');
+
+    if (this.isMobileLayout()) {
+      const panel = this.view?.dataset.ragPanel || 'chat';
+      menuBtn?.classList.toggle('topnav-pill--active', panel === 'knowledge');
+      settingsBtn?.classList.toggle('topnav-pill--active', panel === 'settings');
+      return;
+    }
+
+    const leftOpen = !this.appEl?.classList.contains('rag-left-closed');
+    const rightOpen = !this.appEl?.classList.contains('rag-right-closed');
+    menuBtn?.classList.toggle('topnav-pill--active', leftOpen);
+    settingsBtn?.classList.toggle('topnav-pill--active', rightOpen);
   }
 
   bindSettingsEvents() {

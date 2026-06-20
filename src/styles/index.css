@@ -2620,11 +2620,6 @@ kbd {
   background: var(--error-soft);
 }
 
-.rag-mobile-tabs {
-  display: none;
-  flex-shrink: 0;
-}
-
 .rag-center-actions {
   display: flex;
   align-items: center;
@@ -2707,38 +2702,21 @@ kbd {
 }
 
 .rag-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 20px;
-  padding-top: calc(12px + env(safe-area-inset-top, 0px));
   border-bottom: 1px solid var(--border);
   background: var(--bg-primary);
-  flex-shrink: 0;
-  min-height: var(--topnav-height, 56px);
+  padding-top: env(safe-area-inset-top, 0px);
+  min-height: calc(var(--topnav-height, 56px) + env(safe-area-inset-top, 0px));
 }
 
-.rag-topbar-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
+.rag-app-body {
+  --topnav-height: 56px;
 }
 
-.rag-topbar-brand h1 {
-  font-family: var(--font-serif);
-  font-size: 1.25rem;
-  font-weight: 400;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-}
-
-.rag-topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
+@media (min-width: 1101px) {
+  #rag-app.rag-left-closed .rag-left-sidebar,
+  #rag-app.rag-right-closed .rag-right-sidebar {
+    display: none;
+  }
 }
 
 a.status-pill,
@@ -2754,43 +2732,6 @@ a.rag-back-pill {
 
 /* ---- RAG responsive: tablet & mobile ---- */
 @media (max-width: 1100px) {
-  .rag-mobile-tabs {
-    display: flex;
-    align-items: stretch;
-    gap: 6px;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg-primary);
-  }
-
-  .rag-mobile-tab {
-    flex: 1;
-    min-height: 40px;
-    padding: 8px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-full);
-    background: transparent;
-    color: var(--text-secondary);
-    font-family: var(--font-sans);
-    font-size: 0.8125rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background var(--transition), color var(--transition), border-color var(--transition), box-shadow var(--transition);
-    touch-action: manipulation;
-  }
-
-  .rag-mobile-tab:hover {
-    color: var(--text-primary);
-    background: var(--surface-hover);
-  }
-
-  .rag-mobile-tab.active {
-    background: var(--accent-soft);
-    border-color: var(--accent-border, var(--accent));
-    color: var(--text-primary);
-    box-shadow: var(--shadow-sm);
-  }
-
   .rag-sandbox {
     flex-direction: column;
   }
@@ -2875,33 +2816,16 @@ a.rag-back-pill {
 
 @media (max-width: 768px) {
   .rag-topbar {
-    padding: 10px 12px;
-    padding-top: calc(10px + env(safe-area-inset-top, 0px));
-    min-height: 52px;
+    padding: 0 12px;
   }
 
-  .rag-topbar-brand h1 {
-    font-size: 1.0625rem;
-  }
-
-  .rag-topbar-right .status-pill-text {
+  .rag-topbar .topnav-right .status-pill-text {
     display: none;
   }
 
-  .rag-topbar-right .status-pill {
+  .rag-topbar .topnav-right .status-pill {
     padding: 6px;
     max-width: none;
-  }
-
-  .rag-mobile-tabs {
-    padding: 6px 10px;
-    gap: 4px;
-  }
-
-  .rag-mobile-tab {
-    font-size: 0.75rem;
-    padding: 8px 10px;
-    min-height: 38px;
   }
 
   .rag-messages {
@@ -2947,15 +2871,6 @@ a.rag-back-pill {
 }
 
 @media (max-width: 480px) {
-  .rag-topbar-brand .app-icon {
-    width: 24px;
-    height: 24px;
-  }
-
-  .rag-topbar-brand h1 {
-    font-size: 1rem;
-  }
-
   .rag-sidebar-actions .btn-text {
     font-size: 0.6875rem;
     padding: 4px 6px;
