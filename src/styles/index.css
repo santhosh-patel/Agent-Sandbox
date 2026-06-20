@@ -2628,6 +2628,12 @@ kbd {
   min-height: var(--topnav-height, 56px);
 }
 
+.rag-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .rag-topbar-brand {
   display: flex;
   align-items: center;
@@ -2641,8 +2647,10 @@ kbd {
   letter-spacing: -0.01em;
 }
 
-.rag-back-link {
-  font-size: 0.875rem;
+a.status-pill,
+a.rag-back-pill {
+  text-decoration: none;
+  color: var(--text-secondary);
 }
 
 .rag-app .rag-sandbox {
