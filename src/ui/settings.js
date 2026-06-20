@@ -284,10 +284,10 @@ export class SettingsUI {
     if (!this.favoriteModelBtn) return;
     const modelId = this.modelSelect.value;
     const isFavorite = (state.settings.favoriteModels || []).includes(modelId);
-    this.favoriteModelBtn.textContent = isFavorite ? '★' : '☆';
     this.favoriteModelBtn.classList.toggle('is-favorite', isFavorite);
     this.favoriteModelBtn.disabled = !modelId;
     this.favoriteModelBtn.title = isFavorite ? 'Remove from favorites' : 'Add to favorites';
+    this.favoriteModelBtn.setAttribute('aria-label', this.favoriteModelBtn.title);
   }
 
   renderModelQuickPicks() {
@@ -310,7 +310,8 @@ export class SettingsUI {
     this.modelQuickPicks.hidden = false;
     this.modelQuickPicks.innerHTML = chips.map(chip => `
       <button type="button" class="model-quick-chip model-quick-chip--${chip.kind}" data-model-id="${chip.id}" title="${chip.id}">
-        ${chip.kind === 'favorite' ? '★ ' : ''}${chip.label}
+        ${chip.kind === 'favorite' ? iconHtml('star', { size: 12, className: 'icon model-quick-chip-icon' }) : ''}
+        <span>${chip.label}</span>
       </button>
     `).join('');
 

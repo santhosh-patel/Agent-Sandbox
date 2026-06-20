@@ -1,6 +1,7 @@
 import { showToast } from './toast.js';
 import { supportsVision } from '../providers/message-format.js';
 import { state } from '../state.js';
+import { iconHtml } from './icons.js';
 
 const MAX_IMAGES = 4;
 const MAX_SIZE = 4 * 1024 * 1024;
@@ -72,7 +73,7 @@ export class AttachmentManager {
     this.previewEl.innerHTML = this.images.map((img, i) => `
       <div class="attachment-thumb">
         <img src="${img.dataUrl}" alt="${img.name || 'Attachment'}" />
-        <button type="button" class="attachment-remove" data-index="${i}" aria-label="Remove image">×</button>
+        <button type="button" class="attachment-remove" data-index="${i}" aria-label="Remove image">${iconHtml('x', { size: 14, className: 'icon' })}</button>
       </div>
     `).join('');
 

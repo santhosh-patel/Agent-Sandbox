@@ -2051,13 +2051,22 @@ body.settings-collapsed .edge-toggle-right svg {
 
 .model-favorite-btn {
   flex-shrink: 0;
-  font-size: 1.1rem;
-  line-height: 1;
   color: var(--text-secondary);
 }
 
 .model-favorite-btn.is-favorite {
   color: var(--warning, #b8860b);
+}
+
+.model-favorite-btn.is-favorite .icon {
+  fill: var(--warning, #b8860b);
+  color: var(--warning, #b8860b);
+}
+
+.model-quick-chip-icon {
+  flex-shrink: 0;
+  color: var(--warning, #b8860b);
+  fill: var(--warning, #b8860b);
 }
 
 .model-quick-picks {
@@ -2068,6 +2077,9 @@ body.settings-collapsed .edge-toggle-right svg {
 }
 
 .model-quick-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 4px 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius-full);

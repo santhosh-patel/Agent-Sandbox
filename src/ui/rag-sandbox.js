@@ -8,6 +8,7 @@ import { createProvider, estimateCost } from '../providers/registry.js';
 import { renderMarkdown } from './markdown.js';
 import { showToast } from './toast.js';
 import { showConfirm, showPrompt } from './modal.js';
+import { iconHtml } from './icons.js';
 
 export class RagSandboxUI {
   constructor() {
@@ -177,20 +178,28 @@ export class RagSandboxUI {
     document.getElementById('rag-refresh-chat-models-btn')?.addEventListener('click', () => this.fetchChatModels());
 
     const embedKeyInput = document.getElementById('rag-embedding-key-input');
+    const embedKeyToggle = document.getElementById('rag-embedding-key-toggle');
     embedKeyInput?.addEventListener('input', () => {
       ragState.setApiKey(ragState.settings.embeddingProvider, embedKeyInput.value.trim());
     });
-    document.getElementById('rag-embedding-key-toggle')?.addEventListener('click', () => {
-      embedKeyInput.type = embedKeyInput.type === 'password' ? 'text' : 'password';
-    });
+    embedKeyToggle?.addEventListener('click', () => this.toggleKeyVisibility(embedKeyInput, embedKeyToggle));
 
     const chatKeyInput = document.getElementById('rag-chat-key-input');
+    const chatKeyToggle = document.getElementById('rag-chat-key-toggle');
     chatKeyInput?.addEventListener('input', () => {
       ragState.setApiKey(ragState.settings.chatProvider, chatKeyInput.value.trim());
     });
-    document.getElementById('rag-chat-key-toggle')?.addEventListener('click', () => {
-      chatKeyInput.type = chatKeyInput.type === 'password' ? 'text' : 'password';
-    });
+    chatKeyToggle?.addEventListener('click', () => this.toggleKeyVisibility(chatKeyInput, chatKeyToggle));
+  }
+
+  toggleKeyVisibility(input, btn) {
+    if (!input || !btn) return;
+    const isPass = input.type === 'password';
+    input.type = isPass ? 'text' : 'password';
+    btn.classList.toggle('key-visible', isPass);
+    const label = isPass ? 'Hide API key' : 'Show API key';
+    btn.setAttribute('aria-label', label);
+    btn.setAttribute('title', label);
   }
 
   renderCollections() {
@@ -227,7 +236,7 @@ export class RagSandboxUI {
           <span class="rag-document-meta">${doc.chunks.length} chunks · ${this.formatSize(doc.size)}</span>
         </div>
         <span class="rag-doc-status rag-doc-status--${doc.status}">${doc.status}</span>
-        <button type="button" class="rag-doc-delete" data-id="${doc.id}" aria-label="Delete document">×</button>
+        <button type="button" class="rag-doc-delete" data-id="${doc.id}" aria-label="Delete document">${iconHtml('x', { size: 14, className: 'icon' })}</button>
       </div>
     `).join('');
 
