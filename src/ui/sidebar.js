@@ -14,6 +14,7 @@ export class SidebarUI {
     this.sidebarOverlay = document.getElementById('sidebar-overlay');
     this.edgeToggle = document.getElementById('sidebar-edge-toggle');
     this.collapseBtn = document.getElementById('sidebar-collapse-btn');
+    this.menuBtn = document.getElementById('topnav-menu-btn');
     this.filterTabs = document.getElementById('sidebar-filters');
 
     this.init();
@@ -35,6 +36,9 @@ export class SidebarUI {
       this.collapseBtn.addEventListener('click', () => {
         if (!this.isMobile()) this.setCollapsed(true);
       });
+    }
+    if (this.menuBtn) {
+      this.menuBtn.addEventListener('click', () => this.toggleSidebar());
     }
 
     this.filterTabs?.querySelectorAll('[data-filter]').forEach(btn => {
@@ -70,12 +74,14 @@ export class SidebarUI {
     this.sidebar.classList.add('open');
     this.sidebarOverlay.classList.add('visible');
     document.body.classList.add('sidebar-open');
+    this.updateTopnavState();
   }
 
   closeMobileSidebar() {
     this.sidebar.classList.remove('open');
     this.sidebarOverlay.classList.remove('visible');
     document.body.classList.remove('sidebar-open');
+    this.updateTopnavState();
   }
 
   isMobile() {
@@ -113,6 +119,14 @@ export class SidebarUI {
       this.collapseBtn.title = label;
     }
     localStorage.setItem('sidebar-collapsed', collapsed);
+    this.updateTopnavState();
+  }
+
+  updateTopnavState() {
+    const sidebarOpen = this.isMobile()
+      ? this.sidebar.classList.contains('open')
+      : !this.sidebar.classList.contains('collapsed');
+    this.menuBtn?.classList.toggle('topnav-pill--active', sidebarOpen);
   }
 
   render() {
