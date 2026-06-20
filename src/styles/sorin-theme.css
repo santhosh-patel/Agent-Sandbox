@@ -346,6 +346,26 @@
   flex-shrink: 0;
 }
 
+.status-pill-arrow {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  transition:
+    color var(--transition),
+    transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.status-pill:hover .status-pill-arrow {
+  color: var(--accent);
+}
+
+.status-pill:hover .status-pill-arrow--out {
+  transform: translate(2px, -2px);
+}
+
+.status-pill:hover .status-pill-arrow--back {
+  transform: translate(-2px, -2px);
+}
+
 .status-pill-text {
   overflow: hidden;
   text-overflow: ellipsis;

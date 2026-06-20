@@ -21,6 +21,8 @@ const SVG = {
   refresh: '<path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/>',
   star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
   chevronDown: '<path d="m6 9 6 6 6-6"/>',
+  arrowUpRight: '<path d="M7 17 17 7"/><path d="M7 7h10v10"/>',
+  arrowUpLeft: '<path d="M17 17 7 7"/><path d="M17 7H7v10"/>',
 };
 
 export function iconHtml(name, { size = 16, className = 'icon' } = {}) {
