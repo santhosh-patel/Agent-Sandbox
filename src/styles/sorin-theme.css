@@ -2379,9 +2379,8 @@
     display: none;
   }
 
-  .rag-app-body .topnav,
-  .rag-app-body .topnav-right {
-    display: flex;
+  #rag-app {
+    flex-direction: column;
   }
 
   .mobile-header {
@@ -3220,15 +3219,6 @@
 }
 
 /* RAG layout polish */
-.rag-center {
-  background: var(--bg-primary);
-}
-
-.rag-left-sidebar,
-.rag-right-sidebar {
-  transition: opacity var(--transition);
-}
-
 .rag-message {
   animation: rag-fade-in 0.25s ease-out;
 }
@@ -3249,7 +3239,6 @@
   border-radius: var(--radius-lg);
 }
 
-.rag-settings-body,
 .rag-documents-list,
 .rag-collections-list,
 .rag-messages {
@@ -3263,11 +3252,6 @@
 }
 
 @media (min-width: 1101px) {
-  .rag-left-sidebar {
-    width: 280px;
-    min-width: 280px;
-  }
-
   .rag-messages {
     padding: 20px 28px;
   }

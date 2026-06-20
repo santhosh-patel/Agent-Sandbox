@@ -15,226 +15,275 @@
 </head>
 <body class="rag-app-body">
   <div class="bg-gradient" id="bg-gradient"></div>
-  <div id="rag-app" class="rag-app">
-    <header class="topnav rag-topbar" id="rag-topbar">
-      <nav class="topnav-nav" aria-label="Main">
-        <button type="button" class="topnav-pill topnav-pill--active" id="rag-topnav-menu-btn">Menu</button>
-        <button type="button" class="topnav-pill" id="rag-topnav-settings-btn">Settings</button>
-        <button type="button" class="topnav-pill" id="rag-topnav-help-btn">Help</button>
-      </nav>
-      <div class="topnav-right">
-        <button type="button" class="topnav-theme-btn" id="rag-theme-btn" aria-label="Switch to dark mode" title="Dark mode">
-          <svg class="icon" id="rag-theme-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+
+  <div id="rag-app">
+    <header class="mobile-header" id="rag-mobile-header">
+      <button type="button" class="mobile-nav-btn" id="rag-sidebar-toggle" aria-label="Open menu">
+        <span>Menu</span>
+      </button>
+      <button type="button" class="mobile-status-bar" id="rag-mobile-status-bar" aria-label="RAG Sandbox">
+        <img src="/icon.png" alt="" class="app-icon mobile-status-icon" width="20" height="20" />
+        <span class="mobile-status-text">
+          <span>RAG Sandbox</span>
+        </span>
+      </button>
+      <div class="mobile-header-actions">
+        <button type="button" class="mobile-nav-btn mobile-nav-btn--icon" id="rag-mobile-help-btn" aria-label="Help">
+          <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
         </button>
-        <a href="/" class="status-pill rag-back-pill" aria-label="Back to AI Playground">
-          <img src="/icon.png" alt="" class="status-pill-icon" width="24" height="24" />
-          <span class="status-pill-text">AI Playground</span>
-        </a>
+        <button type="button" class="mobile-nav-btn" id="rag-settings-toggle-mobile" aria-label="Open settings">
+          <span>Settings</span>
+        </button>
       </div>
     </header>
-    <div id="rag-sandbox-view" class="rag-sandbox" data-rag-panel="chat">
-          <aside class="rag-left-sidebar" id="rag-left-sidebar">
-            <div class="rag-sidebar-header">
-              <h2>Knowledge Bases</h2>
-              <button type="button" class="btn-icon rag-icon-btn" id="rag-new-collection-btn" title="New collection" aria-label="New collection">
-                <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-              </button>
-            </div>
-            <div class="rag-collections-list" id="rag-collections-list"></div>
-            <div class="rag-sidebar-section">
-              <div class="rag-documents-header">
-                <h2>Docs</h2>
-                <div class="rag-sidebar-actions">
-                  <button type="button" class="btn-text btn-sm" id="rag-import-collection-btn">Import</button>
-                  <button type="button" class="btn-text btn-sm" id="rag-export-collection-btn">Export</button>
-                  <button type="button" class="btn-text btn-sm" id="rag-reindex-btn">Reindex</button>
-                </div>
-              </div>
-              <div class="rag-documents-body">
-                <div class="rag-upload-zone" id="rag-upload-zone">
-                  <input type="file" id="rag-file-input" accept=".pdf,.docx,.txt,.md,.markdown" multiple hidden />
-                  <button type="button" class="rag-upload-btn" id="rag-upload-btn">
-                    <span>Upload documents</span>
-                    <span class="rag-upload-hint">PDF, DOCX, TXT, Markdown</span>
-                  </button>
-                </div>
-                <div class="rag-documents-list" id="rag-documents-list"></div>
-              </div>
-            </div>
-          </aside>
 
-          <div class="rag-center">
-            <div class="rag-center-header">
-              <h2>RAG Chat</h2>
-              <div class="rag-center-actions">
-                <div class="rag-usage-stats" id="rag-usage-stats"></div>
-                <button type="button" class="btn-text btn-sm" id="rag-clear-chat-btn">Clear chat</button>
-              </div>
+    <aside class="sidebar" id="rag-sidebar">
+      <div class="sidebar-header">
+        <div class="app-brand">
+          <img src="/icon.png" alt="" class="app-icon" width="32" height="32" />
+          <span class="logo-text">RAG Sandbox</span>
+        </div>
+        <button type="button" class="panel-collapse-btn" id="rag-sidebar-collapse-btn" aria-label="Collapse sidebar" title="Collapse sidebar">
+          <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+      </div>
+
+      <div class="rag-sidebar-section-head">
+        <div class="sidebar-section-label">Knowledge Bases</div>
+        <button type="button" class="btn-icon rag-icon-btn" id="rag-new-collection-btn" title="New collection" aria-label="New collection">
+          <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+        </button>
+      </div>
+      <div class="rag-collections-list" id="rag-collections-list"></div>
+
+      <div class="sidebar-section-label">Docs</div>
+      <div class="rag-doc-actions">
+        <button type="button" class="btn-text btn-sm" id="rag-import-collection-btn">Import</button>
+        <button type="button" class="btn-text btn-sm" id="rag-export-collection-btn">Export</button>
+        <button type="button" class="btn-text btn-sm" id="rag-reindex-btn">Reindex</button>
+      </div>
+      <div class="rag-sidebar-docs">
+        <div class="rag-upload-zone" id="rag-upload-zone">
+          <input type="file" id="rag-file-input" accept=".pdf,.docx,.txt,.md,.markdown" multiple hidden />
+          <button type="button" class="rag-upload-btn" id="rag-upload-btn">
+            <span>Upload documents</span>
+            <span class="rag-upload-hint">PDF, DOCX, TXT, Markdown</span>
+          </button>
+        </div>
+        <div class="rag-documents-list" id="rag-documents-list"></div>
+      </div>
+
+      <div class="sidebar-footer">
+        <span class="session-badge">Local session</span>
+      </div>
+    </aside>
+
+    <div class="app-shell">
+      <header class="topnav" id="rag-topbar">
+        <nav class="topnav-nav" aria-label="Main">
+          <button type="button" class="topnav-pill topnav-pill--active" id="rag-topnav-menu-btn">Menu</button>
+          <button type="button" class="topnav-pill" id="rag-topnav-settings-btn">Settings</button>
+          <button type="button" class="topnav-pill" id="rag-topnav-help-btn">Help</button>
+        </nav>
+        <div class="topnav-right">
+          <button type="button" class="topnav-theme-btn" id="rag-theme-btn" aria-label="Switch to dark mode" title="Dark mode">
+            <svg class="icon" id="rag-theme-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+          </button>
+          <a href="/" class="status-pill rag-back-pill" aria-label="Back to AI Playground">
+            <img src="/icon.png" alt="" class="status-pill-icon" width="24" height="24" />
+            <span class="status-pill-text">AI Playground</span>
+          </a>
+        </div>
+      </header>
+
+      <main class="main" id="rag-main">
+        <div class="main-canvas" id="rag-main-canvas">
+          <div class="chat-header" id="rag-chat-header">
+            <div class="chat-header-left">
+              <span class="header-meta">RAG Chat</span>
+              <div class="rag-usage-stats" id="rag-usage-stats"></div>
             </div>
-            <div class="rag-messages" id="rag-messages">
-              <div class="rag-welcome" id="rag-welcome">
-                <img src="/icon.png" alt="" width="56" height="56" class="rag-welcome-icon" />
-                <h3>Test your RAG pipeline</h3>
-                <p>Upload documents, configure chunking and embeddings, then chat with your knowledge base. All API keys stay in your browser.</p>
-              </div>
-            </div>
-            <div class="rag-input-area">
-              <div class="rag-input-container">
-                <textarea id="rag-message-input" placeholder="Ask a question about your documents…" rows="1"></textarea>
-                <button type="button" class="rag-send-btn" id="rag-send-btn" aria-label="Send message">
-                  <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
-                </button>
-                <button type="button" class="rag-stop-btn" id="rag-stop-btn" style="display:none" aria-label="Stop generation">Stop</button>
-              </div>
+            <button type="button" class="btn-text btn-sm" id="rag-clear-chat-btn">Clear chat</button>
+          </div>
+          <div class="messages rag-messages" id="rag-messages">
+            <div class="rag-welcome" id="rag-welcome">
+              <img src="/icon.png" alt="" width="56" height="56" class="rag-welcome-icon" />
+              <h3>Test your RAG pipeline</h3>
+              <p>Upload documents, configure chunking and embeddings, then chat with your knowledge base. All API keys stay in your browser.</p>
             </div>
           </div>
-
-          <aside class="rag-right-sidebar" id="rag-right-sidebar">
-            <div class="rag-settings-header">
-              <h2>Pipeline Settings</h2>
+          <div class="input-area rag-input-area">
+            <div class="rag-input-container">
+              <textarea id="rag-message-input" placeholder="Ask a question about your documents…" rows="1"></textarea>
+              <button type="button" class="rag-send-btn" id="rag-send-btn" aria-label="Send message">
+                <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+              </button>
+              <button type="button" class="rag-stop-btn" id="rag-stop-btn" style="display:none" aria-label="Stop generation">Stop</button>
             </div>
-            <div class="rag-settings-body">
-              <section class="settings-block">
-                <h3 class="settings-block-title">Embeddings</h3>
-                <div class="settings-section">
-                  <label class="settings-label" for="rag-embedding-provider">Provider</label>
-                  <select id="rag-embedding-provider" class="settings-select"></select>
-                </div>
-                <div class="settings-section">
-                  <div class="label-row">
-                    <label class="settings-label" for="rag-embedding-key-input">API key</label>
-                    <a class="settings-link" id="rag-embed-docs-link" href="#" target="_blank" rel="noopener" hidden>Get key</a>
-                  </div>
-                  <div class="api-key-row">
-                    <input type="password" id="rag-embedding-key-input" class="settings-input" placeholder="Paste API key…" autocomplete="off" />
-                    <button type="button" class="btn-icon btn-eye-toggle" id="rag-embedding-key-toggle" aria-label="Show API key" title="Show API key">
-                      <svg class="eye-icon eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                      <svg class="eye-icon eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                        <line x1="1" y1="1" x2="23" y2="23" />
-                      </svg>
-                    </button>
-                  </div>
-                  <p class="settings-hint">Stored locally in your browser only.</p>
-                </div>
-                <div class="settings-section">
-                  <label class="settings-label" for="rag-embedding-model">Model</label>
-                  <select id="rag-embedding-model" class="settings-select"></select>
-                  <button type="button" class="btn btn-test btn-sm" id="rag-test-embed-key-btn">Verify</button>
-                  <div class="rag-key-test-status" id="rag-embed-key-status"></div>
-                </div>
-              </section>
-
-              <section class="settings-block">
-                <h3 class="settings-block-title">Chat Model</h3>
-                <div class="settings-section">
-                  <label class="settings-label" for="rag-chat-provider">Provider</label>
-                  <select id="rag-chat-provider" class="settings-select"></select>
-                </div>
-                <div class="settings-section">
-                  <div class="label-row">
-                    <label class="settings-label" for="rag-chat-key-input">API key</label>
-                    <a class="settings-link" id="rag-chat-docs-link" href="#" target="_blank" rel="noopener" hidden>Get key</a>
-                  </div>
-                  <div class="api-key-row">
-                    <input type="password" id="rag-chat-key-input" class="settings-input" placeholder="Paste API key…" autocomplete="off" />
-                    <button type="button" class="btn-icon btn-eye-toggle" id="rag-chat-key-toggle" aria-label="Show API key" title="Show API key">
-                      <svg class="eye-icon eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                      <svg class="eye-icon eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                        <line x1="1" y1="1" x2="23" y2="23" />
-                      </svg>
-                    </button>
-                  </div>
-                  <p class="settings-hint">Stored locally in your browser only.</p>
-                </div>
-                <div class="settings-section">
-                  <label class="settings-label" for="rag-chat-model">Model</label>
-                  <div class="model-select-row">
-                    <select id="rag-chat-model" class="settings-select"></select>
-                    <button type="button" class="btn-icon" id="rag-refresh-chat-models-btn" title="Refresh models" aria-label="Refresh models">
-                      <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>
-                    </button>
-                  </div>
-                  <button type="button" class="btn btn-test btn-sm" id="rag-test-chat-key-btn">Verify</button>
-                  <div class="rag-key-test-status" id="rag-chat-key-status"></div>
-                </div>
-              </section>
-
-              <section class="settings-block">
-                <h3 class="settings-block-title">Chunking</h3>
-                <div class="settings-section">
-                  <label class="settings-label" for="rag-chunk-size">Chunk size</label>
-                  <input type="number" id="rag-chunk-size" class="settings-input" min="100" max="4000" step="50" />
-                </div>
-                <div class="settings-section">
-                  <label class="settings-label" for="rag-chunk-overlap">Overlap</label>
-                  <input type="number" id="rag-chunk-overlap" class="settings-input" min="0" max="500" step="10" />
-                </div>
-                <div class="settings-section">
-                  <label class="settings-label" for="rag-chunk-strategy">Strategy</label>
-                  <select id="rag-chunk-strategy" class="settings-select">
-                    <option value="recursive">Recursive</option>
-                    <option value="sentence">Sentence</option>
-                    <option value="fixed">Fixed</option>
-                  </select>
-                </div>
-              </section>
-
-              <section class="settings-block">
-                <h3 class="settings-block-title">Retrieval</h3>
-                <div class="settings-section">
-                  <label class="settings-label" for="rag-top-k">Top K <span id="rag-top-k-value"></span></label>
-                  <input type="range" id="rag-top-k" min="1" max="20" step="1" />
-                </div>
-                <div class="settings-section">
-                  <label class="settings-label" for="rag-similarity-threshold">Similarity threshold <span id="rag-threshold-value">0.30</span></label>
-                  <input type="range" id="rag-similarity-threshold" min="0" max="1" step="0.05" />
-                </div>
-                <div class="settings-section">
-                  <label class="settings-label" for="rag-search-strategy">Search strategy</label>
-                  <select id="rag-search-strategy" class="settings-select">
-                    <option value="cosine">Cosine similarity</option>
-                    <option value="dot">Dot product</option>
-                    <option value="euclidean">Euclidean distance</option>
-                  </select>
-                </div>
-              </section>
-
-              <section class="settings-block">
-                <h3 class="settings-block-title">Prompts</h3>
-                <div class="settings-section">
-                  <label class="settings-label" for="rag-system-prompt">System prompt</label>
-                  <textarea id="rag-system-prompt" class="settings-textarea" rows="3"></textarea>
-                </div>
-                <div class="settings-section">
-                  <label class="settings-label" for="rag-rag-prompt">RAG prompt template</label>
-                  <textarea id="rag-rag-prompt" class="settings-textarea" rows="4" placeholder="Use {context} and {question}"></textarea>
-                </div>
-              </section>
-
-              <section class="settings-block">
-                <h3 class="settings-block-title">Advanced</h3>
-                <div class="settings-section">
-                  <label class="settings-label" for="rag-temperature">Temperature <span id="rag-temp-value">0.3</span></label>
-                  <input type="range" id="rag-temperature" min="0" max="2" step="0.1" />
-                </div>
-                <div class="settings-section">
-                  <label class="settings-label" for="rag-max-tokens">Max tokens</label>
-                  <input type="number" id="rag-max-tokens" class="settings-input" min="256" max="32000" step="256" />
-                </div>
-              </section>
-            </div>
-          </aside>
+          </div>
         </div>
+      </main>
+    </div>
 
+    <aside class="settings-panel collapsed" id="rag-settings-panel">
+      <div class="settings-header">
+        <h2>Pipeline Settings</h2>
+        <button type="button" class="panel-collapse-btn" id="rag-settings-collapse-btn" aria-label="Collapse settings" title="Collapse settings">
+          <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+        <button type="button" class="btn-text settings-close-btn" id="rag-settings-close-btn" aria-label="Close settings">Close</button>
+      </div>
+      <div class="settings-body">
+        <section class="settings-block">
+          <h3 class="settings-block-title">Embeddings</h3>
+          <div class="settings-section">
+            <label class="settings-label" for="rag-embedding-provider">Provider</label>
+            <select id="rag-embedding-provider" class="settings-select"></select>
+          </div>
+          <div class="settings-section">
+            <div class="label-row">
+              <label class="settings-label" for="rag-embedding-key-input">API key</label>
+              <a class="settings-link" id="rag-embed-docs-link" href="#" target="_blank" rel="noopener" hidden>Get key</a>
+            </div>
+            <div class="api-key-row">
+              <input type="password" id="rag-embedding-key-input" class="settings-input" placeholder="Paste API key…" autocomplete="off" />
+              <button type="button" class="btn-icon btn-eye-toggle" id="rag-embedding-key-toggle" aria-label="Show API key" title="Show API key">
+                <svg class="eye-icon eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <svg class="eye-icon eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              </button>
+            </div>
+            <p class="settings-hint">Stored locally in your browser only.</p>
+          </div>
+          <div class="settings-section">
+            <label class="settings-label" for="rag-embedding-model">Model</label>
+            <select id="rag-embedding-model" class="settings-select"></select>
+            <button type="button" class="btn btn-test btn-sm" id="rag-test-embed-key-btn">Verify</button>
+            <div class="rag-key-test-status" id="rag-embed-key-status"></div>
+          </div>
+        </section>
+
+        <section class="settings-block">
+          <h3 class="settings-block-title">Chat Model</h3>
+          <div class="settings-section">
+            <label class="settings-label" for="rag-chat-provider">Provider</label>
+            <select id="rag-chat-provider" class="settings-select"></select>
+          </div>
+          <div class="settings-section">
+            <div class="label-row">
+              <label class="settings-label" for="rag-chat-key-input">API key</label>
+              <a class="settings-link" id="rag-chat-docs-link" href="#" target="_blank" rel="noopener" hidden>Get key</a>
+            </div>
+            <div class="api-key-row">
+              <input type="password" id="rag-chat-key-input" class="settings-input" placeholder="Paste API key…" autocomplete="off" />
+              <button type="button" class="btn-icon btn-eye-toggle" id="rag-chat-key-toggle" aria-label="Show API key" title="Show API key">
+                <svg class="eye-icon eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <svg class="eye-icon eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              </button>
+            </div>
+            <p class="settings-hint">Stored locally in your browser only.</p>
+          </div>
+          <div class="settings-section">
+            <label class="settings-label" for="rag-chat-model">Model</label>
+            <div class="model-select-row">
+              <select id="rag-chat-model" class="settings-select"></select>
+              <button type="button" class="btn-icon" id="rag-refresh-chat-models-btn" title="Refresh models" aria-label="Refresh models">
+                <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>
+              </button>
+            </div>
+            <button type="button" class="btn btn-test btn-sm" id="rag-test-chat-key-btn">Verify</button>
+            <div class="rag-key-test-status" id="rag-chat-key-status"></div>
+          </div>
+        </section>
+
+        <section class="settings-block">
+          <h3 class="settings-block-title">Chunking</h3>
+          <div class="settings-section">
+            <label class="settings-label" for="rag-chunk-size">Chunk size</label>
+            <input type="number" id="rag-chunk-size" class="settings-input" min="100" max="4000" step="50" />
+          </div>
+          <div class="settings-section">
+            <label class="settings-label" for="rag-chunk-overlap">Overlap</label>
+            <input type="number" id="rag-chunk-overlap" class="settings-input" min="0" max="500" step="10" />
+          </div>
+          <div class="settings-section">
+            <label class="settings-label" for="rag-chunk-strategy">Strategy</label>
+            <select id="rag-chunk-strategy" class="settings-select">
+              <option value="recursive">Recursive</option>
+              <option value="sentence">Sentence</option>
+              <option value="fixed">Fixed</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="settings-block">
+          <h3 class="settings-block-title">Retrieval</h3>
+          <div class="settings-section">
+            <label class="settings-label" for="rag-top-k">Top K <span id="rag-top-k-value"></span></label>
+            <input type="range" id="rag-top-k" min="1" max="20" step="1" />
+          </div>
+          <div class="settings-section">
+            <label class="settings-label" for="rag-similarity-threshold">Similarity threshold <span id="rag-threshold-value">0.30</span></label>
+            <input type="range" id="rag-similarity-threshold" min="0" max="1" step="0.05" />
+          </div>
+          <div class="settings-section">
+            <label class="settings-label" for="rag-search-strategy">Search strategy</label>
+            <select id="rag-search-strategy" class="settings-select">
+              <option value="cosine">Cosine similarity</option>
+              <option value="dot">Dot product</option>
+              <option value="euclidean">Euclidean distance</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="settings-block">
+          <h3 class="settings-block-title">Prompts</h3>
+          <div class="settings-section">
+            <label class="settings-label" for="rag-system-prompt">System prompt</label>
+            <textarea id="rag-system-prompt" class="settings-textarea" rows="3"></textarea>
+          </div>
+          <div class="settings-section">
+            <label class="settings-label" for="rag-rag-prompt">RAG prompt template</label>
+            <textarea id="rag-rag-prompt" class="settings-textarea" rows="4" placeholder="Use {context} and {question}"></textarea>
+          </div>
+        </section>
+
+        <section class="settings-block">
+          <h3 class="settings-block-title">Advanced</h3>
+          <div class="settings-section">
+            <label class="settings-label" for="rag-temperature">Temperature <span id="rag-temp-value">0.3</span></label>
+            <input type="range" id="rag-temperature" min="0" max="2" step="0.1" />
+          </div>
+          <div class="settings-section">
+            <label class="settings-label" for="rag-max-tokens">Max tokens</label>
+            <input type="number" id="rag-max-tokens" class="settings-input" min="256" max="32000" step="256" />
+          </div>
+        </section>
+      </div>
+    </aside>
+
+    <div class="overlay" id="rag-overlay"></div>
+    <div class="sidebar-overlay" id="rag-sidebar-overlay"></div>
+
+    <button type="button" class="edge-toggle edge-toggle-left" id="rag-sidebar-edge-toggle" aria-label="Collapse sidebar" aria-expanded="true" title="Collapse sidebar">
+      <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <button type="button" class="edge-toggle edge-toggle-right" id="rag-settings-edge-toggle" aria-label="Expand settings" aria-expanded="false" title="Expand settings">
+      <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
   </div>
+
   <script type="module" src="/src/rag-main.js"></script>
 </body>
 </html>

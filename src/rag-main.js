@@ -79,5 +79,6 @@ window.addEventListener('DOMContentLoaded', () => {
   bindThemeToggle();
   const helpUI = new HelpUI();
   document.getElementById('rag-topnav-help-btn')?.addEventListener('click', () => helpUI.togglePanel());
+  document.getElementById('rag-mobile-help-btn')?.addEventListener('click', () => helpUI.togglePanel());
   new RagSandboxUI();
 });

@@ -2401,103 +2401,63 @@ kbd {
   margin-top: 10px;
 }
 
-/* ---- RAG Sandbox Layout ---- */
-.rag-sandbox {
+/* ---- RAG Sandbox ---- */
+.rag-app-body {
+  overflow: hidden;
+  --topnav-height: 56px;
+}
+
+#rag-app {
+  position: relative;
   display: flex;
-  flex: 1;
-  min-height: 0;
+  min-height: 100dvh;
+  height: 100dvh;
   width: 100%;
+  max-width: 100vw;
   overflow: hidden;
+  z-index: 1;
 }
 
-.rag-left-sidebar {
-  width: 260px;
-  min-width: 260px;
+#rag-sidebar {
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--border);
-  background: var(--sidebar-bg);
-  overflow: hidden;
-}
-
-.rag-right-sidebar {
-  width: var(--settings-width);
-  min-width: var(--settings-width);
-  display: flex;
-  flex-direction: column;
-  border-left: 1px solid var(--border);
-  background: var(--sidebar-bg);
-  overflow: hidden;
-}
-
-.rag-center {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
   min-height: 0;
 }
 
-.rag-sidebar-header,
-.rag-center-header,
-.rag-settings-header,
-.rag-documents-header {
+.rag-sidebar-section-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 16px 12px;
+  padding-right: 12px;
   flex-shrink: 0;
-  border-bottom: 1px solid var(--border);
-  background: var(--sidebar-bg);
-  gap: 8px;
 }
 
-.rag-sidebar-header h2,
-.rag-center-header h2,
-.rag-settings-header h2,
-.rag-documents-header h2 {
-  font-family: var(--font-serif);
-  font-size: 1.125rem;
-  font-weight: 400;
-  letter-spacing: -0.01em;
+.rag-sidebar-section-head .sidebar-section-label {
   flex: 1;
-  min-width: 0;
+  padding-bottom: 6px;
 }
 
-.rag-documents-header {
-  border-top: 1px solid var(--border);
+.rag-doc-actions {
+  display: flex;
+  gap: 4px;
+  padding: 0 16px 8px;
+  flex-shrink: 0;
 }
 
 .rag-collections-list {
-  padding: 8px 8px 0;
+  padding: 0 8px 4px;
   flex-shrink: 0;
   max-height: 180px;
   overflow-y: auto;
-  background: var(--sidebar-bg);
 }
 
-.rag-sidebar-section {
+.rag-sidebar-docs {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--sidebar-bg);
-}
-
-.rag-documents-body {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  padding: 12px 16px 16px;
-}
-
-.rag-sidebar-actions {
-  display: flex;
-  gap: 4px;
-  flex-shrink: 0;
+  padding: 0 12px 12px;
 }
 
 .rag-documents-list {
@@ -2507,26 +2467,17 @@ kbd {
   margin-top: 8px;
 }
 
-.rag-settings-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px 16px 24px;
-  min-height: 0;
+#rag-chat-header .chat-header-left {
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .rag-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px var(--content-padding);
   min-height: 0;
 }
 
 .rag-input-area {
-  padding: 12px var(--content-padding) 16px;
   padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid var(--border);
-  flex-shrink: 0;
-  background: var(--bg-primary);
 }
 
 .rag-input-container {
@@ -2535,6 +2486,9 @@ kbd {
   align-items: flex-end;
   gap: 10px;
   padding: 10px 12px;
+  max-width: 768px;
+  margin: 0 auto;
+  width: 100%;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
@@ -2620,17 +2574,12 @@ kbd {
   background: var(--error-soft);
 }
 
-.rag-center-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
 .rag-usage-stats {
   display: flex;
   gap: 10px;
   font-size: 0.75rem;
   color: var(--text-tertiary);
+  flex-wrap: wrap;
 }
 
 .rag-api-keys-list {
@@ -2685,147 +2634,29 @@ kbd {
   line-height: 1.5;
 }
 
-/* Standalone RAG app shell */
-.rag-app-body {
-  overflow: hidden;
-}
-
-.rag-app {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-  width: 100%;
-  max-width: 100vw;
-  overflow: hidden;
-}
-
-.rag-topbar {
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-primary);
-  padding-top: env(safe-area-inset-top, 0px);
-  min-height: calc(var(--topnav-height, 56px) + env(safe-area-inset-top, 0px));
-}
-
-.rag-app-body {
-  --topnav-height: 56px;
-}
-
-@media (min-width: 1101px) {
-  #rag-app.rag-left-closed .rag-left-sidebar,
-  #rag-app.rag-right-closed .rag-right-sidebar {
-    display: none;
-  }
-}
-
 a.status-pill,
 a.rag-back-pill {
   text-decoration: none;
   color: var(--text-secondary);
 }
 
-.rag-app .rag-sandbox {
-  flex: 1;
-  min-height: 0;
+.rag-app-body .mobile-header {
+  display: none;
 }
 
-/* ---- RAG responsive: tablet & mobile ---- */
 @media (max-width: 1100px) {
-  .rag-sandbox {
-    flex-direction: column;
-  }
-
-  .rag-sandbox[data-rag-panel="knowledge"] .rag-left-sidebar {
-    display: flex;
-    flex: 1;
-    min-height: 0;
-  }
-
-  .rag-sandbox[data-rag-panel="knowledge"] .rag-center,
-  .rag-sandbox[data-rag-panel="knowledge"] .rag-right-sidebar {
-    display: none;
-  }
-
-  .rag-sandbox[data-rag-panel="chat"] .rag-center {
-    display: flex;
-    flex: 1;
-    min-height: 0;
-  }
-
-  .rag-sandbox[data-rag-panel="chat"] .rag-left-sidebar,
-  .rag-sandbox[data-rag-panel="chat"] .rag-right-sidebar {
-    display: none;
-  }
-
-  .rag-sandbox[data-rag-panel="settings"] .rag-right-sidebar {
-    display: flex;
-    flex: 1;
-    min-height: 0;
-  }
-
-  .rag-sandbox[data-rag-panel="settings"] .rag-left-sidebar,
-  .rag-sandbox[data-rag-panel="settings"] .rag-center {
-    display: none;
-  }
-
-  .rag-left-sidebar,
-  .rag-right-sidebar {
-    width: 100%;
-    min-width: 0;
-    max-height: none;
-    border: none;
-  }
-
-  .rag-left-sidebar {
-    border-right: none;
-  }
-
-  .rag-right-sidebar {
-    border-left: none;
-  }
-
   .rag-collections-list {
     max-height: min(28vh, 200px);
-  }
-
-  .rag-center-header {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .rag-center-actions {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
-
-  .rag-usage-stats {
-    flex-wrap: wrap;
-    gap: 6px 10px;
-  }
-
-  .rag-documents-header {
-    flex-wrap: wrap;
-  }
-
-  .rag-sidebar-actions {
-    flex-wrap: wrap;
-    justify-content: flex-end;
   }
 }
 
 @media (max-width: 768px) {
-  .rag-topbar {
-    padding: 0 12px;
+  .rag-app-body .mobile-header {
+    display: flex;
   }
 
-  .rag-topbar .topnav-right .status-pill-text {
+  #rag-topbar {
     display: none;
-  }
-
-  .rag-topbar .topnav-right .status-pill {
-    padding: 6px;
-    max-width: none;
   }
 
   .rag-messages {
@@ -2842,36 +2673,13 @@ a.rag-back-pill {
     border-radius: var(--radius-lg);
   }
 
-  .rag-welcome {
-    padding: 32px 16px;
-  }
-
-  .rag-welcome h3 {
-    font-size: 1.25rem;
-  }
-
-  .rag-message--user .rag-message-content {
-    max-width: 92%;
-  }
-
-  .rag-sidebar-header h2,
-  .rag-center-header h2,
-  .rag-settings-header h2,
-  .rag-documents-header h2 {
-    font-size: 1rem;
-  }
-
-  .rag-settings-body {
-    padding: 10px 14px 20px;
-  }
-
-  .rag-documents-body {
-    padding: 10px 14px 14px;
+  .rag-usage-stats {
+    gap: 6px 10px;
   }
 }
 
 @media (max-width: 480px) {
-  .rag-sidebar-actions .btn-text {
+  .rag-doc-actions .btn-text {
     font-size: 0.6875rem;
     padding: 4px 6px;
   }

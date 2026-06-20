@@ -9,22 +9,26 @@ import { renderMarkdown } from './markdown.js';
 import { showToast } from './toast.js';
 import { showConfirm, showPrompt } from './modal.js';
 import { iconHtml } from './icons.js';
+import { isMobile, isTablet, onViewportChange } from './breakpoints.js';
 
 export class RagSandboxUI {
   constructor() {
-    this.view = document.getElementById('rag-sandbox-view');
+    this.root = document.getElementById('rag-app');
+    this.sidebar = document.getElementById('rag-sidebar');
+    this.settingsPanel = document.getElementById('rag-settings-panel');
+    this.sidebarOverlay = document.getElementById('rag-sidebar-overlay');
+    this.overlay = document.getElementById('rag-overlay');
+    this.sidebarEdgeToggle = document.getElementById('rag-sidebar-edge-toggle');
+    this.settingsEdgeToggle = document.getElementById('rag-settings-edge-toggle');
     this.abortController = null;
     this.indexing = false;
     this.init();
   }
 
   init() {
-    if (!this.view) return;
-    this.appEl = document.getElementById('rag-app');
-    this.panelMq = window.matchMedia('(max-width: 1100px)');
+    if (!this.root || !this.sidebar) return;
     this.bindEvents();
-    this.bindTopnav();
-    this.restoreSidebarState();
+    this.bindLayout();
     this.renderCollections();
     this.renderDocuments();
     this.renderSettings();
@@ -90,60 +94,115 @@ export class RagSandboxUI {
     ragState.on('apikey-changed', () => this.syncKeyFields());
   }
 
-  bindTopnav() {
-    const menuBtn = document.getElementById('rag-topnav-menu-btn');
-    const settingsBtn = document.getElementById('rag-topnav-settings-btn');
+  bindLayout() {
+    document.getElementById('rag-topnav-menu-btn')?.addEventListener('click', () => this.toggleSidebar());
+    document.getElementById('rag-topnav-settings-btn')?.addEventListener('click', () => this.toggleSettingsPanel());
+    document.getElementById('rag-sidebar-toggle')?.addEventListener('click', () => this.toggleSidebar());
+    document.getElementById('rag-settings-toggle-mobile')?.addEventListener('click', () => this.toggleSettingsPanel());
+    document.getElementById('rag-mobile-status-bar')?.addEventListener('click', () => this.expandSettingsPanel());
 
-    menuBtn?.addEventListener('click', () => this.toggleLeftSidebar());
-    settingsBtn?.addEventListener('click', () => this.toggleRightSidebar());
-
-    this.panelMq.addEventListener('change', () => {
-      if (!this.isMobileLayout()) this.restoreSidebarState();
-      this.updateTopnavState();
+    document.getElementById('rag-sidebar-collapse-btn')?.addEventListener('click', () => {
+      if (!isMobile()) this.setSidebarCollapsed(true);
     });
+    document.getElementById('rag-settings-collapse-btn')?.addEventListener('click', () => {
+      if (!this.isOverlayMode()) this.collapseSettingsPanel();
+    });
+    document.getElementById('rag-settings-close-btn')?.addEventListener('click', () => this.collapseSettingsPanel());
+
+    this.sidebarEdgeToggle?.addEventListener('click', () => this.toggleSidebar());
+    this.settingsEdgeToggle?.addEventListener('click', () => this.toggleSettingsPanel());
+    this.sidebarOverlay?.addEventListener('click', () => this.closeMobileSidebar());
+    this.overlay?.addEventListener('click', () => this.collapseSettingsPanel());
+
+    const storedSidebar = localStorage.getItem('rag-sidebar-collapsed');
+    const storedSettings = localStorage.getItem('rag-settings-collapsed');
+    const sidebarCollapsed = storedSidebar !== null ? storedSidebar === 'true' : false;
+    const settingsCollapsed = storedSettings !== null ? storedSettings === 'true' : this.isOverlayMode();
+
+    this.setSidebarCollapsed(sidebarCollapsed);
+    this.setSettingsCollapsed(settingsCollapsed);
+
+    onViewportChange(({ mobile }) => {
+      if (!mobile) this.closeMobileSidebar();
+      if (!this.isOverlayMode() && this.overlay) this.overlay.classList.remove('visible');
+    });
+  }
+
+  isOverlayMode() {
+    return isTablet();
+  }
+
+  openMobileSidebar() {
+    this.collapseSettingsPanel();
+    this.sidebar?.classList.add('open');
+    this.sidebarOverlay?.classList.add('visible');
+    document.body.classList.add('sidebar-open');
     this.updateTopnavState();
   }
 
-  isMobileLayout() {
-    return this.panelMq.matches;
-  }
-
-  setMobilePanel(panel) {
-    if (!this.view) return;
-    this.view.dataset.ragPanel = panel;
+  closeMobileSidebar() {
+    this.sidebar?.classList.remove('open');
+    this.sidebarOverlay?.classList.remove('visible');
+    document.body.classList.remove('sidebar-open');
     this.updateTopnavState();
   }
 
-  toggleLeftSidebar() {
-    if (this.isMobileLayout()) {
-      const panel = this.view.dataset.ragPanel || 'chat';
-      this.setMobilePanel(panel === 'knowledge' ? 'chat' : 'knowledge');
-      return;
+  toggleSidebar() {
+    if (isMobile()) {
+      if (this.sidebar?.classList.contains('open')) this.closeMobileSidebar();
+      else this.openMobileSidebar();
+    } else {
+      this.setSidebarCollapsed(!this.sidebar?.classList.contains('collapsed'));
     }
-
-    if (!this.appEl) return;
-    this.appEl.classList.toggle('rag-left-closed');
-    localStorage.setItem('rag-left-closed', this.appEl.classList.contains('rag-left-closed'));
-    this.updateTopnavState();
   }
 
-  toggleRightSidebar() {
-    if (this.isMobileLayout()) {
-      const panel = this.view.dataset.ragPanel || 'chat';
-      this.setMobilePanel(panel === 'settings' ? 'chat' : 'settings');
-      return;
+  setSidebarCollapsed(collapsed) {
+    this.sidebar?.classList.toggle('collapsed', collapsed);
+    document.body.classList.toggle('sidebar-collapsed', collapsed);
+    const label = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+    if (this.sidebarEdgeToggle) {
+      this.sidebarEdgeToggle.setAttribute('aria-expanded', String(!collapsed));
+      this.sidebarEdgeToggle.setAttribute('aria-label', label);
+      this.sidebarEdgeToggle.title = label;
     }
-
-    if (!this.appEl) return;
-    this.appEl.classList.toggle('rag-right-closed');
-    localStorage.setItem('rag-right-closed', this.appEl.classList.contains('rag-right-closed'));
+    const collapseBtn = document.getElementById('rag-sidebar-collapse-btn');
+    if (collapseBtn) {
+      collapseBtn.setAttribute('aria-label', label);
+      collapseBtn.title = label;
+    }
+    localStorage.setItem('rag-sidebar-collapsed', collapsed);
     this.updateTopnavState();
   }
 
-  restoreSidebarState() {
-    if (!this.appEl || this.isMobileLayout()) return;
-    if (localStorage.getItem('rag-left-closed') === 'true') this.appEl.classList.add('rag-left-closed');
-    if (localStorage.getItem('rag-right-closed') === 'true') this.appEl.classList.add('rag-right-closed');
+  expandSettingsPanel() {
+    if (this.isOverlayMode()) this.closeMobileSidebar();
+    this.setSettingsCollapsed(false);
+  }
+
+  collapseSettingsPanel() {
+    this.setSettingsCollapsed(true);
+  }
+
+  toggleSettingsPanel() {
+    this.setSettingsCollapsed(!this.settingsPanel?.classList.contains('collapsed'));
+  }
+
+  setSettingsCollapsed(collapsed) {
+    this.settingsPanel?.classList.toggle('collapsed', collapsed);
+    document.body.classList.toggle('settings-collapsed', collapsed);
+    const label = collapsed ? 'Expand settings' : 'Collapse settings';
+    if (this.settingsEdgeToggle) {
+      this.settingsEdgeToggle.setAttribute('aria-expanded', String(!collapsed));
+      this.settingsEdgeToggle.setAttribute('aria-label', label);
+      this.settingsEdgeToggle.title = label;
+    }
+    const collapseBtn = document.getElementById('rag-settings-collapse-btn');
+    if (collapseBtn) {
+      collapseBtn.setAttribute('aria-label', label);
+      collapseBtn.title = label;
+    }
+    if (this.overlay) this.overlay.classList.toggle('visible', !collapsed && this.isOverlayMode());
+    localStorage.setItem('rag-settings-collapsed', collapsed);
     this.updateTopnavState();
   }
 
@@ -151,17 +210,13 @@ export class RagSandboxUI {
     const menuBtn = document.getElementById('rag-topnav-menu-btn');
     const settingsBtn = document.getElementById('rag-topnav-settings-btn');
 
-    if (this.isMobileLayout()) {
-      const panel = this.view?.dataset.ragPanel || 'chat';
-      menuBtn?.classList.toggle('topnav-pill--active', panel === 'knowledge');
-      settingsBtn?.classList.toggle('topnav-pill--active', panel === 'settings');
-      return;
-    }
+    const sidebarOpen = isMobile()
+      ? this.sidebar?.classList.contains('open')
+      : !this.sidebar?.classList.contains('collapsed');
+    const settingsOpen = !this.settingsPanel?.classList.contains('collapsed');
 
-    const leftOpen = !this.appEl?.classList.contains('rag-left-closed');
-    const rightOpen = !this.appEl?.classList.contains('rag-right-closed');
-    menuBtn?.classList.toggle('topnav-pill--active', leftOpen);
-    settingsBtn?.classList.toggle('topnav-pill--active', rightOpen);
+    menuBtn?.classList.toggle('topnav-pill--active', sidebarOpen);
+    settingsBtn?.classList.toggle('topnav-pill--active', settingsOpen);
   }
 
   bindSettingsEvents() {
