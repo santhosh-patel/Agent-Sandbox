@@ -2511,29 +2511,63 @@ kbd {
 
 .rag-input-area {
   padding: 12px var(--content-padding) 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--border);
   flex-shrink: 0;
+  background: var(--bg-primary);
 }
 
-.rag-input-area textarea {
-  width: 100%;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+.rag-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   padding: 12px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.rag-input-container:focus-within {
+  border-color: var(--border-strong);
+  box-shadow: var(--float-shadow);
+}
+
+.rag-input-container textarea {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
   font-family: var(--font-sans);
   font-size: 0.9375rem;
-  background: var(--bg-elevated);
+  line-height: 1.5;
   color: var(--text-primary);
   resize: none;
-  min-height: 48px;
+  min-height: 24px;
   max-height: 160px;
+  outline: none;
+}
+
+.rag-input-container textarea::placeholder {
+  color: var(--text-tertiary);
 }
 
 .rag-input-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 8px;
   gap: 8px;
+}
+
+.rag-input-actions .btn-send {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rag-mobile-tabs {
+  display: none;
+  flex-shrink: 0;
 }
 
 .rag-center-actions {
@@ -2621,23 +2655,20 @@ kbd {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   padding: 12px 20px;
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
   border-bottom: 1px solid var(--border);
   background: var(--bg-primary);
   flex-shrink: 0;
   min-height: var(--topnav-height, 56px);
 }
 
-.rag-topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .rag-topbar-brand {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
 .rag-topbar-brand h1 {
@@ -2645,6 +2676,14 @@ kbd {
   font-size: 1.25rem;
   font-weight: 400;
   letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.rag-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 a.status-pill,
@@ -2658,28 +2697,213 @@ a.rag-back-pill {
   min-height: 0;
 }
 
+/* ---- RAG responsive: tablet & mobile ---- */
 @media (max-width: 1100px) {
+  .rag-mobile-tabs {
+    display: flex;
+    align-items: stretch;
+    gap: 6px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-primary);
+  }
+
+  .rag-mobile-tab {
+    flex: 1;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background var(--transition), color var(--transition), border-color var(--transition), box-shadow var(--transition);
+    touch-action: manipulation;
+  }
+
+  .rag-mobile-tab:hover {
+    color: var(--text-primary);
+    background: var(--surface-hover);
+  }
+
+  .rag-mobile-tab.active {
+    background: var(--accent-soft);
+    border-color: var(--accent-border, var(--accent));
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+  }
+
   .rag-sandbox {
     flex-direction: column;
+  }
+
+  .rag-sandbox[data-rag-panel="knowledge"] .rag-left-sidebar {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .rag-sandbox[data-rag-panel="knowledge"] .rag-center,
+  .rag-sandbox[data-rag-panel="knowledge"] .rag-right-sidebar {
+    display: none;
+  }
+
+  .rag-sandbox[data-rag-panel="chat"] .rag-center {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .rag-sandbox[data-rag-panel="chat"] .rag-left-sidebar,
+  .rag-sandbox[data-rag-panel="chat"] .rag-right-sidebar {
+    display: none;
+  }
+
+  .rag-sandbox[data-rag-panel="settings"] .rag-right-sidebar {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .rag-sandbox[data-rag-panel="settings"] .rag-left-sidebar,
+  .rag-sandbox[data-rag-panel="settings"] .rag-center {
+    display: none;
   }
 
   .rag-left-sidebar,
   .rag-right-sidebar {
     width: 100%;
     min-width: 0;
-    max-height: 200px;
+    max-height: none;
     border: none;
-    border-bottom: 1px solid var(--border);
+  }
+
+  .rag-left-sidebar {
+    border-right: none;
   }
 
   .rag-right-sidebar {
-    max-height: 280px;
+    border-left: none;
+  }
+
+  .rag-collections-list {
+    max-height: min(28vh, 200px);
+  }
+
+  .rag-center-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .rag-center-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .rag-usage-stats {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+  }
+
+  .rag-documents-header {
+    flex-wrap: wrap;
+  }
+
+  .rag-sidebar-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 }
 
 @media (max-width: 768px) {
-  .rag-left-sidebar {
-    max-height: 160px;
+  .rag-topbar {
+    padding: 10px 12px;
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
+    min-height: 52px;
+  }
+
+  .rag-topbar-brand h1 {
+    font-size: 1.0625rem;
+  }
+
+  .rag-topbar-right .status-pill-text {
+    display: none;
+  }
+
+  .rag-topbar-right .status-pill {
+    padding: 6px;
+    max-width: none;
+  }
+
+  .rag-mobile-tabs {
+    padding: 6px 10px;
+    gap: 4px;
+  }
+
+  .rag-mobile-tab {
+    font-size: 0.75rem;
+    padding: 8px 10px;
+    min-height: 38px;
+  }
+
+  .rag-messages {
+    padding: 12px 14px;
+  }
+
+  .rag-input-area {
+    padding: 10px 14px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .rag-input-container {
+    padding: 10px 12px;
+    border-radius: var(--radius-lg);
+  }
+
+  .rag-welcome {
+    padding: 32px 16px;
+  }
+
+  .rag-welcome h3 {
+    font-size: 1.25rem;
+  }
+
+  .rag-message--user .rag-message-content {
+    max-width: 92%;
+  }
+
+  .rag-sidebar-header h2,
+  .rag-center-header h2,
+  .rag-settings-header h2,
+  .rag-documents-header h2 {
+    font-size: 1rem;
+  }
+
+  .rag-settings-body {
+    padding: 10px 14px 20px;
+  }
+
+  .rag-documents-body {
+    padding: 10px 14px 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .rag-topbar-brand .app-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .rag-topbar-brand h1 {
+    font-size: 1rem;
+  }
+
+  .rag-sidebar-actions .btn-text {
+    font-size: 0.6875rem;
+    padding: 4px 6px;
   }
 }
 

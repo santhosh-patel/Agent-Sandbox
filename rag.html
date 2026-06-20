@@ -31,7 +31,12 @@
         </a>
       </div>
     </header>
-    <div id="rag-sandbox-view" class="rag-sandbox">
+    <nav class="rag-mobile-tabs" id="rag-mobile-tabs" aria-label="RAG sections">
+      <button type="button" class="rag-mobile-tab active" data-rag-panel="knowledge" id="rag-tab-knowledge">Knowledge</button>
+      <button type="button" class="rag-mobile-tab" data-rag-panel="chat" id="rag-tab-chat">Chat</button>
+      <button type="button" class="rag-mobile-tab" data-rag-panel="settings" id="rag-tab-settings">Settings</button>
+    </nav>
+    <div id="rag-sandbox-view" class="rag-sandbox" data-rag-panel="chat">
           <aside class="rag-left-sidebar" id="rag-left-sidebar">
             <div class="rag-sidebar-header">
               <h2>Knowledge Bases</h2>
@@ -76,10 +81,15 @@
               </div>
             </div>
             <div class="rag-input-area">
-              <textarea id="rag-message-input" placeholder="Ask a question about your documents…" rows="2"></textarea>
-              <div class="rag-input-actions">
-                <button type="button" class="btn-send" id="rag-send-btn">Send</button>
-                <button type="button" class="btn-stop" id="rag-stop-btn" style="display:none">Stop</button>
+              <div class="rag-input-container">
+                <textarea id="rag-message-input" placeholder="Ask a question about your documents…" rows="1"></textarea>
+                <div class="rag-input-actions">
+                  <button type="button" class="btn-send" id="rag-send-btn">
+                    <span>Send</span>
+                    <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+                  </button>
+                  <button type="button" class="btn-stop" id="rag-stop-btn" style="display:none">Stop</button>
+                </div>
               </div>
             </div>
           </div>

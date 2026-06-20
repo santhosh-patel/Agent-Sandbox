@@ -20,6 +20,7 @@ export class RagSandboxUI {
   init() {
     if (!this.view) return;
     this.bindEvents();
+    this.bindMobilePanels();
     this.renderCollections();
     this.renderDocuments();
     this.renderSettings();
@@ -55,6 +56,11 @@ export class RagSandboxUI {
         this.handleSend();
       }
     });
+    document.getElementById('rag-message-input')?.addEventListener('input', (e) => {
+      const el = e.target;
+      el.style.height = 'auto';
+      el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+    });
     document.getElementById('rag-clear-chat-btn')?.addEventListener('click', () => {
       ragState.clearMessages();
       this.renderMessages();
@@ -78,6 +84,32 @@ export class RagSandboxUI {
     ragState.on('messages-cleared', () => this.renderMessages());
     ragState.on('usage-changed', () => this.renderUsage());
     ragState.on('apikey-changed', () => this.renderApiKeys());
+  }
+
+  bindMobilePanels() {
+    const tabs = document.querySelectorAll('.rag-mobile-tab');
+    const sandbox = this.view;
+    if (!tabs.length || !sandbox) return;
+
+    const setPanel = (panel) => {
+      sandbox.dataset.ragPanel = panel;
+      tabs.forEach(tab => {
+        const active = tab.dataset.ragPanel === panel;
+        tab.classList.toggle('active', active);
+        tab.setAttribute('aria-current', active ? 'page' : 'false');
+      });
+    };
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => setPanel(tab.dataset.ragPanel));
+    });
+
+    const mq = window.matchMedia('(max-width: 1100px)');
+    const syncPanel = () => {
+      if (mq.matches) setPanel(sandbox.dataset.ragPanel || 'chat');
+    };
+    mq.addEventListener('change', syncPanel);
+    syncPanel();
   }
 
   bindSettingsEvents() {
