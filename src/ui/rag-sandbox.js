@@ -47,6 +47,7 @@ export class RagSandboxUI {
     this.renderSettings();
     this.renderMessages();
     this.renderUsage();
+    this.renderSettingsUsageSummary();
     this.evalUI = new RagEvalUI();
     this.renderStorageMeter();
   }
@@ -136,6 +137,8 @@ export class RagSandboxUI {
       this.renderMessages();
     });
 
+    this.bindUsageButtons();
+
     this.bindSettingsEvents();
 
     ragState.on('collections-changed', () => {
@@ -155,7 +158,10 @@ export class RagSandboxUI {
     ragState.on('message-added', () => this.renderMessages());
     ragState.on('message-updated', () => this.renderMessages());
     ragState.on('messages-cleared', () => this.renderMessages());
-    ragState.on('usage-changed', () => this.renderUsage());
+    ragState.on('usage-changed', () => {
+      this.renderUsage();
+      this.renderSettingsUsageSummary();
+    });
     ragState.on('apikey-changed', () => this.syncKeyFields());
   }
 
@@ -638,6 +644,30 @@ export class RagSandboxUI {
     return html;
   }
 
+  bindUsageButtons() {
+    ['rag-topnav-usage-btn', 'rag-sidebar-usage-btn', 'rag-settings-usage-btn'].forEach(id => {
+      document.getElementById(id)?.addEventListener('click', () => openUsageWindow());
+    });
+  }
+
+  renderSettingsUsageSummary() {
+    const el = document.getElementById('rag-settings-usage-summary');
+    if (!el) return;
+    const usage = ragState.usage;
+    const avgLatency = usage.latency.length
+      ? (usage.latency.reduce((a, b) => a + b, 0) / usage.latency.length).toFixed(2)
+      : '—';
+    el.innerHTML = `
+      <span class="settings-status-item">${usage.requests} requests</span>
+      <span class="settings-status-sep" aria-hidden="true">·</span>
+      <span class="settings-status-item">${usage.tokens.toLocaleString()} tokens</span>
+      <span class="settings-status-sep" aria-hidden="true">·</span>
+      <span class="settings-status-item">$${usage.cost.toFixed(4)} (est.)</span>
+      <span class="settings-status-sep" aria-hidden="true">·</span>
+      <span class="settings-status-item">${avgLatency}s avg</span>
+    `;
+  }
+
   renderUsage() {
     const usage = ragState.usage;
     const el = document.getElementById('rag-usage-stats');
@@ -645,13 +675,15 @@ export class RagSandboxUI {
     const avgLatency = usage.latency.length
       ? (usage.latency.reduce((a, b) => a + b, 0) / usage.latency.length).toFixed(2)
       : '—';
+    el.className = 'rag-usage-stats rag-usage-stats--clickable';
+    el.title = 'Open usage dashboard';
     el.innerHTML = `
-      <span role="button" tabindex="0" class="rag-usage-clickable" title="Open usage dashboard">${usage.requests} requests</span>
+      <span>${usage.requests} requests</span>
       <span>${usage.tokens.toLocaleString()} tokens</span>
       <span>$${usage.cost.toFixed(4)}</span>
       <span>${avgLatency}s avg</span>
     `;
-    el.querySelector('.rag-usage-clickable')?.addEventListener('click', () => openUsageWindow());
+    el.onclick = () => openUsageWindow();
   }
 
   async handleNewCollection() {

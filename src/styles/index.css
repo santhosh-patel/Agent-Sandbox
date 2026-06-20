@@ -2734,6 +2734,16 @@ a.rag-back-pill {
 .rag-eval-fail { background: rgba(217, 112, 112, 0.08); }
 
 .rag-usage-clickable { cursor: pointer; text-decoration: underline; }
+.rag-usage-stats--clickable { cursor: pointer; }
+.rag-usage-stats--clickable:hover { opacity: 0.85; }
+.rag-settings-usage-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+  font-size: 0.8rem;
+}
 .search-scope-btn { margin-top: 4px; }
 .settings-usage-link { margin-bottom: 12px; }
 .settings-advanced summary { cursor: pointer; list-style: none; }

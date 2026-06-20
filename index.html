@@ -479,6 +479,7 @@
 
       <div class="rag-storage-meter" id="rag-storage-meter"></div>
       <div class="sidebar-footer">
+        <button type="button" class="btn-text btn-sm" id="rag-sidebar-usage-btn">Usage dashboard</button>
         <span class="session-badge">Local session</span>
       </div>
     </aside>
@@ -489,6 +490,7 @@
           <button type="button" class="topnav-pill topnav-pill--active" id="rag-topnav-menu-btn">Menu</button>
           <button type="button" class="topnav-pill" id="rag-topnav-settings-btn">Settings</button>
           <button type="button" class="topnav-pill" id="rag-topnav-help-btn">Help</button>
+          <button type="button" class="topnav-pill" id="rag-topnav-usage-btn">Usage</button>
         </nav>
         <div class="topnav-right">
           <button type="button" class="topnav-theme-btn" id="rag-theme-btn" aria-label="Switch to dark mode" title="Dark mode">
@@ -550,6 +552,8 @@
         <button type="button" class="btn-text settings-close-btn" id="rag-settings-close-btn" aria-label="Close settings">Close</button>
       </div>
       <div class="settings-body">
+        <button type="button" class="btn-text btn-sm settings-usage-link" id="rag-settings-usage-btn">View usage dashboard</button>
+        <div class="rag-settings-usage-summary" id="rag-settings-usage-summary" aria-live="polite"></div>
         <section class="settings-block">
           <h3 class="settings-block-title">Embeddings</h3>
           <div class="settings-section">
