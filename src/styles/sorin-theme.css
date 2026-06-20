@@ -216,9 +216,9 @@
 
 /* ---- Top navigation ---- */
 .topnav {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
   height: var(--topnav-height);
   padding: 0 16px;
@@ -229,12 +229,14 @@
 }
 
 .topnav-nav {
+  grid-column: 2;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  flex: 1 1 auto;
-  min-width: 0;
+  width: max-content;
+  max-width: 100%;
+  justify-self: center;
   padding: 4px;
   background: var(--bg-elevated);
   backdrop-filter: blur(20px);
@@ -269,9 +271,12 @@
 }
 
 .topnav-right {
+  grid-column: 3;
+  justify-self: end;
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
   flex-shrink: 0;
 }
 
@@ -348,6 +353,10 @@
 }
 
 @container topnav (max-width: 520px) {
+  .topnav-nav {
+    max-width: calc(100cqi - 88px);
+  }
+
   .topnav-pill {
     padding: 6px 12px;
     font-size: 0.75rem;
