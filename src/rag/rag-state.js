@@ -8,6 +8,7 @@ import { createId } from '../shared/id.js';
 import { saveCollectionToDb, loadAllCollectionsFromDb, migrateCollectionsToDb, deleteCollectionFromDb } from './rag-db.js';
 
 const STORAGE_KEY = 'rag-sandbox-state';
+const MAX_MESSAGE_UNDO = 10;
 
 function createCollection(name = 'New Collection') {
   return {
@@ -36,6 +37,7 @@ function createDocument(name, content, type) {
 class RagStateManager {
   constructor() {
     this._listeners = new Map();
+    this._messageUndoStack = [];
     this._state = this._loadState();
     if (!this._state.activeCollectionId && this._state.collections.length > 0) {
       this._state.activeCollectionId = this._state.collections[0].id;
@@ -166,6 +168,36 @@ class RagStateManager {
       const idx = arr.indexOf(fn);
       if (idx > -1) arr.splice(idx, 1);
     };
+  }
+
+  pushMessageUndoSnapshot(label = 'Previous state') {
+    if (!this._state.messages.length) return;
+    this._messageUndoStack.push({
+      label,
+      messages: JSON.parse(JSON.stringify(this._state.messages)),
+      timestamp: Date.now(),
+    });
+    if (this._messageUndoStack.length > MAX_MESSAGE_UNDO) this._messageUndoStack.shift();
+    this._emit('undo-changed');
+  }
+
+  canUndoMessages() {
+    return this._messageUndoStack.length > 0;
+  }
+
+  getMessageUndoLabel() {
+    const last = this._messageUndoStack[this._messageUndoStack.length - 1];
+    return last?.label || '';
+  }
+
+  undoLastMessages() {
+    const snapshot = this._messageUndoStack.pop();
+    if (!snapshot) return false;
+    this._state.messages = snapshot.messages;
+    this._saveState();
+    this._emit('messages-undo', { label: snapshot.label });
+    this._emit('undo-changed');
+    return true;
   }
 
   get collections() { return this._state.collections; }
@@ -334,6 +366,7 @@ class RagStateManager {
   }
 
   clearMessages() {
+    if (this._state.messages.length) this.pushMessageUndoSnapshot('Before clear chat');
     this._state.messages = [];
     this._saveState();
     this._emit('messages-cleared');

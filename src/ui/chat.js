@@ -8,6 +8,13 @@ import { showPrompt } from './modal.js';
 import { showToast } from './toast.js';
 import { renderWelcomePrompts } from './prompt-library.js';
 import { setTip } from './tooltip.js';
+import {
+  confirmRegenerate,
+  confirmRegenerateAs,
+  confirmEditRegenerate,
+  confirmPickCompare,
+  confirmRetry,
+} from './confirm-actions.js';
 
 const QUICK_ACTION_TIPS = {
   compare: 'Enable compare mode — send one prompt to multiple models',
@@ -38,6 +45,7 @@ export class ChatUI {
     this.onPickCompare = onPickCompare;
     this.getModelOptions = getModelOptions;
     this.regenMenuEl = null;
+    this.rollbackBtn = document.getElementById('chat-rollback-btn');
     this.userNearBottom = true;
     this.stickToBottom = true;
     this.scrollBtn = null;
@@ -64,6 +72,8 @@ export class ChatUI {
 
     this.chatTitleBtn?.addEventListener('click', () => this.renameChat());
 
+    this.rollbackBtn?.addEventListener('click', () => this.handleRollback());
+
     this.mobileStatusBar?.addEventListener('click', () => {
       if (this.onOpenSettings) this.onOpenSettings();
     });
@@ -83,6 +93,11 @@ export class ChatUI {
     });
     state.on('follow-ups-updated', () => this.handleFollowUpsUpdated());
     state.on('compare-picked', () => this.render({ animate: false }));
+    state.on('undo-changed', () => this.updateRollbackButton());
+    state.on('chat-undo', ({ label }) => {
+      showToast(`Rolled back${label ? `: ${label}` : ''}`);
+      this.render({ animate: false });
+    });
     state.on('prompt-library-changed', () => this.renderQuickActions());
 
     this.render();
@@ -224,6 +239,26 @@ export class ChatUI {
 
     const hasMessages = chat && chat.messages.length > 0;
     document.body.classList.toggle('has-messages', hasMessages);
+    this.updateRollbackButton();
+  }
+
+  updateRollbackButton() {
+    const chat = state.getActiveChat();
+    const btn = this.rollbackBtn || document.getElementById('chat-rollback-btn');
+    if (!btn) return;
+    const can = chat && state.canUndo(chat.id);
+    btn.hidden = !can;
+    if (can) {
+      setTip(btn, `Roll back: ${state.getUndoLabel(chat.id)} (${navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+Z)`);
+    } else {
+      setTip(btn, '');
+    }
+  }
+
+  handleRollback() {
+    const chat = state.getActiveChat();
+    if (!chat || !state.canUndo(chat.id)) return;
+    state.undoLastChange(chat.id);
   }
 
   async renameChat() {
@@ -408,7 +443,9 @@ export class ChatUI {
   }
 
   bindErrorActions(el, index) {
-    el.querySelector('.error-retry-btn')?.addEventListener('click', () => {
+    el.querySelector('.error-retry-btn')?.addEventListener('click', async () => {
+      const ok = await confirmRetry();
+      if (!ok) return;
       if (this.onRetry) this.onRetry();
     });
   }
@@ -444,15 +481,20 @@ export class ChatUI {
     });
 
     el.querySelector('.edit-msg-btn')?.addEventListener('click', async () => {
-      const newContent = await showPrompt({ title: 'Edit message', defaultValue: msg.content, multiline: true, confirmText: 'Save & regenerate' });
-      if (newContent?.trim()) {
-        const chat = state.getActiveChat();
-        state.editUserMessage(chat.id, index, newContent.trim());
-        if (this.onRegenerate) this.onRegenerate({});
-      }
+      const newContent = await showPrompt({ title: 'Edit message', defaultValue: msg.content, multiline: true, confirmText: 'Continue' });
+      if (!newContent?.trim()) return;
+      const ok = await confirmEditRegenerate();
+      if (!ok) return;
+      const chat = state.getActiveChat();
+      state.editUserMessage(chat.id, index, newContent.trim());
+      if (this.onRegenerate) this.onRegenerate({});
     });
 
-    el.querySelector('.regen-msg-btn')?.addEventListener('click', () => {
+    el.querySelector('.regen-msg-btn')?.addEventListener('click', async () => {
+      const chat = state.getActiveChat();
+      const removesFollowing = chat && index < chat.messages.length - 1;
+      const ok = await confirmRegenerate({ removesFollowing });
+      if (!ok) return;
       this.prepareRegenerate(index);
       if (this.onRegenerate) this.onRegenerate({});
     });
@@ -506,8 +548,9 @@ export class ChatUI {
   prepareRegenerate(index) {
     const chat = state.getActiveChat();
     if (!chat) return;
+    state.pushUndoSnapshot(chat.id, 'Before regenerate');
     if (index < chat.messages.length - 1) {
-      state.truncateMessagesAfter(chat.id, index - 1);
+      state.truncateMessagesAfter(chat.id, index - 1, { skipUndo: true });
     } else {
       state.removeLastMessage(chat.id);
     }
@@ -569,10 +612,15 @@ export class ChatUI {
     this.regenMenuEl = menu;
 
     menu.querySelectorAll('.regen-menu-item').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const options = {};
         if (btn.dataset.model) options.model = btn.dataset.model;
         if (btn.dataset.profile) options.responseProfile = btn.dataset.profile;
+        const profileLabel = options.responseProfile
+          ? RESPONSE_PROFILES[options.responseProfile]?.label || options.responseProfile
+          : '';
+        const ok = await confirmRegenerateAs({ model: options.model, profile: profileLabel });
+        if (!ok) return;
         this.prepareRegenerate(index);
         if (this.onRegenerate) this.onRegenerate(options);
         this.closeRegenerateMenu();
@@ -682,7 +730,9 @@ export class ChatUI {
         col.querySelector('.compare-column-footer')?.classList.toggle('collapsed', expanded);
       });
 
-      col.querySelector('.compare-use-btn')?.addEventListener('click', () => {
+      col.querySelector('.compare-use-btn')?.addEventListener('click', async () => {
+        const ok = await confirmPickCompare(modelName);
+        if (!ok) return;
         if (this.onPickCompare) this.onPickCompare(compareId, modelName);
       });
 

@@ -6,6 +6,7 @@ import { credentials } from './shared/credentials.js';
 import { createId } from './shared/id.js';
 
 const STORAGE_KEY = 'ai-playground-state';
+const MAX_UNDO = 10;
 
 const defaultSettings = {
   provider: '',
@@ -56,12 +57,53 @@ function createFolder(name = 'New Folder') {
 class StateManager {
   constructor() {
     this._listeners = new Map();
+    this._undoStacks = {};
     this._state = this._loadState();
     if (Object.keys(this._state.chats).length === 0) {
       const chat = createChat();
       this._state.chats[chat.id] = chat;
       this._state.activeChat = chat.id;
     }
+  }
+
+  _cloneMessages(messages) {
+    return JSON.parse(JSON.stringify(messages));
+  }
+
+  pushUndoSnapshot(chatId, label = 'Previous state') {
+    const chat = this._state.chats[chatId];
+    if (!chat) return;
+    if (!this._undoStacks[chatId]) this._undoStacks[chatId] = [];
+    const stack = this._undoStacks[chatId];
+    stack.push({
+      label,
+      messages: this._cloneMessages(chat.messages),
+      timestamp: Date.now(),
+    });
+    if (stack.length > MAX_UNDO) stack.shift();
+    this._emit('undo-changed', { chatId });
+  }
+
+  canUndo(chatId) {
+    return (this._undoStacks[chatId]?.length || 0) > 0;
+  }
+
+  getUndoLabel(chatId) {
+    const stack = this._undoStacks[chatId];
+    return stack?.length ? stack[stack.length - 1].label : '';
+  }
+
+  undoLastChange(chatId) {
+    const chat = this._state.chats[chatId];
+    const stack = this._undoStacks[chatId];
+    if (!chat || !stack?.length) return false;
+    const snapshot = stack.pop();
+    chat.messages = snapshot.messages;
+    chat.updatedAt = Date.now();
+    this._saveState();
+    this._emit('chat-undo', { chatId, label: snapshot.label });
+    this._emit('undo-changed', { chatId });
+    return true;
   }
 
   _loadState() {
@@ -243,6 +285,7 @@ class StateManager {
   pickCompareResponse(chatId, compareId, model) {
     const chat = this._state.chats[chatId];
     if (!chat) return;
+    this.pushUndoSnapshot(chatId, 'Before compare pick');
     const picked = chat.messages.find(m => m.compareId === compareId && m.compareModel === model);
     if (!picked) return;
     chat.messages = chat.messages.filter(m => m.compareId !== compareId);
@@ -425,6 +468,7 @@ class StateManager {
   }
 
   deleteChat(chatId) {
+    delete this._undoStacks[chatId];
     delete this._state.drafts[chatId];
     delete this._state.chats[chatId];
     if (this._state.activeChat === chatId) {
@@ -520,9 +564,10 @@ class StateManager {
     return removed;
   }
 
-  truncateMessagesAfter(chatId, index) {
+  truncateMessagesAfter(chatId, index, { skipUndo = false } = {}) {
     const chat = this._state.chats[chatId];
     if (!chat) return;
+    if (!skipUndo) this.pushUndoSnapshot(chatId, 'Before removing messages');
     chat.messages = chat.messages.slice(0, index + 1);
     chat.updatedAt = Date.now();
     this._saveState();
@@ -532,6 +577,7 @@ class StateManager {
   editUserMessage(chatId, index, newContent) {
     const chat = this._state.chats[chatId];
     if (!chat || !chat.messages[index]) return;
+    this.pushUndoSnapshot(chatId, 'Before edit');
     chat.messages[index].content = newContent;
     chat.messages = chat.messages.slice(0, index + 1);
     chat.updatedAt = Date.now();
@@ -542,6 +588,7 @@ class StateManager {
   clearChat(chatId) {
     const chat = this._state.chats[chatId];
     if (!chat) return;
+    if (chat.messages.length) this.pushUndoSnapshot(chatId, 'Before clear chat');
     chat.messages = [];
     chat.tokenUsage = { prompt: 0, completion: 0, total: 0 };
     chat.totalCost = 0;

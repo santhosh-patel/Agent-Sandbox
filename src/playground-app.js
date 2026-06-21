@@ -67,6 +67,7 @@ export class PlaygroundApp {
       newChat: () => state.createNewChat(),
       send: () => this.inputUI.triggerSend(),
       onEscape: () => this.handleStop(),
+      onUndo: () => this.handleUndo(),
     });
 
     this.helpUI = new HelpUI();
@@ -164,6 +165,12 @@ export class PlaygroundApp {
     this.chatUI.render({ animate: false });
   }
 
+  handleUndo() {
+    const chat = state.getActiveChat();
+    if (!chat || !state.canUndo(chat.id)) return;
+    state.undoLastChange(chat.id);
+  }
+
   async handleSend(prompt, images = []) {
     if (this.abortController || this.abortControllers.length > 0) return;
 
@@ -234,7 +241,10 @@ export class PlaygroundApp {
     const activeChat = state.getActiveChat();
     if (!activeChat) return;
     const lastMsg = activeChat.messages[activeChat.messages.length - 1];
-    if (lastMsg?.role === 'assistant') state.removeLastMessage(activeChat.id);
+    if (lastMsg?.role === 'assistant') {
+      state.pushUndoSnapshot(activeChat.id, 'Before retry');
+      state.removeLastMessage(activeChat.id);
+    }
     await this.executeStreamingResponse(activeChat.id);
   }
 

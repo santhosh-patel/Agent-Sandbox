@@ -180,6 +180,7 @@
                     <span id="input-model-pill">No model</span>
                   </button>
                   <button type="button" class="input-tool-pill" id="save-prompt-btn" title="Save to prompt library">Save</button>
+                  <button type="button" class="input-tool-pill" id="chat-rollback-btn" hidden title="Roll back">Roll back</button>
                   <span class="char-count" id="char-count"></span>
                 </div>
                 <div class="input-send-group">
@@ -512,7 +513,10 @@
               <span class="header-meta">RAG Chat</span>
               <div class="rag-usage-stats" id="rag-usage-stats"></div>
             </div>
-            <button type="button" class="btn-text btn-sm" id="rag-clear-chat-btn">Clear chat</button>
+            <div class="chat-header-right">
+              <button type="button" class="btn-text btn-sm" id="rag-rollback-btn" hidden>Roll back</button>
+              <button type="button" class="btn-text btn-sm" id="rag-clear-chat-btn">Clear chat</button>
+            </div>
           </div>
           <div class="messages rag-messages" id="rag-messages">
             <div class="rag-welcome" id="rag-welcome">

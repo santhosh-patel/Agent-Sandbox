@@ -1,4 +1,5 @@
 import { modKeyLabel } from './icons.js';
+import { getRoute } from '../router.js';
 
 export class ShortcutsUI {
   constructor(handlers) {
@@ -62,6 +63,12 @@ export class ShortcutsUI {
       return;
     }
 
+    if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey && !isInput && getRoute() === '/') {
+      e.preventDefault();
+      if (this.handlers.onUndo) this.handlers.onUndo();
+      return;
+    }
+
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault();
       if (this.handlers.send) this.handlers.send();
@@ -93,6 +100,7 @@ export class ShortcutsUI {
           <div class="shortcut-row"><kbd>${mod}</kbd><kbd>K</kbd><span>Search chats</span></div>
           <div class="shortcut-row"><kbd>${mod}</kbd><kbd>,</kbd><span>Toggle settings</span></div>
           <div class="shortcut-row"><kbd>${mod}</kbd><kbd>Shift</kbd><kbd>N</kbd><span>New chat</span></div>
+          <div class="shortcut-row"><kbd>${mod}</kbd><kbd>Z</kbd><span>Roll back last change</span></div>
           <div class="shortcut-row"><kbd>${mod}</kbd><kbd>Enter</kbd><span>Send message</span></div>
           <div class="shortcut-row"><kbd>Enter</kbd><span>Send message</span></div>
           <div class="shortcut-row"><kbd>Shift</kbd><kbd>Enter</kbd><span>New line</span></div>

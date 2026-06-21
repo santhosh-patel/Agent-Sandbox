@@ -22,6 +22,7 @@ const ELEMENT_TIPS = {
   'attach-image-btn': 'Attach an image to your message',
   'input-settings-btn': 'Quick access to model and provider settings',
   'save-prompt-btn': 'Save the current message to your prompt library',
+  'chat-rollback-btn': 'Restore the chat to before your last destructive action',
   'send-btn': 'Send message — press Enter',
   'stop-btn': 'Stop the current response',
   'scroll-bottom-btn': 'Scroll to the latest message',
@@ -67,6 +68,8 @@ const ELEMENT_TIPS = {
   'inspector-close-btn': 'Close message inspector',
   'rag-send-btn': 'Send question through the RAG pipeline',
   'rag-stop-btn': 'Stop answer generation',
+  'rag-clear-chat-btn': 'Remove all RAG chat messages (you can roll back afterward)',
+  'rag-rollback-btn': 'Restore messages before your last clear or destructive change',
   'chat-title-btn': 'Rename this chat',
   'input-model-pill': 'Active model — click to open settings',
 };

@@ -14,6 +14,7 @@ import { RagEvalUI } from './rag-eval.js';
 import { estimateStorageBytes, formatBytes } from '../rag/rag-db.js';
 import { credentials } from '../shared/credentials.js';
 import { openUsageWindow } from './help-base.js';
+import { confirmClearChat } from './confirm-actions.js';
 import { setTip } from './tooltip.js';
 import { bindThemeToggle } from '../shared/theme.js';
 
@@ -28,6 +29,7 @@ export class RagSandboxUI {
     this.settingsEdgeToggle = document.getElementById('rag-settings-edge-toggle');
     this.abortController = null;
     this.indexing = false;
+    this.rollbackBtn = document.getElementById('rag-rollback-btn');
     this.init();
   }
 
@@ -51,6 +53,36 @@ export class RagSandboxUI {
     this.renderSettingsUsageSummary();
     this.evalUI = new RagEvalUI();
     this.renderStorageMeter();
+    this.updateRollbackButton();
+  }
+
+  handleKeydown(e) {
+    const ragView = document.getElementById('rag-view');
+    if (ragView?.hidden) return;
+    const target = e.target;
+    const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT';
+    if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey && !isInput) {
+      e.preventDefault();
+      this.handleRollback();
+    }
+  }
+
+  handleRollback() {
+    if (!ragState.canUndoMessages()) return;
+    ragState.undoLastMessages();
+  }
+
+  updateRollbackButton() {
+    const btn = this.rollbackBtn || document.getElementById('rag-rollback-btn');
+    if (!btn) return;
+    const can = ragState.canUndoMessages();
+    btn.hidden = !can;
+    if (can) {
+      const mod = navigator.platform.includes('Mac') ? '⌘' : 'Ctrl';
+      setTip(btn, `Roll back: ${ragState.getMessageUndoLabel()} (${mod}+Z)`);
+    } else {
+      setTip(btn, '');
+    }
   }
 
   bindSetupCard() {
@@ -133,10 +165,17 @@ export class RagSandboxUI {
       el.style.height = 'auto';
       el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
     });
-    document.getElementById('rag-clear-chat-btn')?.addEventListener('click', () => {
+    document.getElementById('rag-clear-chat-btn')?.addEventListener('click', async () => {
+      if (!ragState.messages.length) return;
+      const ok = await confirmClearChat('rag');
+      if (!ok) return;
       ragState.clearMessages();
       this.renderMessages();
     });
+
+    this.rollbackBtn?.addEventListener('click', () => this.handleRollback());
+
+    document.addEventListener('keydown', (e) => this.handleKeydown(e));
 
     this.bindUsageButtons();
 
@@ -160,6 +199,11 @@ export class RagSandboxUI {
     ragState.on('message-added', () => this.renderMessages());
     ragState.on('message-updated', () => this.renderMessages());
     ragState.on('messages-cleared', () => this.renderMessages());
+    ragState.on('messages-undo', ({ label }) => {
+      showToast(`Rolled back${label ? `: ${label}` : ''}`);
+      this.renderMessages();
+    });
+    ragState.on('undo-changed', () => this.updateRollbackButton());
     ragState.on('usage-changed', () => {
       this.renderUsage();
       this.renderSettingsUsageSummary();
@@ -667,6 +711,7 @@ export class RagSandboxUI {
     });
 
     container.scrollTop = container.scrollHeight;
+    this.updateRollbackButton();
   }
 
   renderMessageHtml(msg) {
