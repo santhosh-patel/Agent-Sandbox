@@ -23,6 +23,23 @@ function updateNavPills(path) {
   });
 }
 
+function syncLayoutBodyClasses(view) {
+  if (view === 'playground') {
+    const sidebar = document.getElementById('sidebar');
+    const settings = document.getElementById('settings-panel');
+    document.body.classList.toggle('sidebar-collapsed', !!sidebar?.classList.contains('collapsed'));
+    document.body.classList.toggle('settings-collapsed', !!settings?.classList.contains('collapsed'));
+    return;
+  }
+
+  if (view === 'rag') {
+    const sidebar = document.getElementById('rag-sidebar');
+    const settings = document.getElementById('rag-settings-panel');
+    document.body.classList.toggle('sidebar-collapsed', !!sidebar?.classList.contains('collapsed'));
+    document.body.classList.toggle('settings-collapsed', !!settings?.classList.contains('collapsed'));
+  }
+}
+
 async function mountPlayground() {
   setView('playground');
   document.title = 'AI Playground';
@@ -30,6 +47,7 @@ async function mountPlayground() {
     playgroundApp = new PlaygroundApp();
     playgroundApp.init();
   }
+  syncLayoutBodyClasses('playground');
   updateNavPills('/');
 }
 
@@ -51,6 +69,7 @@ async function mountRag() {
     const sandbox = new RagSandboxUI();
     ragModule = { sandbox, helpUI };
   }
+  syncLayoutBodyClasses('rag');
   updateNavPills('/rag');
 }
 

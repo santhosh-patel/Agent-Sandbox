@@ -98,6 +98,39 @@ body {
   position: relative;
 }
 
+@media (min-width: 769px) {
+  #playground-view #sidebar.collapsed {
+    width: 0;
+    min-width: 0;
+    max-width: 0;
+    flex-basis: 0;
+    overflow: hidden;
+    border-right: none;
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+@media (min-width: 1101px) {
+  #playground-view #settings-panel.collapsed {
+    width: 0;
+    min-width: 0;
+    max-width: 0;
+    flex-basis: 0;
+    overflow: hidden;
+    border-left: none;
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+#playground-view #app > .app-shell {
+  flex: 1 1 0%;
+  min-width: 0;
+  width: 0;
+  max-width: 100%;
+}
+
 #playground-view .edge-toggle-left {
   left: calc(var(--playground-sidebar-width) - 14px);
 }
@@ -106,22 +139,75 @@ body {
   right: calc(var(--playground-settings-width) - 14px);
 }
 
-body.sidebar-collapsed #playground-view .edge-toggle-left {
+#playground-view:has(#sidebar.collapsed) .edge-toggle-left {
   left: 0;
 }
 
-body.settings-collapsed #playground-view .edge-toggle-right {
+#playground-view:has(#settings-panel.collapsed) .edge-toggle-right {
   right: 0;
+}
+
+#playground-view:has(#sidebar.collapsed) .edge-toggle-left svg {
+  transform: rotate(180deg);
+}
+
+#playground-view:has(#settings-panel.collapsed) .edge-toggle-right svg {
+  transform: rotate(180deg);
 }
 
 @media (max-width: 1100px) {
   #playground-view #settings-panel {
     width: min(var(--playground-settings-width), 100vw);
+    min-width: 0;
   }
 
   #playground-view #settings-panel.collapsed {
     width: min(var(--playground-settings-width), 100vw);
+    min-width: 0;
+    max-width: none;
+    flex-basis: auto;
+    opacity: 1;
   }
+
+  #rag-settings-panel {
+    width: min(var(--rag-settings-width), 100vw);
+    min-width: 0;
+  }
+
+  #rag-settings-panel.collapsed {
+    width: min(var(--rag-settings-width), 100vw);
+    min-width: 0;
+    max-width: none;
+    flex-basis: auto;
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  #playground-view #sidebar,
+  #rag-sidebar {
+    width: min(320px, 92vw);
+    min-width: 0;
+    max-width: none;
+    flex-basis: auto;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  #playground-view #sidebar.collapsed,
+  #rag-sidebar.collapsed {
+    width: min(320px, 92vw);
+    min-width: 0;
+    max-width: none;
+  }
+}
+
+#playground-view .main,
+#playground-view .main-canvas,
+#rag-app .main,
+#rag-app .main-canvas {
+  width: 100%;
+  min-width: 0;
 }
 
 /* ---- Mobile Header ---- */
@@ -1417,22 +1503,6 @@ body.settings-collapsed #playground-view .edge-toggle-right {
   border-radius: var(--radius-full);
 }
 
-body.sidebar-collapsed .edge-toggle-left {
-  left: 0;
-}
-
-body.sidebar-collapsed .edge-toggle-left svg {
-  transform: rotate(180deg);
-}
-
-body.settings-collapsed .edge-toggle-right {
-  right: 0;
-}
-
-body.settings-collapsed .edge-toggle-right svg {
-  transform: rotate(180deg);
-}
-
 /* ---- Markdown Content ---- */
 .message-content h1,
 .message-content h2,
@@ -2475,6 +2545,39 @@ kbd {
   position: relative;
 }
 
+@media (min-width: 769px) {
+  #rag-sidebar.collapsed {
+    width: 0;
+    min-width: 0;
+    max-width: 0;
+    flex-basis: 0;
+    overflow: hidden;
+    border-right: none;
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+@media (min-width: 1101px) {
+  #rag-settings-panel.collapsed {
+    width: 0;
+    min-width: 0;
+    max-width: 0;
+    flex-basis: 0;
+    overflow: hidden;
+    border-left: none;
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+#rag-app > .app-shell {
+  flex: 1 1 0%;
+  min-width: 0;
+  width: 0;
+  max-width: 100%;
+}
+
 #rag-app .edge-toggle-left {
   left: calc(var(--rag-sidebar-width) - 14px);
 }
@@ -2483,22 +2586,20 @@ kbd {
   right: calc(var(--rag-settings-width) - 14px);
 }
 
-body.rag-app-body.sidebar-collapsed #rag-app .edge-toggle-left {
+#rag-app:has(#rag-sidebar.collapsed) .edge-toggle-left {
   left: 0;
 }
 
-body.rag-app-body.settings-collapsed #rag-app .edge-toggle-right {
+#rag-app:has(#rag-settings-panel.collapsed) .edge-toggle-right {
   right: 0;
 }
 
-@media (max-width: 1100px) {
-  #rag-settings-panel {
-    width: min(var(--rag-settings-width), 100vw);
-  }
+#rag-app:has(#rag-sidebar.collapsed) .edge-toggle-left svg {
+  transform: rotate(180deg);
+}
 
-  #rag-settings-panel.collapsed {
-    width: min(var(--rag-settings-width), 100vw);
-  }
+#rag-app:has(#rag-settings-panel.collapsed) .edge-toggle-right svg {
+  transform: rotate(180deg);
 }
 
 .rag-sidebar-section-head {
