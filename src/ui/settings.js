@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { PROVIDERS, createProvider } from '../providers/registry.js';
+import { PROVIDERS, createProvider, refreshOpenRouterPricing, registerLivePricing } from '../providers/registry.js';
 import { RESPONSE_PROFILES } from '../data/presets.js';
 import { getModelHint } from '../data/model-hints.js';
 import { showConfirm } from './modal.js';
@@ -68,9 +68,12 @@ export class SettingsUI {
     this.corsProxyInput.addEventListener('input', () => {
       state.updateSettings({ corsProxyUrl: this.corsProxyInput.value.trim() });
     });
+    this.settingsStatus?.classList.add('settings-status--clickable');
+    this.settingsStatus?.addEventListener('click', () => openUsageWindow());
+    this.settingsStatus?.setAttribute('title', 'Open usage dashboard');
     this.refreshModelsBtn.addEventListener('click', () => this.fetchModels(true));
     this.modelSelect.addEventListener('change', () => {
-      state.updateSettings({ model: this.modelSelect.value });
+      this.patchSettings({ model: this.modelSelect.value });
       state.pushRecentModel(this.modelSelect.value);
       this.modelHint.textContent = getModelHint(this.modelSelect.value);
       this.updateFavoriteButton();
@@ -99,6 +102,7 @@ export class SettingsUI {
       const enabled = this.compareModeToggle.checked;
       this.compareModelsRow.hidden = !enabled;
       state.updateSettings({ compareMode: enabled });
+      this.updateCompareBadge();
     });
 
     this.switchOpenRouterBtn?.addEventListener('click', () => {
@@ -109,7 +113,7 @@ export class SettingsUI {
     this.profileSelect?.addEventListener('change', () => this.applyProfile(this.profileSelect.value));
 
     this.systemPrompt.addEventListener('input', () => {
-      state.updateSettings({ systemPrompt: this.systemPrompt.value });
+      this.patchSettings({ systemPrompt: this.systemPrompt.value });
     });
 
     this.assistantNameInput?.addEventListener('input', () => {
@@ -120,10 +124,10 @@ export class SettingsUI {
 
     document.getElementById('settings-usage-btn')?.addEventListener('click', () => openUsageWindow());
     document.getElementById('temperature-input')?.addEventListener('change', (e) => {
-      state.updateSettings({ temperature: parseFloat(e.target.value) });
+      this.patchSettings({ temperature: parseFloat(e.target.value) });
     });
     document.getElementById('max-tokens-input')?.addEventListener('change', (e) => {
-      state.updateSettings({ maxTokens: parseInt(e.target.value, 10) });
+      this.patchSettings({ maxTokens: parseInt(e.target.value, 10) });
     });
     document.getElementById('reasoning-mode-toggle')?.addEventListener('change', (e) => {
       state.updateSettings({ reasoningMode: e.target.checked });
@@ -143,9 +147,15 @@ export class SettingsUI {
       }
     });
 
-    state.on('chat-switched', () => this.syncPerChatToggle());
+    state.on('chat-switched', () => {
+      this.syncPerChatToggle();
+      this.loadStateValues();
+    });
 
-    state.on('settings-changed', () => this.updateSettingsStatus());
+    state.on('settings-changed', () => {
+      this.updateSettingsStatus();
+      this.updateCompareBadge();
+    });
     state.on('usage-updated', () => this.updateSettingsStatus());
     state.on('apikey-changed', () => this.updateSettingsStatus());
 
@@ -164,7 +174,7 @@ export class SettingsUI {
   applyProfile(key) {
     const profile = RESPONSE_PROFILES[key];
     if (!profile) return;
-    state.updateSettings({
+    this.patchSettings({
       responseProfile: key,
       temperature: profile.temperature,
       topP: profile.topP,
@@ -256,8 +266,31 @@ export class SettingsUI {
     localStorage.setItem('settings-collapsed', collapsed);
   }
 
+  getEffectiveSettings() {
+    const chat = state.getActiveChat();
+    if (chat?.settings) return { ...state.settings, ...chat.settings };
+    return state.settings;
+  }
+
+  patchSettings(partial) {
+    const chat = state.getActiveChat();
+    if (chat?.settings) {
+      state.updateChatSettings(chat.id, partial);
+    } else {
+      state.updateSettings(partial);
+    }
+  }
+
+  updateCompareBadge() {
+    const badge = document.getElementById('compare-mode-badge');
+    if (!badge) return;
+    const on = state.settings.compareMode && (state.settings.compareModels?.length || 0) > 0;
+    badge.hidden = !on;
+    badge.textContent = on ? `Compare · ${state.settings.compareModels.length}` : 'Compare';
+  }
+
   loadStateValues() {
-    const settings = state.settings;
+    const settings = this.getEffectiveSettings();
     this.providerSelect.value = settings.provider || '';
     this.corsProxyInput.value = settings.corsProxyUrl || '';
     this.apiKeyInput.value = settings.provider ? state.getApiKey(settings.provider) : '';
@@ -279,6 +312,7 @@ export class SettingsUI {
     this.updateProviderUI();
     this.fetchModels(false);
     this.updateSettingsStatus();
+    this.updateCompareBadge();
   }
 
   updateSettingsStatus() {
@@ -413,7 +447,7 @@ export class SettingsUI {
     this.testKeyBtn.disabled = !this.apiKeyInput.value;
     if (this.modelSearch) this.modelSearch.value = '';
     this.modelSearchQuery = '';
-    state.updateSettings({ provider, model: '' });
+    this.patchSettings({ provider, model: '' });
     this.updateProviderUI();
     this.fetchModels(false);
     this.updateSettingsStatus();
@@ -499,6 +533,9 @@ export class SettingsUI {
     try {
       const adapter = createProvider(providerName, key, state.settings.corsProxyUrl);
       this.availableModels = await adapter.listModels();
+      if (providerName === 'openrouter') {
+        registerLivePricing(this.availableModels);
+      }
       this.renderModelOptions(this.availableModels);
     } catch {
       const adapter = createProvider(providerName, '', state.settings.corsProxyUrl);
@@ -552,13 +589,13 @@ export class SettingsUI {
       });
     }
 
-    const current = state.settings.model;
+    const current = this.getEffectiveSettings().model;
     if (current && Array.from(this.modelSelect.options).some(o => o.value === current)) {
       this.modelSelect.value = current;
     } else {
       const first = this.modelSelect.options[0]?.value || '';
       this.modelSelect.value = first;
-      if (first) state.updateSettings({ model: first });
+      if (first) this.patchSettings({ model: first });
     }
 
     this.modelHint.textContent = getModelHint(this.modelSelect.value);

@@ -460,23 +460,37 @@ export class ChatUI {
 
   showMessageInspector(msg, index) {
     const chat = state.getActiveChat();
-    const settings = state.settings;
-    const lines = [
-      `Model: ${msg.model || settings.model || '—'}`,
-      `Profile: ${settings.responseProfile || 'balanced'}`,
-      msg.latency != null ? `Latency: ${msg.latency}s` : null,
-      msg.cost != null ? `Cost (est.): $${msg.cost.toFixed(5)}` : null,
-      msg.tokens ? `Tokens: ${msg.tokens.prompt_tokens || 0} prompt / ${msg.tokens.completion_tokens || 0} completion` : null,
-      `History messages before this: ${index}`,
-    ].filter(Boolean);
-    showPrompt({
-      title: 'Message inspector',
-      message: lines.join('\n'),
-      defaultValue: lines.join('\n'),
-      multiline: true,
-      confirmText: 'Close',
-      cancelText: 'Close',
-    });
+    const effective = chat?.settings ? { ...state.settings, ...chat.settings } : state.settings;
+    const drawer = document.getElementById('inspector-drawer');
+    const backdrop = document.getElementById('inspector-backdrop');
+    const body = document.getElementById('inspector-drawer-body');
+    if (!drawer || !body) return;
+
+    const rows = [
+      ['Model', msg.model || effective.model || '—'],
+      ['Provider', effective.provider || '—'],
+      ['Profile', effective.responseProfile || 'balanced'],
+      ['Temperature', effective.temperature ?? '—'],
+      ['Latency', msg.latency != null ? `${msg.latency}s` : '—'],
+      ['Cost (est.)', msg.cost != null ? `$${msg.cost.toFixed(5)}` : '—'],
+      ['Tokens', msg.tokens ? `${msg.tokens.prompt_tokens || 0} prompt / ${msg.tokens.completion_tokens || 0} completion` : '—'],
+      ['History index', String(index)],
+      ['Message ID', msg.id || '—'],
+    ];
+
+    body.innerHTML = rows.map(([k, v]) => `
+      <div class="inspector-row"><span class="inspector-key">${k}</span><span class="inspector-val">${this.escapeHtml(String(v))}</span></div>
+    `).join('') + (msg.content ? `<div class="inspector-section"><div class="inspector-key">Content preview</div><pre class="inspector-pre">${this.escapeHtml(msg.content.slice(0, 1200))}${msg.content.length > 1200 ? '…' : ''}</pre></div>` : '');
+
+    drawer.classList.remove('collapsed');
+    if (backdrop) backdrop.hidden = false;
+
+    const close = () => {
+      drawer.classList.add('collapsed');
+      if (backdrop) backdrop.hidden = true;
+    };
+    document.getElementById('inspector-close-btn')?.addEventListener('click', close, { once: true });
+    backdrop?.addEventListener('click', close, { once: true });
   }
 
   prepareRegenerate(index) {

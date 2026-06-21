@@ -131,6 +131,7 @@
               <span class="header-meta" id="header-provider">No provider</span>
               <span class="meta-sep" aria-hidden="true"></span>
               <span class="header-model" id="header-model">Select model</span>
+              <span class="compare-mode-badge" id="compare-mode-badge" hidden>Compare</span>
               <span class="session-cost" id="session-cost" hidden></span>
             </div>
           </div>
@@ -563,7 +564,7 @@
           <div class="settings-section">
             <div class="label-row">
               <label class="settings-label" for="rag-embedding-key-input">API key</label>
-              <a class="settings-link" id="rag-embed-docs-link" href="#" target="_blank" rel="noopener" hidden>Get key</button>
+              <a class="settings-link" id="rag-embed-docs-link" href="#" target="_blank" rel="noopener" hidden>Get key</a>
             </div>
             <div class="api-key-row">
               <input type="password" id="rag-embedding-key-input" class="settings-input" placeholder="Paste API key…" autocomplete="off" />
@@ -597,7 +598,7 @@
           <div class="settings-section">
             <div class="label-row">
               <label class="settings-label" for="rag-chat-key-input">API key</label>
-              <a class="settings-link" id="rag-chat-docs-link" href="#" target="_blank" rel="noopener" hidden>Get key</button>
+              <a class="settings-link" id="rag-chat-docs-link" href="#" target="_blank" rel="noopener" hidden>Get key</a>
             </div>
             <div class="api-key-row">
               <input type="password" id="rag-chat-key-input" class="settings-input" placeholder="Paste API key…" autocomplete="off" />
@@ -665,6 +666,18 @@
               <option value="euclidean">Euclidean distance</option>
             </select>
           </div>
+          <div class="settings-section">
+            <label class="settings-label" for="rag-max-context-chars">Context window (chars)</label>
+            <input type="number" id="rag-max-context-chars" class="settings-input" min="1000" max="100000" step="500" />
+          </div>
+          <div class="settings-section">
+            <div class="label-row">
+              <label class="settings-label">Document scope</label>
+              <button type="button" class="btn-text btn-sm" id="rag-retrieval-scope-all">All docs</button>
+            </div>
+            <div class="rag-retrieval-scope" id="rag-retrieval-scope"></div>
+            <p class="settings-hint">Limit retrieval to selected documents. Empty = all indexed docs.</p>
+          </div>
         </section>
 
         <section class="settings-block">
@@ -681,6 +694,11 @@
 
         <section class="settings-block">
           <h3 class="settings-block-title">Advanced</h3>
+          <div class="settings-section" id="rag-cors-proxy-row">
+            <label class="settings-label" for="rag-cors-proxy-url">CORS proxy URL</label>
+            <input type="url" id="rag-cors-proxy-url" class="settings-input" placeholder="https://corsproxy.io/?" />
+            <p class="settings-hint">Required for some providers (e.g. Anthropic) from the browser.</p>
+          </div>
           <div class="settings-section">
             <label class="settings-label" for="rag-temperature">Temperature <span id="rag-temp-value">0.3</span></label>
             <input type="range" id="rag-temperature" min="0" max="2" step="0.1" />
@@ -705,6 +723,15 @@
   </div>
 
   </div>
+
+  <aside class="inspector-drawer collapsed" id="inspector-drawer" aria-label="Message inspector">
+    <div class="inspector-drawer-header">
+      <h3>Message inspector</h3>
+      <button type="button" class="btn-icon" id="inspector-close-btn" aria-label="Close inspector">×</button>
+    </div>
+    <div class="inspector-drawer-body" id="inspector-drawer-body"></div>
+  </aside>
+  <div class="inspector-backdrop" id="inspector-backdrop" hidden></div>
 
   <script type="module" src="/src/app.js"></script>
 </body>

@@ -18,9 +18,14 @@
       <div class="usage-page-actions">
         <button type="button" class="btn btn-ghost btn-sm" id="usage-refresh-btn">Refresh</button>
         <button type="button" class="btn btn-ghost btn-sm" id="usage-export-btn">Export JSON</button>
-        <button type="button" class="btn btn-danger btn-sm" id="usage-reset-btn">Reset stats</button>
+        <button type="button" class="btn btn-danger btn-sm" id="usage-reset-btn">Reset…</button>
       </div>
     </header>
+    <nav class="usage-tabs" id="usage-tabs">
+      <button type="button" class="usage-tab usage-tab--active" data-tab="all">All</button>
+      <button type="button" class="usage-tab" data-tab="playground">Playground</button>
+      <button type="button" class="usage-tab" data-tab="rag">RAG</button>
+    </nav>
     <div id="usage-dashboard"></div>
   </div>
   <script type="module" src="/src/usage-main.js"></script>

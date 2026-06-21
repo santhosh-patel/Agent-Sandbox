@@ -46,9 +46,15 @@ export function searchChunks(queryEmbedding, chunks, options = {}) {
     topK = 5,
     similarityThreshold = 0.3,
     searchStrategy = 'cosine',
+    docIds,
   } = options;
 
-  const scored = chunks
+  let pool = chunks;
+  if (docIds?.length) {
+    pool = chunks.filter(c => docIds.includes(c.docId));
+  }
+
+  const scored = pool
     .filter(c => c.embedding?.length)
     .map(chunk => ({
       chunk,

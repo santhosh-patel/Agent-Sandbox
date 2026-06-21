@@ -146,3 +146,42 @@ export function copyShareLink(chat) {
   navigator.clipboard.writeText(url);
   return { copied: true, downloaded: false, url, strippedImages };
 }
+
+export function chatToCompareMarkdown(chat) {
+  const groups = new Map();
+  for (const msg of chat.messages) {
+    if (!msg.compareId) continue;
+    if (!groups.has(msg.compareId)) groups.set(msg.compareId, []);
+    groups.get(msg.compareId).push(msg);
+  }
+  if (!groups.size) return null;
+
+  const lines = [`# ${chat.title || 'Chat'} — Model comparison`, '', `*Exported ${new Date().toLocaleString()}*`, ''];
+  for (const [, msgs] of groups) {
+    lines.push('## Comparison', '');
+    msgs.forEach(msg => {
+      lines.push(`### ${msg.compareModel || msg.model || 'Model'}`, '', msg.content || '_(empty)_', '');
+      if (msg.latency || msg.cost != null) {
+        const meta = [];
+        if (msg.latency) meta.push(`${msg.latency}s`);
+        if (msg.cost != null) meta.push(`$${msg.cost.toFixed(5)}`);
+        lines.push(`*${meta.join(' · ')}*`, '');
+      }
+    });
+    lines.push('---', '');
+  }
+  return lines.join('\n');
+}
+
+export function downloadCompareMarkdown(chat) {
+  const md = chatToCompareMarkdown(chat);
+  if (!md) return false;
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${(chat.title || 'chat').replace(/[^\w\s-]/g, '').slice(0, 40)}-compare.md`;
+  a.click();
+  URL.revokeObjectURL(url);
+  return true;
+}

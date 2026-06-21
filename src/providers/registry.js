@@ -55,6 +55,31 @@ export const PROVIDERS = {
   },
 };
 
+const livePricing = new Map();
+
+export function registerLivePricing(models) {
+  if (!Array.isArray(models)) return;
+  for (const m of models) {
+    if (!m?.id || !m.pricing) continue;
+    const input = parseFloat(m.pricing.prompt) * 1_000_000;
+    const output = parseFloat(m.pricing.completion) * 1_000_000;
+    if (Number.isFinite(input) && Number.isFinite(output)) {
+      livePricing.set(m.id, { input, output });
+    }
+  }
+}
+
+export async function refreshOpenRouterPricing() {
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/models');
+    if (!res.ok) return;
+    const data = await res.json();
+    registerLivePricing(data.data || []);
+  } catch {
+    /* ignore network errors */
+  }
+}
+
 // Pricing per 1M tokens (input / output) in USD
 export const MODEL_PRICING = {
   // OpenAI
@@ -94,11 +119,14 @@ export function createProvider(providerName, apiKey, corsProxy = '') {
 }
 
 export function estimateCost(model, promptTokens, completionTokens) {
-  // Try exact match first, then prefix match
-  let pricing = MODEL_PRICING[model];
+  let pricing = livePricing.get(model) || MODEL_PRICING[model];
   if (!pricing) {
     const key = Object.keys(MODEL_PRICING).find(k => model.includes(k));
     if (key) pricing = MODEL_PRICING[key];
+  }
+  if (!pricing) {
+    const liveKey = [...livePricing.keys()].find(k => model.includes(k) || k.includes(model));
+    if (liveKey) pricing = livePricing.get(liveKey);
   }
   if (!pricing) return null;
 

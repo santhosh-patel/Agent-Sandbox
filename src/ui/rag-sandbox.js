@@ -56,21 +56,21 @@ export class RagSandboxUI {
     const card = document.getElementById('rag-setup-card');
     if (!card) return;
     const update = () => {
+      const s = ragState.settings;
       const dismissed = localStorage.getItem('rag-onboarding-dismissed') === '1';
-      card.hidden = dismissed && ragState.getSetupIssues().length === 0;
+      const issues = ragState.getSetupIssues();
+      card.hidden = dismissed && issues.length === 0;
       const stepsEl = document.getElementById('rag-setup-steps');
       if (stepsEl) {
-        const issues = ragState.getSetupIssues();
-        const allSteps = [
-          'Select embedding provider & model',
-          'Add embedding API key',
-          'Select chat provider & model',
-          'Add chat API key',
+        const steps = [
+          { label: 'Select embedding provider & model', done: !!(s.embeddingProvider && s.embeddingModel) },
+          { label: 'Add embedding API key', done: ragState.hasApiKey(s.embeddingProvider) },
+          { label: 'Select chat provider & model', done: !!(s.chatProvider && s.chatModel) },
+          { label: 'Add chat API key', done: ragState.hasApiKey(s.chatProvider) },
         ];
-        stepsEl.innerHTML = allSteps.map((label, i) => {
-          const done = issues.length <= allSteps.length - 1 - i || (i === 0 && !issues.includes('Select an embedding provider'));
-          return `<li class="${issues.includes(label.split('&')[0].trim()) || (i < allSteps.length - issues.length) ? 'setup-step--pending' : 'setup-step--done'}">${label}</li>`;
-        }).join('');
+        stepsEl.innerHTML = steps.map(step => `
+          <li class="${step.done ? 'setup-step--done' : 'setup-step--pending'}">${step.label}</li>
+        `).join('');
       }
     };
     update();
@@ -153,6 +153,7 @@ export class RagSandboxUI {
     ragState.on('documents-changed', () => {
       this.renderDocuments();
       this.renderStorageMeter();
+      this.renderRetrievalScope();
     });
     ragState.on('settings-changed', () => this.renderSettings());
     ragState.on('message-added', () => this.renderMessages());
@@ -349,6 +350,12 @@ export class RagSandboxUI {
     bind('rag-max-tokens', () => {
       ragState.updateSettings({ maxTokens: parseInt(document.getElementById('rag-max-tokens').value, 10) });
     });
+    bind('rag-max-context-chars', () => {
+      ragState.updateSettings({ maxContextChars: parseInt(document.getElementById('rag-max-context-chars').value, 10) });
+    });
+    bind('rag-cors-proxy-url', () => {
+      ragState.updateSettings({ corsProxyUrl: document.getElementById('rag-cors-proxy-url').value.trim() });
+    });
 
     document.getElementById('rag-test-embed-key-btn')?.addEventListener('click', () => this.testApiKey('embedding'));
     document.getElementById('rag-test-chat-key-btn')?.addEventListener('click', () => this.testApiKey('chat'));
@@ -385,14 +392,39 @@ export class RagSandboxUI {
 
     const activeId = ragState.getActiveCollection()?.id;
     list.innerHTML = ragState.collections.map(c => `
-      <button type="button" class="rag-collection-item${c.id === activeId ? ' active' : ''}" data-id="${c.id}">
-        <span class="rag-collection-name">${this.escape(c.name)}</span>
-        <span class="rag-collection-meta">${c.documents.length} docs</span>
-      </button>
+      <div class="rag-collection-row${c.id === activeId ? ' active' : ''}" data-id="${c.id}">
+        <button type="button" class="rag-collection-item" data-id="${c.id}">
+          <span class="rag-collection-name">${this.escape(c.name)}</span>
+          <span class="rag-collection-meta">${c.documents.length} docs</span>
+        </button>
+        <div class="rag-collection-actions">
+          <button type="button" class="btn-icon rag-collection-rename" data-id="${c.id}" title="Rename" aria-label="Rename collection">✎</button>
+          <button type="button" class="btn-icon rag-collection-delete" data-id="${c.id}" title="Delete" aria-label="Delete collection">×</button>
+        </div>
+      </div>
     `).join('');
 
     list.querySelectorAll('.rag-collection-item').forEach(btn => {
       btn.addEventListener('click', () => ragState.setActiveCollection(btn.dataset.id));
+    });
+    list.querySelectorAll('.rag-collection-rename').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const col = ragState.collections.find(c => c.id === btn.dataset.id);
+        const name = await showPrompt({ title: 'Rename collection', defaultValue: col?.name || '' });
+        if (name?.trim()) ragState.renameCollection(btn.dataset.id, name.trim());
+      });
+    });
+    list.querySelectorAll('.rag-collection-delete').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (ragState.collections.length <= 1) {
+          showToast('Keep at least one collection', { isError: true });
+          return;
+        }
+        const ok = await showConfirm({ title: 'Delete collection?', message: 'Documents and eval data for this collection will be removed.', destructive: true });
+        if (ok) ragState.deleteCollection(btn.dataset.id);
+      });
     });
   }
 
@@ -449,6 +481,8 @@ export class RagSandboxUI {
     setVal('rag-rag-prompt', s.ragPrompt);
     setVal('rag-temperature', s.temperature);
     setVal('rag-max-tokens', s.maxTokens);
+    setVal('rag-max-context-chars', s.maxContextChars ?? 8000);
+    setVal('rag-cors-proxy-url', s.corsProxyUrl || '');
 
     const thresholdVal = document.getElementById('rag-threshold-value');
     if (thresholdVal) thresholdVal.textContent = s.similarityThreshold.toFixed(2);
@@ -456,6 +490,36 @@ export class RagSandboxUI {
     if (tempVal) tempVal.textContent = s.temperature.toFixed(1);
 
     this.syncKeyFields();
+    this.renderRetrievalScope();
+  }
+
+  renderRetrievalScope() {
+    const root = document.getElementById('rag-retrieval-scope');
+    const collection = ragState.getActiveCollection();
+    if (!root) return;
+    if (!collection?.documents.length) {
+      root.innerHTML = '<p class="settings-hint">Upload documents to limit retrieval scope.</p>';
+      return;
+    }
+    const selected = new Set(ragState.settings.retrievalDocIds || []);
+    root.innerHTML = collection.documents.map(doc => `
+      <label class="rag-scope-check">
+        <input type="checkbox" value="${doc.id}" ${!selected.size || selected.has(doc.id) ? 'checked' : ''} ${doc.status !== 'indexed' ? 'disabled' : ''} />
+        <span>${this.escape(doc.name)}${doc.status !== 'indexed' ? ' (not indexed)' : ''}</span>
+      </label>
+    `).join('');
+    root.querySelectorAll('input').forEach(input => {
+      input.addEventListener('change', () => {
+        const checked = Array.from(root.querySelectorAll('input:checked:not(:disabled)')).map(i => i.value);
+        const allIndexed = collection.documents.filter(d => d.status === 'indexed').map(d => d.id);
+        const scope = checked.length === allIndexed.length ? [] : checked;
+        ragState.updateSettings({ retrievalDocIds: scope });
+      });
+    });
+    document.getElementById('rag-retrieval-scope-all')?.addEventListener('click', () => {
+      ragState.updateSettings({ retrievalDocIds: [] });
+      this.renderRetrievalScope();
+    }, { once: true });
   }
 
   getKeyPlaceholder(provider) {
@@ -657,6 +721,9 @@ export class RagSandboxUI {
     const avgLatency = usage.latency.length
       ? (usage.latency.reduce((a, b) => a + b, 0) / usage.latency.length).toFixed(2)
       : '—';
+    el.className = 'rag-settings-usage-summary rag-usage-stats--clickable';
+    el.title = 'Open usage dashboard';
+    el.onclick = () => openUsageWindow();
     el.innerHTML = `
       <span class="settings-status-item">${usage.requests} requests</span>
       <span class="settings-status-sep" aria-hidden="true">·</span>
@@ -875,9 +942,10 @@ export class RagSandboxUI {
         topK: s.topK,
         similarityThreshold: s.similarityThreshold,
         searchStrategy: s.searchStrategy,
+        docIds: s.retrievalDocIds?.length ? s.retrievalDocIds : undefined,
       });
 
-      const context = buildContext(retrieved);
+      const context = buildContext(retrieved, s.maxContextChars ?? 8000);
       const ragContent = formatRagPrompt(s.ragPrompt, context, question);
 
       ragState.addMessage({

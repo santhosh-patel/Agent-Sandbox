@@ -196,6 +196,8 @@ export const DEFAULT_RAG_SETTINGS = {
   systemPrompt: 'You are a helpful assistant. Answer questions based on the provided context. If the context does not contain relevant information, say so clearly.',
   ragPrompt: 'Use the following context to answer the question. Cite relevant passages when possible.\n\nContext:\n{context}\n\nQuestion: {question}',
   corsProxyUrl: '',
+  maxContextChars: 8000,
+  retrievalDocIds: [],
   maxTokens: 4096,
   temperature: 0.3,
 };

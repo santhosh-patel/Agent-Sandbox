@@ -78,19 +78,53 @@ class RagStateManager {
     };
   }
 
+  _toLocalStoragePayload() {
+    return {
+      collections: this._state.collections.map(c => ({
+        id: c.id,
+        name: c.name,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+        documents: c.documents.map(d => ({
+          id: d.id,
+          name: d.name,
+          type: d.type,
+          status: d.status,
+          size: d.size,
+          createdAt: d.createdAt,
+          updatedAt: d.updatedAt,
+          chunks: [],
+          content: '',
+        })),
+      })),
+      activeCollectionId: this._state.activeCollectionId,
+      settings: this._state.settings,
+      messages: this._state.messages,
+      usage: this._state.usage,
+      evalSets: this._state.evalSets,
+      evalRuns: this._state.evalRuns,
+    };
+  }
+
   async initFromDb() {
     try {
       const dbCollections = await loadAllCollectionsFromDb();
+      const hasLegacyFullData = this._state.collections.some(c =>
+        c.documents?.some(d => d.chunks?.length || d.content),
+      );
+
       if (dbCollections.length) {
+        for (let i = 0; i < this._state.collections.length; i++) {
+          const meta = this._state.collections[i];
+          const full = dbCollections.find(c => c.id === meta.id);
+          if (full) this._state.collections[i] = full;
+        }
         for (const dbCol of dbCollections) {
-          const idx = this._state.collections.findIndex(c => c.id === dbCol.id);
-          if (idx >= 0) {
-            this._state.collections[idx] = dbCol;
-          } else {
+          if (!this._state.collections.find(c => c.id === dbCol.id)) {
             this._state.collections.push(dbCol);
           }
         }
-      } else if (this._state.collections.some(c => c.documents?.length)) {
+      } else if (hasLegacyFullData) {
         await migrateCollectionsToDb(this._state.collections);
       }
       this._saveState();
@@ -112,7 +146,7 @@ class RagStateManager {
 
   _saveState() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this._state));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this._toLocalStoragePayload()));
       this._persistCollectionsToDb();
     } catch (e) {
       console.warn('Failed to save RAG state:', e);

@@ -1,7 +1,7 @@
 import { state } from '../state.js';
 import { showConfirm, showPrompt } from './modal.js';
 import { isMobile, onViewportChange, closeSettingsPanel } from './breakpoints.js';
-import { downloadMarkdown, copyShareLink, downloadShareHtml } from '../export.js';
+import { downloadMarkdown, copyShareLink, downloadShareHtml, buildShareLink, downloadCompareMarkdown } from '../export.js';
 import { showToast } from './toast.js';
 import { PROVIDERS } from '../providers/registry.js';
 import { openUsageWindow } from './help-base.js';
@@ -327,6 +327,7 @@ export class SidebarUI {
       <div class="chat-menu-label">Export</div>
       <button type="button" data-action="export-md">Export Markdown</button>
       <button type="button" data-action="export-share">Copy share link</button>
+      <button type="button" data-action="export-compare">Export comparison</button>
       <button type="button" data-action="export-html">Download HTML</button>
     ` : '';
 
@@ -373,9 +374,27 @@ export class SidebarUI {
           showToast('Markdown exported');
         }
         else if (action === 'export-share') {
+          const preview = buildShareLink(chat);
+          if (preview.tooLarge || !preview.url) {
+            downloadShareHtml(chat);
+            showToast('Chat too large for link — HTML downloaded');
+            close();
+            return;
+          }
+          const ok = await showConfirm({
+            title: 'Copy share link?',
+            message: 'The full chat is encoded in the URL. Anyone with the link can read it. Continue?',
+            confirmText: 'Copy link',
+          });
+          if (!ok) return;
           const result = copyShareLink(chat);
-          if (result.copied) showToast('Share link copied');
-          else if (result.downloaded) showToast('Chat too large for link — HTML downloaded');
+          if (result.copied) {
+            showToast(result.strippedImages ? 'Link copied (images removed for size)' : 'Share link copied');
+          }
+        }
+        else if (action === 'export-compare') {
+          if (downloadCompareMarkdown(chat)) showToast('Comparison exported');
+          else showToast('No comparison messages in this chat', { isError: true });
         }
         else if (action === 'export-html') {
           downloadShareHtml(chat);

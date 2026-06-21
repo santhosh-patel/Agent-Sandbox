@@ -7,7 +7,7 @@ import { ShortcutsUI } from './ui/shortcuts.js';
 import { HelpUI } from './ui/help.js';
 import { PromptLibraryUI } from './ui/prompt-library.js';
 import { AttachmentManager } from './ui/attachments.js';
-import { createProvider, estimateCost } from './providers/registry.js';
+import { createProvider, estimateCost, refreshOpenRouterPricing } from './providers/registry.js';
 import { generateFollowUpQueries, heuristicFollowUps } from './followups.js';
 import { buildApiHistory } from './chat-history.js';
 import { RESPONSE_PROFILES } from './data/presets.js';
@@ -36,6 +36,7 @@ export class PlaygroundApp {
     this.initialized = true;
 
     this.settingsUI = new SettingsUI();
+    refreshOpenRouterPricing();
     this.sidebarUI = new SidebarUI();
     this.chatUI = new ChatUI(
       (options) => this.handleRegenerate(options),
