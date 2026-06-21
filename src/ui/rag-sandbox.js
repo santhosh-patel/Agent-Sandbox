@@ -30,6 +30,7 @@ export class RagSandboxUI {
     this.abortController = null;
     this.indexing = false;
     this.rollbackBtn = document.getElementById('rag-rollback-btn');
+    this.collectionMenuEl = null;
     this.init();
   }
 
@@ -435,6 +436,8 @@ export class RagSandboxUI {
     const list = document.getElementById('rag-collections-list');
     if (!list) return;
 
+    this.closeCollectionMenu();
+
     const activeId = ragState.getActiveCollection()?.id;
     list.innerHTML = ragState.collections.map(c => `
       <div class="rag-collection-row${c.id === activeId ? ' active' : ''}" data-id="${c.id}">
@@ -443,8 +446,9 @@ export class RagSandboxUI {
           <span class="rag-collection-meta">${c.documents.length} docs</span>
         </button>
         <div class="rag-collection-actions">
-          <button type="button" class="btn-icon rag-collection-rename" data-id="${c.id}" aria-label="Rename collection" data-tip="Rename this knowledge base">✎</button>
-          <button type="button" class="btn-icon rag-collection-delete" data-id="${c.id}" aria-label="Delete collection" data-tip="Delete collection and all its documents">×</button>
+          <button type="button" class="rag-collection-menu-btn" data-id="${c.id}" aria-label="Collection options" data-tip="Rename or delete this knowledge base">
+            <svg class="rag-menu-dots" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.75" fill="currentColor"/><circle cx="12" cy="12" r="1.75" fill="currentColor"/><circle cx="12" cy="19" r="1.75" fill="currentColor"/></svg>
+          </button>
         </div>
       </div>
     `).join('');
@@ -452,25 +456,69 @@ export class RagSandboxUI {
     list.querySelectorAll('.rag-collection-item').forEach(btn => {
       btn.addEventListener('click', () => ragState.setActiveCollection(btn.dataset.id));
     });
-    list.querySelectorAll('.rag-collection-rename').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
+    list.querySelectorAll('.rag-collection-menu-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const col = ragState.collections.find(c => c.id === btn.dataset.id);
-        const name = await showPrompt({ title: 'Rename collection', defaultValue: col?.name || '' });
-        if (name?.trim()) ragState.renameCollection(btn.dataset.id, name.trim());
+        if (col) this.showCollectionMenu(col, btn);
       });
     });
-    list.querySelectorAll('.rag-collection-delete').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        if (ragState.collections.length <= 1) {
-          showToast('Keep at least one collection', { isError: true });
-          return;
-        }
-        const ok = await showConfirm({ title: 'Delete collection?', message: 'Documents and eval data for this collection will be removed.', destructive: true });
-        if (ok) ragState.deleteCollection(btn.dataset.id);
-      });
+  }
+
+  closeCollectionMenu() {
+    this.collectionMenuEl?.remove();
+    this.collectionMenuEl = null;
+    if (this._collectionMenuOutside) {
+      document.removeEventListener('click', this._collectionMenuOutside);
+      this._collectionMenuOutside = null;
+    }
+  }
+
+  showCollectionMenu(collection, anchor) {
+    this.closeCollectionMenu();
+
+    const menu = document.createElement('div');
+    menu.className = 'chat-context-menu rag-collection-menu';
+    menu.innerHTML = `
+      <button type="button" data-action="rename">Rename</button>
+      <div class="chat-menu-divider"></div>
+      <button type="button" data-action="delete" class="menu-danger">Delete</button>
+    `;
+
+    document.body.appendChild(menu);
+    const rect = anchor.getBoundingClientRect();
+    const menuWidth = menu.offsetWidth || 140;
+    menu.style.top = `${rect.bottom + 4}px`;
+    menu.style.left = `${Math.max(12, Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 12))}px`;
+
+    this.collectionMenuEl = menu;
+
+    menu.querySelector('[data-action="rename"]')?.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      this.closeCollectionMenu();
+      const name = await showPrompt({ title: 'Rename collection', defaultValue: collection.name });
+      if (name?.trim()) ragState.renameCollection(collection.id, name.trim());
     });
+
+    menu.querySelector('[data-action="delete"]')?.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      this.closeCollectionMenu();
+      if (ragState.collections.length <= 1) {
+        showToast('Keep at least one collection', { isError: true });
+        return;
+      }
+      const ok = await showConfirm({
+        title: 'Delete collection?',
+        message: 'Documents and eval data for this collection will be removed.',
+        destructive: true,
+      });
+      if (ok) ragState.deleteCollection(collection.id);
+    });
+
+    this._collectionMenuOutside = (e) => {
+      if (!menu.contains(e.target) && e.target !== anchor) this.closeCollectionMenu();
+    };
+    setTimeout(() => document.addEventListener('click', this._collectionMenuOutside), 0);
   }
 
   renderDocuments() {

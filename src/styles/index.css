@@ -2791,11 +2791,45 @@ a.rag-back-pill {
 .inspector-pre { margin-top: 8px; padding: 10px; background: var(--bg-elevated); border-radius: var(--radius-md); font-size: 0.78rem; white-space: pre-wrap; max-height: 240px; overflow: auto; }
 .inspector-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 1190; }
 
-.rag-collection-row { display: flex; align-items: center; gap: 4px; }
+.rag-collection-row { display: flex; align-items: center; gap: 2px; min-width: 0; }
 .rag-collection-row.active .rag-collection-item { background: var(--bg-elevated); border-color: var(--accent); }
-.rag-collection-item { flex: 1; }
-.rag-collection-actions { display: flex; gap: 2px; opacity: 0.6; }
-.rag-collection-row:hover .rag-collection-actions { opacity: 1; }
+.rag-collection-item { flex: 1; min-width: 0; }
+.rag-collection-actions {
+  display: flex;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.rag-collection-row:hover .rag-collection-actions,
+.rag-collection-row:focus-within .rag-collection-actions { opacity: 1; }
+.rag-collection-menu-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  transition: color var(--transition);
+}
+.rag-collection-menu-btn:hover,
+.rag-collection-menu-btn:focus-visible {
+  color: var(--text-primary);
+  background: transparent;
+}
+.rag-collection-menu-btn .rag-menu-dots {
+  display: block;
+}
+.rag-collection-menu {
+  min-width: 140px;
+  padding: 4px;
+}
+.chat-context-menu button.menu-danger { color: var(--error); }
+.chat-context-menu button.menu-danger:hover {
+  background: color-mix(in srgb, var(--error) 10%, transparent);
+  color: var(--error);
+}
 .rag-retrieval-scope { display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow: auto; }
 .rag-scope-check { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; }
 .rag-eval-run-config { font-size: 0.72rem; color: var(--text-tertiary); margin-top: 2px; }
