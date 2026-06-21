@@ -9,6 +9,7 @@ const DOC_SECTIONS = [
   { id: 'indexing', label: 'Indexing & chunking' },
   { id: 'embeddings', label: 'Embeddings' },
   { id: 'retrieval', label: 'Retrieval' },
+  { id: 'eval', label: 'Eval pipeline' },
   { id: 'chat', label: 'RAG chat' },
   { id: 'settings', label: 'Pipeline settings' },
   { id: 'providers', label: 'Providers' },
@@ -159,11 +160,12 @@ export class RagHelpUI {
               <ul class="help-doc-list">
                 <li><strong>New collection</strong> — click <strong>+</strong> next to Knowledge Bases; enter a name</li>
                 <li><strong>Select</strong> — click a collection in the list; active collection is highlighted</li>
+                <li><strong>Rename / delete</strong> — use the edit (✎) and delete (×) buttons on each collection row</li>
                 <li><strong>Document count</strong> — shown beside each collection name</li>
               </ul>
               <p>
-                Collections, document text, chunk embeddings, messages, API keys, and settings are stored in
-                <code>localStorage</code> under <code>rag-sandbox-state</code>.
+                Document content and embedding vectors are stored in <strong>IndexedDB</strong> (<code>rag-sandbox-db</code>).
+                Settings, eval sets, and chat messages stay in <code>localStorage</code> under <code>rag-sandbox-state</code>.
               </p>
             </section>
 
@@ -258,7 +260,7 @@ export class RagHelpUI {
                 <li>Embeds your question with the same embedding model</li>
                 <li>Compares the query vector to all indexed chunks in the active collection</li>
                 <li>Ranks chunks by similarity and filters by threshold</li>
-                <li>Builds a context block from the top results (up to ~8000 characters)</li>
+                <li>Builds a context block from the top results (configurable character limit, default 8000)</li>
                 <li>Injects context into the RAG prompt template and sends it to the chat model</li>
               </ol>
               <h4>Retrieval settings</h4>
@@ -266,6 +268,8 @@ export class RagHelpUI {
                 <li><strong>Top K</strong> — maximum chunks returned (1–20, default 5)</li>
                 <li><strong>Similarity threshold</strong> — minimum score to include a chunk (0–1, default 0.30)</li>
                 <li><strong>Search strategy</strong> — <em>Cosine similarity</em> (default), <em>Dot product</em>, or <em>Euclidean distance</em> (converted to a 0–1 score)</li>
+                <li><strong>Context window (chars)</strong> — max characters injected into the RAG prompt from retrieved chunks</li>
+                <li><strong>Document scope</strong> — optionally limit retrieval to specific indexed documents (empty = all)</li>
               </ul>
               <h4>Inspecting retrieval</h4>
               <p>Each assistant reply can show:</p>
@@ -278,6 +282,24 @@ export class RagHelpUI {
                 <strong>Tip</strong>
                 <p>If answers miss relevant info, try lowering the similarity threshold, increasing Top K, or using smaller chunks with more overlap.</p>
               </div>
+            </section>
+
+            <section class="help-doc-section" id="help-eval">
+              <h3>Eval pipeline</h3>
+              <p>
+                The sidebar <strong>Evaluation</strong> panel lets you batch-test retrieval without calling the chat model.
+                Use it to tune Top K, similarity threshold, chunking, and document scope before chatting.
+              </p>
+              <ul class="help-doc-list">
+                <li><strong>+ Question</strong> — add a test query; optional expected keywords for keyword-hit scoring</li>
+                <li><strong>Import</strong> — load questions from a JSON eval set</li>
+                <li><strong>Run batch</strong> — embeds each question, runs retrieval, and scores results</li>
+                <li><strong>JSON / Report</strong> — export full eval history or a Markdown report of the latest run</li>
+              </ul>
+              <p>
+                Results show top similarity score, source document, latency, and keyword hit percentage.
+                Recent runs compare avg score against the previous run for the same collection.
+              </p>
             </section>
 
             <section class="help-doc-section" id="help-chat">
@@ -313,9 +335,9 @@ export class RagHelpUI {
                     <tr><td><strong>Embeddings</strong></td><td>Provider, API key, model, verify</td></tr>
                     <tr><td><strong>Chat Model</strong></td><td>Provider, API key, model list refresh, verify</td></tr>
                     <tr><td><strong>Chunking</strong></td><td>Chunk size, overlap, strategy</td></tr>
-                    <tr><td><strong>Retrieval</strong></td><td>Top K, similarity threshold, search strategy</td></tr>
+                    <tr><td><strong>Retrieval</strong></td><td>Top K, similarity threshold, search strategy, context window, document scope</td></tr>
                     <tr><td><strong>Prompts</strong></td><td>System prompt, RAG template</td></tr>
-                    <tr><td><strong>Advanced</strong></td><td>Temperature (0–2), max tokens (256–32000)</td></tr>
+                    <tr><td><strong>Advanced</strong></td><td>CORS proxy URL, temperature (0–2), max tokens (256–32000)</td></tr>
                   </tbody>
                 </table>
               </div>
