@@ -30,15 +30,64 @@ Supports OpenRouter, OpenAI, Anthropic, Gemini, Groq, and DeepSeek. Anthropic ma
 
 ## Scripts
 
-- `npm run dev` — development server
-- `npm run build` — production build
-- `npm run preview` — preview production build
-- `npm test` — run Vitest unit tests
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Development server |
+| `npm run build` | Production build |
+| `npm run preview` | Preview production build |
+| `npm test` | Run Vitest unit tests |
 
 ## Features
 
-- Multi-provider chat with streaming, images, compare mode
-- Shared credentials across Playground and RAG
-- Chat folders, pin/archive, export/share
-- RAG pipeline testing with eval mode and IndexedDB storage
-- Usage dashboard with cost tracking (estimated)
+### AI Playground
+
+- Multi-provider chat with streaming, image attachments, and compare mode
+- Prompt library with folders, pin/archive, export, and share links
+- Confirmation dialogs before destructive actions (regenerate, clear chat, compare pick, retry, etc.)
+- Roll back / undo for chat changes — **Roll back** button in the input bar or `⌘Z` / `Ctrl+Z`
+- Drag-to-resize sidebar and settings panel (up to 50% wider than default)
+- Floating glass input composer with model pill and cost estimate
+- Contextual tooltips on toolbar and settings controls
+
+### RAG Sandbox
+
+- End-to-end RAG pipeline testing with chunking, retrieval, and eval mode
+- IndexedDB-backed document storage; default collection name `defaultKB`
+- Collection row menu (⋮) for rename and delete
+- RAG chat matches Playground input layout (model pill, Roll back, Send/Stop)
+- Message rollback after clear or other destructive changes
+- Same resizable sidebar/settings panels as Playground
+
+### Shared
+
+- Credentials shared across Playground and RAG
+- Usage dashboard modal with Playground/RAG tabs, export, and reset (estimated costs)
+- Light/dark theme with Sorin design system
+- Keyboard shortcuts — press `?` in the app for the full list
+
+## Keyboard shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `?` | Open shortcuts help |
+| `/` | Focus message input |
+| `⌘K` / `Ctrl+K` | Focus chat search |
+| `⌘,` / `Ctrl+,` | Toggle settings panel |
+| `⌘⇧N` / `Ctrl+Shift+N` | New chat |
+| `⌘Z` / `Ctrl+Z` | Roll back last change (Playground) |
+| `⌘Enter` / `Ctrl+Enter` | Send message |
+| `Esc` | Close panels / cancel |
+
+## Project layout
+
+```
+src/
+  playground-app.js   # Playground bootstrap
+  app.js              # Router + shared shell
+  state.js            # Chat state + undo stack
+  ui/                 # Chat, sidebar, settings, tooltips, modals, usage panel
+  rag/                # RAG state, chunker, retriever, providers
+  usage/              # Usage data load/render/export
+  providers/          # LLM provider registry
+  styles/             # index.css + sorin-theme.css
+```
