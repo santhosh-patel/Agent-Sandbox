@@ -67,7 +67,7 @@ class RagStateManager {
     } catch (e) {
       console.warn('Failed to load RAG state:', e);
     }
-    const defaultCollection = createCollection('Default Knowledge Base');
+    const defaultCollection = createCollection('defaultKB');
     return {
       collections: [defaultCollection],
       activeCollectionId: defaultCollection.id,
@@ -235,7 +235,7 @@ class RagStateManager {
       this._state.activeCollectionId = this._state.collections[0]?.id || '';
     }
     if (this._state.collections.length === 0) {
-      const c = createCollection('Default Knowledge Base');
+      const c = createCollection('defaultKB');
       this._state.collections.push(c);
       this._state.activeCollectionId = c.id;
     }
