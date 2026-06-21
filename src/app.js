@@ -1,6 +1,7 @@
 import { initRouter, registerRoute, navigate, onRoute } from './router.js';
 import { PlaygroundApp } from './playground-app.js';
 import { registerPWA } from './pwa.js';
+import { openUsageWindow } from './ui/help-base.js';
 
 let playgroundApp = null;
 let ragModule = null;
@@ -60,9 +61,7 @@ window.addEventListener('DOMContentLoaded', () => {
   onRoute(updateNavPills);
   registerPWA();
 
-  document.getElementById('topnav-usage-nav-btn')?.addEventListener('click', () => {
-    import('./ui/help-base.js').then(m => m.openUsageWindow());
-  });
+  document.getElementById('topnav-usage-nav-btn')?.addEventListener('click', () => openUsageWindow());
   document.getElementById('topnav-status-btn')?.addEventListener('click', () => navigate('/rag'));
 });
 

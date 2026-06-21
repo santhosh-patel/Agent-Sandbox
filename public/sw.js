@@ -1,8 +1,7 @@
-const CACHE = 'ai-playground-v2';
+const CACHE = 'ai-playground-v3';
 const ASSETS = [
   '/',
   '/index.html',
-  '/usage.html',
   '/share.html',
   '/icon.png',
   '/manifest.webmanifest',

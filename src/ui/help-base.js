@@ -1,4 +1,5 @@
 import { modKeyLabel } from './icons.js';
+import { usagePanel } from './usage-panel.js';
 
 export function createHelpPanel({ title, lead, sections, onClose }) {
   const mod = modKeyLabel();
@@ -78,5 +79,5 @@ export function createHelpPanel({ title, lead, sections, onClose }) {
 }
 
 export function openUsageWindow() {
-  window.open('/usage.html', 'usage', 'width=760,height=680,scrollbars=yes');
+  usagePanel.open();
 }

@@ -1,9 +1,7 @@
 const PLAYGROUND_KEY = 'ai-playground-state';
 const RAG_KEY = 'rag-sandbox-state';
 
-let activeTab = 'all';
-
-function loadPlaygroundUsage() {
+export function loadPlaygroundUsage() {
   try {
     const raw = localStorage.getItem(PLAYGROUND_KEY);
     if (raw) return JSON.parse(raw).usage || null;
@@ -11,7 +9,7 @@ function loadPlaygroundUsage() {
   return null;
 }
 
-function loadRagUsage() {
+export function loadRagUsage() {
   try {
     const raw = localStorage.getItem(RAG_KEY);
     if (raw) return JSON.parse(raw).usage || null;
@@ -19,7 +17,7 @@ function loadRagUsage() {
   return null;
 }
 
-function loadTopChats() {
+export function loadTopChats() {
   try {
     const raw = localStorage.getItem(PLAYGROUND_KEY);
     if (!raw) return [];
@@ -82,7 +80,7 @@ function renderProviderRows(byProvider) {
   `).join('');
 }
 
-function renderChart(series, metric = 'cost') {
+export function renderChart(series, metric = 'cost') {
   const max = Math.max(...series.map(d => d[metric] || 0), 0.0001);
   return `
     <div class="usage-chart" role="img" aria-label="7-day ${metric} chart">
@@ -96,7 +94,7 @@ function renderChart(series, metric = 'cost') {
   `;
 }
 
-function renderPlaygroundSection(pg) {
+export function renderPlaygroundSection(pg) {
   const today = new Date().toISOString().slice(0, 10);
   const todayStats = pg.daily[today] || { requests: 0, tokens: 0, cost: 0, byProvider: {} };
   const weekStats = sumLastDays(pg.daily, 7);
@@ -127,7 +125,7 @@ function renderPlaygroundSection(pg) {
   `;
 }
 
-function renderRagSection(rag) {
+export function renderRagSection(rag) {
   const avgLatency = rag.latency?.length
     ? (rag.latency.reduce((a, b) => a + b, 0) / rag.latency.length).toFixed(2)
     : '—';
@@ -145,23 +143,16 @@ function renderRagSection(rag) {
   `;
 }
 
-function render() {
-  const el = document.getElementById('usage-dashboard');
-  if (!el) return;
-
+export function renderUsageDashboard(activeTab = 'all') {
   const pg = loadPlaygroundUsage() || { daily: {}, total: { requests: 0, tokens: 0, cost: 0 } };
   const rag = loadRagUsage() || { requests: 0, tokens: 0, cost: 0, latency: [] };
 
-  if (activeTab === 'playground') {
-    el.innerHTML = renderPlaygroundSection(pg);
-  } else if (activeTab === 'rag') {
-    el.innerHTML = renderRagSection(rag);
-  } else {
-    el.innerHTML = renderPlaygroundSection(pg) + renderRagSection(rag);
-  }
+  if (activeTab === 'playground') return renderPlaygroundSection(pg);
+  if (activeTab === 'rag') return renderRagSection(rag);
+  return renderPlaygroundSection(pg) + renderRagSection(rag);
 }
 
-function exportJson() {
+export function exportUsageJson() {
   const data = {
     exportedAt: Date.now(),
     playground: loadPlaygroundUsage(),
@@ -177,9 +168,8 @@ function exportJson() {
   URL.revokeObjectURL(url);
 }
 
-async function resetStats() {
-  const scope = await showResetDialog();
-  if (!scope) return;
+export function resetUsageStats(scope) {
+  if (!scope) return { ok: false, reason: 'cancelled' };
 
   try {
     if (scope === 'all' || scope === 'playground') {
@@ -202,65 +192,8 @@ async function resetStats() {
         localStorage.setItem(RAG_KEY, JSON.stringify(rag));
       }
     }
-    render();
+    return { ok: true, scope };
   } catch (e) {
-    alert('Reset failed: ' + e.message);
+    return { ok: false, error: e.message };
   }
 }
-
-function showResetDialog() {
-  return new Promise((resolve) => {
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay visible';
-    overlay.innerHTML = `
-      <div class="modal" role="dialog">
-        <h3 class="modal-title">Reset usage statistics</h3>
-        <p class="modal-message">Choose which stats to clear. This cannot be undone.</p>
-        <div class="modal-actions modal-actions--stack">
-          <button type="button" class="btn btn-danger" data-scope="all">Reset all</button>
-          <button type="button" class="btn btn-ghost" data-scope="playground">Playground only</button>
-          <button type="button" class="btn btn-ghost" data-scope="rag">RAG only</button>
-          <button type="button" class="btn btn-ghost modal-cancel">Cancel</button>
-        </div>
-      </div>
-    `;
-    const close = (val) => {
-      overlay.remove();
-      resolve(val);
-    };
-    overlay.querySelector('.modal-cancel')?.addEventListener('click', () => close(null));
-    overlay.querySelectorAll('[data-scope]').forEach(btn => {
-      btn.addEventListener('click', () => close(btn.dataset.scope));
-    });
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(null); });
-    document.body.appendChild(overlay);
-  });
-}
-
-document.getElementById('usage-tabs')?.addEventListener('click', (e) => {
-  const tab = e.target.closest('.usage-tab');
-  if (!tab) return;
-  activeTab = tab.dataset.tab || 'all';
-  document.querySelectorAll('.usage-tab').forEach(t => {
-    t.classList.toggle('usage-tab--active', t === tab);
-  });
-  render();
-});
-
-document.getElementById('usage-refresh-btn')?.addEventListener('click', render);
-document.getElementById('usage-export-btn')?.addEventListener('click', exportJson);
-document.getElementById('usage-reset-btn')?.addEventListener('click', resetStats);
-window.addEventListener('storage', render);
-render();
-
-try {
-  const raw = localStorage.getItem(PLAYGROUND_KEY);
-  if (raw) {
-    const theme = JSON.parse(raw).settings?.theme || 'light';
-    let active = theme;
-    if (theme === 'system') {
-      active = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    document.documentElement.setAttribute('data-theme', active);
-  }
-} catch { /* ignore */ }

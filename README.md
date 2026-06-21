@@ -17,7 +17,7 @@ Open `http://localhost:5173/` for chat or `http://localhost:5173/rag` for RAG.
 |-------|-------------|
 | `/` | AI Playground chat |
 | `/rag` | RAG Sandbox (lazy-loaded) |
-| `/usage.html` | Usage dashboard popup |
+| Usage (top nav / settings) | In-app usage dashboard modal |
 | `/share.html` | Read-only shared chat viewer |
 
 ## Privacy

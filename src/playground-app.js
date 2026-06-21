@@ -82,9 +82,6 @@ export class PlaygroundApp {
       this.settingsUI.expandPanel();
     });
     document.getElementById('topnav-status-btn')?.addEventListener('click', () => navigate('/rag'));
-    document.getElementById('topnav-usage-nav-btn')?.addEventListener('click', () => {
-      import('./ui/help-base.js').then(m => m.openUsageWindow());
-    });
     document.getElementById('input-settings-btn')?.addEventListener('click', () => {
       this.settingsUI.expandPanel();
     });

@@ -2719,7 +2719,6 @@ a.rag-back-pill {
 .usage-page { max-width: 720px; margin: 0 auto; padding: 24px; }
 .usage-page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
 .usage-page-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.usage-empty { color: var(--text-secondary); font-size: 0.85rem; }
 
 .rag-storage-meter {
   font-size: 0.75rem;
@@ -2801,8 +2800,17 @@ a.rag-back-pill {
 .rag-scope-check { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; }
 .rag-eval-run-config { font-size: 0.72rem; color: var(--text-tertiary); margin-top: 2px; }
 
-.usage-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-.usage-tab { border: 1px solid var(--border); background: var(--bg-elevated); border-radius: 999px; padding: 6px 14px; cursor: pointer; font-size: 0.85rem; }
+.usage-empty { color: var(--text-secondary); font-size: 0.85rem; }
+.usage-tabs { display: flex; gap: 8px; margin-bottom: 0; }
+.usage-tab {
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
 .usage-tab--active { background: var(--accent); color: #fff; border-color: var(--accent); }
 .usage-chart { display: flex; align-items: flex-end; gap: 8px; height: 80px; margin: 12px 0 20px; }
 .usage-chart-bar { flex: 1; height: var(--h, 10%); min-height: 4px; background: var(--accent); border-radius: 4px 4px 0 0; display: flex; align-items: flex-end; justify-content: center; font-size: 0.65rem; color: var(--text-tertiary); padding-bottom: 2px; }
