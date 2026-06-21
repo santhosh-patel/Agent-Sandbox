@@ -15,7 +15,7 @@ import { estimateStorageBytes, formatBytes } from '../rag/rag-db.js';
 import { credentials } from '../shared/credentials.js';
 import { openUsageWindow } from './help-base.js';
 import { confirmClearChat } from './confirm-actions.js';
-import { setTip } from './tooltip.js';
+import { setTip, rollbackTip } from './tooltip.js';
 import { bindThemeToggle } from '../shared/theme.js';
 import { initAppPanelResize } from './panel-resize.js';
 
@@ -110,10 +110,9 @@ export class RagSandboxUI {
     const can = ragState.canUndoMessages();
     btn.hidden = !can;
     if (can) {
-      const mod = navigator.platform.includes('Mac') ? '⌘' : 'Ctrl';
-      setTip(btn, `Roll back: ${ragState.getMessageUndoLabel()} (${mod}+Z)`);
+      setTip(btn, rollbackTip(ragState.getMessageUndoLabel()), 'bottom');
     } else {
-      setTip(btn, '');
+      setTip(btn, 'Restore messages before your last clear or destructive change', 'bottom');
     }
   }
 

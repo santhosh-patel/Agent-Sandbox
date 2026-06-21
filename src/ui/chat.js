@@ -7,7 +7,7 @@ import { messageAvatarHtml } from './icons.js';
 import { showPrompt } from './modal.js';
 import { showToast } from './toast.js';
 import { renderWelcomePrompts } from './prompt-library.js';
-import { setTip } from './tooltip.js';
+import { setTip, rollbackTip } from './tooltip.js';
 import {
   confirmRegenerate,
   confirmRegenerateAs,
@@ -249,9 +249,9 @@ export class ChatUI {
     const can = chat && state.canUndo(chat.id);
     btn.hidden = !can;
     if (can) {
-      setTip(btn, `Roll back: ${state.getUndoLabel(chat.id)} (${navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+Z)`);
+      setTip(btn, rollbackTip(state.getUndoLabel(chat.id)), 'bottom');
     } else {
-      setTip(btn, '');
+      setTip(btn, 'Restore the chat to before your last destructive action', 'bottom');
     }
   }
 

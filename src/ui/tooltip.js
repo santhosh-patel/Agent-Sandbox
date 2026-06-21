@@ -290,6 +290,12 @@ function onPointerDown() {
   hideTip();
 }
 
+export function rollbackTip(label) {
+  const mod = navigator.platform.includes('Mac') ? '⌘' : 'Ctrl';
+  if (label?.trim()) return `Roll back: ${label.trim()} (${mod}+Z)`;
+  return `Roll back last change (${mod}+Z)`;
+}
+
 export function setTip(el, text, pos) {
   if (!el) return;
   if (text) {
@@ -338,6 +344,11 @@ export function applyDefaultTooltips() {
     document.getElementById('search-scope-btn'),
     'Searching titles and message content — click for titles only',
   );
+
+  for (const id of ['chat-rollback-btn', 'rag-rollback-btn']) {
+    const el = document.getElementById(id);
+    if (el && ELEMENT_TIPS[id]) setTip(el, ELEMENT_TIPS[id], 'bottom');
+  }
 
   document.querySelectorAll('[title]').forEach(el => {
     if (el.hasAttribute('data-tip')) el.removeAttribute('title');
