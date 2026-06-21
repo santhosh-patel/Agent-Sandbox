@@ -14,6 +14,8 @@ import { RESPONSE_PROFILES } from './data/presets.js';
 import { showToast } from './ui/toast.js';
 import { navigate } from './router.js';
 import { initTheme } from './shared/theme.js';
+import { isMobile, isTablet } from './ui/breakpoints.js';
+import { initAppPanelResize } from './ui/panel-resize.js';
 
 export class PlaygroundApp {
   constructor() {
@@ -102,6 +104,24 @@ export class PlaygroundApp {
       if (settings.provider) this.updateProviderChips();
     });
     this.updateProviderChips();
+    this.bindPanelResize();
+  }
+
+  bindPanelResize() {
+    const root = document.getElementById('app');
+    const sidebar = document.getElementById('sidebar');
+    const settingsPanel = document.getElementById('settings-panel');
+    if (!root || !sidebar || !settingsPanel) return;
+
+    initAppPanelResize({
+      root,
+      sidebarEl: sidebar,
+      settingsEl: settingsPanel,
+      prefix: 'playground',
+      enabled: () => !isTablet() && !isMobile(),
+      sidebarLabel: 'Resize chat sidebar',
+      settingsLabel: 'Resize settings panel',
+    });
   }
 
   bindProviderChips() {

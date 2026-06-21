@@ -17,6 +17,7 @@ import { openUsageWindow } from './help-base.js';
 import { confirmClearChat } from './confirm-actions.js';
 import { setTip } from './tooltip.js';
 import { bindThemeToggle } from '../shared/theme.js';
+import { initAppPanelResize } from './panel-resize.js';
 
 export class RagSandboxUI {
   constructor() {
@@ -243,6 +244,22 @@ export class RagSandboxUI {
     onViewportChange(({ mobile }) => {
       if (!mobile) this.closeMobileSidebar();
       if (!this.isOverlayMode() && this.overlay) this.overlay.classList.remove('visible');
+    });
+
+    this.bindPanelResize();
+  }
+
+  bindPanelResize() {
+    if (!this.root || !this.sidebar || !this.settingsPanel) return;
+
+    initAppPanelResize({
+      root: this.root,
+      sidebarEl: this.sidebar,
+      settingsEl: this.settingsPanel,
+      prefix: 'rag',
+      enabled: () => !this.isOverlayMode() && !isMobile(),
+      sidebarLabel: 'Resize knowledge base sidebar',
+      settingsLabel: 'Resize pipeline settings panel',
     });
   }
 

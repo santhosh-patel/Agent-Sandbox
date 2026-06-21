@@ -82,6 +82,46 @@ body {
   max-width: 100vw;
   overflow: hidden;
   z-index: 1;
+  --playground-sidebar-width: 260px;
+  --playground-settings-width: 360px;
+}
+
+#playground-view #sidebar {
+  width: var(--playground-sidebar-width);
+  min-width: var(--playground-sidebar-width);
+  position: relative;
+}
+
+#playground-view #settings-panel {
+  width: var(--playground-settings-width);
+  min-width: var(--playground-settings-width);
+  position: relative;
+}
+
+#playground-view .edge-toggle-left {
+  left: calc(var(--playground-sidebar-width) - 14px);
+}
+
+#playground-view .edge-toggle-right {
+  right: calc(var(--playground-settings-width) - 14px);
+}
+
+body.sidebar-collapsed #playground-view .edge-toggle-left {
+  left: 0;
+}
+
+body.settings-collapsed #playground-view .edge-toggle-right {
+  right: 0;
+}
+
+@media (max-width: 1100px) {
+  #playground-view #settings-panel {
+    width: min(var(--playground-settings-width), 100vw);
+  }
+
+  #playground-view #settings-panel.collapsed {
+    width: min(var(--playground-settings-width), 100vw);
+  }
 }
 
 /* ---- Mobile Header ---- */
@@ -2416,12 +2456,49 @@ kbd {
   max-width: 100vw;
   overflow: hidden;
   z-index: 1;
+  --rag-sidebar-width: 260px;
+  --rag-settings-width: 360px;
 }
 
 #rag-sidebar {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  width: var(--rag-sidebar-width);
+  min-width: var(--rag-sidebar-width);
+  position: relative;
+}
+
+#rag-settings-panel {
+  width: var(--rag-settings-width);
+  min-width: var(--rag-settings-width);
+  position: relative;
+}
+
+#rag-app .edge-toggle-left {
+  left: calc(var(--rag-sidebar-width) - 14px);
+}
+
+#rag-app .edge-toggle-right {
+  right: calc(var(--rag-settings-width) - 14px);
+}
+
+body.rag-app-body.sidebar-collapsed #rag-app .edge-toggle-left {
+  left: 0;
+}
+
+body.rag-app-body.settings-collapsed #rag-app .edge-toggle-right {
+  right: 0;
+}
+
+@media (max-width: 1100px) {
+  #rag-settings-panel {
+    width: min(var(--rag-settings-width), 100vw);
+  }
+
+  #rag-settings-panel.collapsed {
+    width: min(var(--rag-settings-width), 100vw);
+  }
 }
 
 .rag-sidebar-section-head {
@@ -2830,6 +2907,93 @@ a.rag-back-pill {
   background: color-mix(in srgb, var(--error) 10%, transparent);
   color: var(--error);
 }
+
+/* ---- Panel resize handles ---- */
+.panel-resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  z-index: 95;
+  cursor: col-resize;
+  touch-action: none;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.panel-resize-handle--right {
+  right: -4px;
+}
+
+.panel-resize-handle--left {
+  left: -4px;
+}
+
+.panel-resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 36px;
+  border-radius: 1px;
+  background: var(--border);
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, height 0.15s;
+}
+
+.panel-resize-handle:hover::after,
+.panel-resize-handle.is-dragging::after,
+.panel-resize-handle:focus-visible::after {
+  opacity: 1;
+  background: var(--accent);
+  height: 48px;
+}
+
+.panel-resize-handle:focus-visible {
+  outline: none;
+}
+
+.panel-resize-handle.is-dragging,
+.panel-resize-handle.is-dragging::after {
+  opacity: 1;
+}
+
+body.panel-resizing {
+  cursor: col-resize !important;
+  user-select: none;
+}
+
+body.panel-resizing * {
+  cursor: col-resize !important;
+}
+
+body.panel-resizing #sidebar,
+body.panel-resizing #settings-panel,
+body.panel-resizing #rag-sidebar,
+body.panel-resizing #rag-settings-panel,
+body.panel-resizing #playground-view .edge-toggle-left,
+body.panel-resizing #playground-view .edge-toggle-right,
+body.panel-resizing #rag-app .edge-toggle-left,
+body.panel-resizing #rag-app .edge-toggle-right {
+  transition: none !important;
+}
+
+@media (max-width: 1100px) {
+  #rag-app .panel-resize-handle,
+  #playground-view .panel-resize-handle {
+    display: none;
+  }
+}
+
+#rag-sidebar.collapsed .panel-resize-handle,
+#rag-settings-panel.collapsed .panel-resize-handle,
+#playground-view #sidebar.collapsed .panel-resize-handle,
+#playground-view #settings-panel.collapsed .panel-resize-handle {
+  display: none;
+}
+
 .rag-retrieval-scope { display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow: auto; }
 .rag-scope-check { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; }
 .rag-eval-run-config { font-size: 0.72rem; color: var(--text-tertiary); margin-top: 2px; }
