@@ -56,6 +56,36 @@ export class RagSandboxUI {
     this.evalUI = new RagEvalUI();
     this.renderStorageMeter();
     this.updateRollbackButton();
+    this.updateRagInputBar();
+  }
+
+  updateRagInputBar() {
+    const pill = document.getElementById('rag-input-model-pill');
+    const settingsBtn = document.getElementById('rag-input-settings-btn');
+    const s = ragState.settings;
+    if (pill) {
+      if (s.chatModel) {
+        const short = s.chatModel.split('/').pop();
+        pill.textContent = short.length > 18 ? `${short.slice(0, 16)}…` : short;
+      } else {
+        pill.textContent = 'No model';
+      }
+    }
+    if (settingsBtn) {
+      const provider = RAG_PROVIDERS[s.chatProvider]?.name || s.chatProvider || 'No provider';
+      setTip(settingsBtn, s.chatModel ? `${provider} · ${s.chatModel} — click to change` : 'Open pipeline settings');
+    }
+    this.refreshRagSendState();
+  }
+
+  refreshRagSendState() {
+    const input = document.getElementById('rag-message-input');
+    const sendBtn = document.getElementById('rag-send-btn');
+    if (!input || !sendBtn || sendBtn.style.display === 'none') return;
+    const hasText = !!input.value.trim();
+    const configured = ragState.isConfigured();
+    sendBtn.disabled = !hasText || !configured;
+    setTip(sendBtn, configured ? 'Send message — press Enter' : 'Configure API keys and models in settings');
   }
 
   handleKeydown(e) {
@@ -156,6 +186,7 @@ export class RagSandboxUI {
 
     document.getElementById('rag-send-btn')?.addEventListener('click', () => this.handleSend());
     document.getElementById('rag-stop-btn')?.addEventListener('click', () => this.handleStop());
+    document.getElementById('rag-input-settings-btn')?.addEventListener('click', () => this.expandSettingsPanel());
     document.getElementById('rag-message-input')?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -165,7 +196,8 @@ export class RagSandboxUI {
     document.getElementById('rag-message-input')?.addEventListener('input', (e) => {
       const el = e.target;
       el.style.height = 'auto';
-      el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+      el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+      this.refreshRagSendState();
     });
     document.getElementById('rag-clear-chat-btn')?.addEventListener('click', async () => {
       if (!ragState.messages.length) return;
@@ -197,7 +229,10 @@ export class RagSandboxUI {
       this.renderStorageMeter();
       this.renderRetrievalScope();
     });
-    ragState.on('settings-changed', () => this.renderSettings());
+    ragState.on('settings-changed', () => {
+      this.renderSettings();
+      this.updateRagInputBar();
+    });
     ragState.on('message-added', () => this.renderMessages());
     ragState.on('message-updated', () => this.renderMessages());
     ragState.on('messages-cleared', () => this.renderMessages());
@@ -1029,6 +1064,8 @@ export class RagSandboxUI {
     }
 
     input.value = '';
+    input.style.height = 'auto';
+    this.refreshRagSendState();
     const s = ragState.settings;
     const embedKey = ragState.getApiKey(s.embeddingProvider);
     const chatKey = ragState.getApiKey(s.chatProvider);
@@ -1417,6 +1454,7 @@ export class RagSandboxUI {
     if (sendBtn) sendBtn.style.display = loading ? 'none' : '';
     if (stopBtn) stopBtn.style.display = loading ? '' : 'none';
     if (input) input.disabled = loading;
+    if (!loading) this.refreshRagSendState();
   }
 
   escape(str) {

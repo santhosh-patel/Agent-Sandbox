@@ -149,7 +149,7 @@
                   <li data-step="key">Add your API key</li>
                   <li data-step="model">Pick a model and send a message</li>
                 </ol>
-                <p class="setup-hint">OpenRouter works in-browser with one key.</p>
+                <p class="setup-hint" id="setup-hint" hidden></p>
                 <div class="setup-actions">
                   <button type="button" class="btn btn-primary btn-sm" id="setup-open-settings-btn">Open settings</button>
                   <button type="button" class="btn btn-ghost btn-sm" id="setup-openrouter-btn">Use OpenRouter</button>
@@ -514,7 +514,6 @@
               <div class="rag-usage-stats" id="rag-usage-stats"></div>
             </div>
             <div class="chat-header-right">
-              <button type="button" class="btn-text btn-sm" id="rag-rollback-btn" hidden>Roll back</button>
               <button type="button" class="btn-text btn-sm" id="rag-clear-chat-btn">Clear chat</button>
             </div>
           </div>
@@ -536,12 +535,23 @@
             </div>
           </div>
           <div class="input-area rag-input-area">
-            <div class="rag-input-container">
+            <div class="input-container">
               <textarea id="rag-message-input" placeholder="Ask a question about your documents…" rows="1"></textarea>
-              <button type="button" class="rag-send-btn" id="rag-send-btn" aria-label="Send message">
-                <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
-              </button>
-              <button type="button" class="rag-stop-btn" id="rag-stop-btn" style="display:none" aria-label="Stop generation">Stop</button>
+              <div class="input-actions">
+                <div class="input-tools">
+                  <button type="button" class="input-tool-pill" id="rag-input-settings-btn" title="Pipeline settings">
+                    <span id="rag-input-model-pill">No model</span>
+                  </button>
+                  <button type="button" class="input-tool-pill" id="rag-rollback-btn" hidden title="Roll back">Roll back</button>
+                </div>
+                <div class="input-send-group">
+                  <button type="button" class="btn-send" id="rag-send-btn" disabled>
+                    <span>Send</span>
+                    <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+                  </button>
+                  <button type="button" class="btn-stop" id="rag-stop-btn" style="display:none">Stop</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

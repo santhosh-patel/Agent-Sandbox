@@ -469,9 +469,13 @@ export class ChatUI {
     const hint = this.setupCard.querySelector('.setup-hint');
     const issues = state.getSetupIssues();
     if (hint) {
-      hint.textContent = issues.length
-        ? `Next: ${issues[0]}`
-        : 'OpenRouter works in-browser with one key.';
+      if (issues.length) {
+        hint.textContent = `Next: ${issues[0]}`;
+        hint.hidden = false;
+      } else {
+        hint.textContent = '';
+        hint.hidden = true;
+      }
     }
   }
 
