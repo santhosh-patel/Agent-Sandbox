@@ -2,6 +2,7 @@ import { initRouter, registerRoute, navigate, onRoute } from './router.js';
 import { PlaygroundApp } from './playground-app.js';
 import { registerPWA } from './pwa.js';
 import { openUsageWindow } from './ui/help-base.js';
+import { initTooltips } from './ui/tooltip.js';
 
 let playgroundApp = null;
 let ragModule = null;
@@ -57,6 +58,7 @@ registerRoute('/', mountPlayground);
 registerRoute('/rag', mountRag);
 
 window.addEventListener('DOMContentLoaded', () => {
+  initTooltips();
   initRouter('/');
   onRoute(updateNavPills);
   registerPWA();

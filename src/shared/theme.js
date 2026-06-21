@@ -1,6 +1,7 @@
 import { state } from '../state.js';
 import { setMarkdownTheme } from '../ui/markdown.js';
 import { iconHtml } from '../ui/icons.js';
+import { setTip } from '../ui/tooltip.js';
 
 export function resolveTheme(theme) {
   if (theme === 'system') {
@@ -22,7 +23,7 @@ export function updateThemeToggleButton(theme, btnId = 'topnav-theme-btn', iconI
   const active = resolveTheme(theme);
   const isDark = active === 'dark';
   btn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
-  btn.title = isDark ? 'Light mode' : 'Dark mode';
+  setTip(btn, isDark ? 'Switch to light mode' : 'Switch to dark mode');
   const iconEl = document.getElementById(iconId);
   if (iconEl) {
     const iconName = isDark ? 'sun' : 'moon';
