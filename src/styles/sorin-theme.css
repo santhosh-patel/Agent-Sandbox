@@ -600,6 +600,22 @@
   position: relative;
 }
 
+.main-canvas::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 112px;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--bg-primary) 72%, transparent) 0%,
+    transparent 100%
+  );
+}
+
 /* ---- Chat header (hidden — info/actions live in sidebar ⋯ menu) ---- */
 .chat-header:not([hidden]) {
   display: flex;
@@ -1013,49 +1029,62 @@
 .thinking-content.hidden { display: none; }
 
 /* ---- Input card ---- */
-.input-area {
+.input-area,
+.rag-input-area {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 10px;
-  padding: 12px 24px 28px;
+  gap: 8px;
+  padding: 4px 24px 24px;
   background: transparent;
-  border-top: none;
+  border: none;
+  box-shadow: none;
   z-index: 2;
   flex-shrink: 0;
 }
 
-.input-area > .attachment-preview,
 .input-area > .cost-estimate,
-.input-area > .input-container {
+.input-area > .input-container,
+.rag-input-area > .rag-input-container {
   width: 100%;
   max-width: 768px;
   margin-left: auto;
   margin-right: auto;
 }
 
-.input-container {
+.input-area > .cost-estimate {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.cost-estimate[hidden],
+.attachment-preview[hidden] {
+  display: none !important;
+}
+
+.input-container,
+.rag-input-container {
   flex-direction: column;
   align-items: stretch;
   gap: 0;
   padding: 0;
-  background: var(--bg-elevated);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border);
+  background: var(--bg-glass-strong);
+  backdrop-filter: blur(var(--glass-blur-strong));
+  -webkit-backdrop-filter: blur(var(--glass-blur-strong));
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
-  box-shadow: var(--float-shadow);
+  box-shadow: var(--float-shadow), var(--glass-inset);
   overflow: hidden;
   transition:
     box-shadow var(--transition),
-    border-color var(--transition),
-    transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    border-color var(--transition);
 }
 
-.input-container:focus-within {
-  border-color: var(--border-strong);
-  box-shadow: var(--float-shadow-lift);
-  transform: translateY(-2px);
+.input-container:focus-within,
+.rag-input-container:focus-within {
+  border-color: color-mix(in srgb, var(--accent-secondary) 40%, var(--glass-border));
+  box-shadow: var(--float-shadow-lift), var(--glass-inset);
 }
 
 .input-container textarea,
@@ -1063,6 +1092,7 @@
   padding: 16px 20px 8px;
   font-size: 0.9375rem;
   min-height: 48px;
+  background: transparent;
 }
 
 .input-actions {
@@ -1083,11 +1113,11 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  border: 1px solid var(--border);
+  padding: 5px 11px;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
   border-radius: var(--radius-full);
-  background: var(--surface);
-  font-size: 0.75rem;
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  font-size: 0.72rem;
   font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
@@ -1350,19 +1380,28 @@
   position: absolute;
   bottom: 140px;
   right: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 36px;
   height: 36px;
+  padding: 0;
   border-radius: 50%;
   border: 1px solid var(--border);
   background: var(--bg-elevated);
   box-shadow: var(--shadow-md);
   cursor: pointer;
-  font-size: 1rem;
   color: var(--text-secondary);
+  line-height: 0;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, background var(--transition), color var(--transition), border-color var(--transition);
   z-index: 10;
+}
+
+.scroll-bottom-btn .icon {
+  display: block;
+  flex-shrink: 0;
 }
 
 .scroll-bottom-btn.visible {
@@ -1380,7 +1419,7 @@
 .attachment-preview {
   display: flex;
   gap: 8px;
-  padding: 10px 20px 0;
+  padding: 12px 16px 0;
   flex-wrap: wrap;
 }
 
@@ -2645,6 +2684,10 @@
     -webkit-backdrop-filter: none;
   }
 
+  .main-canvas::after {
+    display: none;
+  }
+
   .messages {
     flex: 1;
     min-height: 0;
@@ -2739,24 +2782,27 @@
     height: auto;
   }
 
-  .input-area {
+  .input-area,
+  .rag-input-area {
     flex-shrink: 0;
     padding: 8px var(--content-padding) calc(12px + env(safe-area-inset-bottom, 0px));
     gap: 8px;
   }
 
-  .input-area > .attachment-preview,
   .input-area > .cost-estimate,
-  .input-area > .input-container {
+  .input-area > .input-container,
+  .rag-input-area > .rag-input-container {
     max-width: 100%;
   }
 
-  .input-container {
+  .input-container,
+  .rag-input-container {
     border-radius: var(--radius-lg);
   }
 
-  .input-container:focus-within {
-    transform: translateY(-1px);
+  .input-container:focus-within,
+  .rag-input-container:focus-within {
+    transform: none;
   }
 
   .input-container textarea,
@@ -3361,9 +3407,17 @@
   transform: none;
 }
 
+/* RAG input uses shared floating styles from input card section */
 .rag-input-container {
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.rag-input-container textarea {
+  padding: 6px 0;
+  min-height: 24px;
 }
 
 /* RAG layout polish */
