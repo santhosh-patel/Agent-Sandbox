@@ -93,3 +93,18 @@ src/
   providers/          # LLM provider registry
   styles/             # index.css + sorin-theme.css
 ```
+
+## Contributing
+
+Contributions are welcome. This project lives at [github.com/santhosh-patel/Agent-Sandbox](https://github.com/santhosh-patel/Agent-Sandbox).
+
+1. **Fork** the repo and clone your fork locally.
+2. **Install** dependencies and run the dev server (`npm install` && `npm run dev`).
+3. **Create a branch** for your change (`git checkout -b feat/my-change`).
+4. **Make your changes** — keep diffs focused and match existing code style.
+5. **Run tests** before opening a PR: `npm test` (and `npm run build` if you touched UI or build config).
+6. **Open a pull request** against `main` with a short summary and test plan.
+
+**Bug reports & ideas:** open an [issue](https://github.com/santhosh-patel/Agent-Sandbox/issues) with steps to reproduce, expected vs actual behavior, and browser/OS if relevant.
+
+**Scope notes:** Agent Sandbox is fully client-side — avoid backend dependencies unless there is a clear reason. Do not commit API keys, `.env` files, or personal chat exports.
