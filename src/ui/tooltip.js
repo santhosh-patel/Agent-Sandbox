@@ -48,7 +48,7 @@ const ELEMENT_TIPS = {
   'rag-topnav-settings-btn': 'Pipeline settings — embeddings, retrieval, prompts',
   'rag-topnav-help-btn': 'RAG documentation and tips',
   'rag-topnav-usage-btn': 'Embedding and chat usage for this session',
-  'rag-back-pill': 'Return to AI Playground',
+  'rag-back-pill': 'Return to Agent Sandbox',
   'rag-sidebar-toggle': 'Open RAG sidebar',
   'rag-settings-toggle-mobile': 'Open pipeline settings',
   'rag-mobile-help-btn': 'Open RAG help',

@@ -127,12 +127,12 @@
       if (!hash) throw new Error('No chat data in link');
       const data = JSON.parse(decodeURIComponent(escape(atob(hash))));
       const assistantName = data.assistantName || 'Maya';
-      document.title = (data.title || 'Shared Chat') + ' · AI Playground';
+      document.title = (data.title || 'Shared Chat') + ' · Agent Sandbox';
       document.getElementById('content').innerHTML = `
         <h1>${escapeHtml(data.title || 'Shared Chat')}</h1>
         <p class="meta">Read-only · Exported ${new Date(data.exportedAt).toLocaleString()}</p>
         ${(data.messages || []).map(m => renderMessage(m, assistantName)).join('')}
-        <p class="footer">Shared from AI Playground</p>
+        <p class="footer">Shared from Agent Sandbox</p>
       `;
     } catch (e) {
       document.getElementById('content').innerHTML = `<p class="error">Could not load shared chat. The link may be invalid or truncated.</p>`;

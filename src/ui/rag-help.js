@@ -76,7 +76,7 @@ export class RagHelpUI {
               </p>
               <div class="help-callout help-callout--tip">
                 <strong>Tip</strong>
-                <p>Open RAG Sandbox from the main AI Playground top bar, or return anytime via the <strong>AI Playground</strong> pill. Theme preference is shared between both apps.</p>
+                <p>Open RAG Sandbox from the main Agent Sandbox top bar, or return anytime via the <strong>Agent Sandbox</strong> pill. Theme preference is shared between both apps.</p>
               </div>
               <h4>What you can do</h4>
               <ul class="help-doc-list">
@@ -122,7 +122,7 @@ export class RagHelpUI {
 
             <section class="help-doc-section" id="help-interface">
               <h3>Interface</h3>
-              <p>RAG Sandbox uses the same shell layout as AI Playground:</p>
+              <p>RAG Sandbox uses the same shell layout as Agent Sandbox:</p>
               <div class="help-feature-grid">
                 <article class="help-feature-card">
                   <h4>Left sidebar (Menu)</h4>
@@ -138,7 +138,7 @@ export class RagHelpUI {
                 </article>
                 <article class="help-feature-card">
                   <h4>Top navigation</h4>
-                  <p><strong>Menu</strong>, <strong>Settings</strong>, and <strong>Help</strong> pills. Theme toggle and link back to AI Playground on the right.</p>
+                  <p><strong>Menu</strong>, <strong>Settings</strong>, and <strong>Help</strong> pills. Theme toggle and link back to Agent Sandbox on the right.</p>
                 </article>
                 <article class="help-feature-card">
                   <h4>Edge toggles</h4>
@@ -243,7 +243,7 @@ export class RagHelpUI {
               </p>
               <ul class="help-doc-list">
                 <li><strong>Provider</strong> — must support embeddings (OpenAI, Gemini, OpenRouter, Mistral, Cohere, Voyage AI)</li>
-                <li><strong>API key</strong> — stored locally per provider in RAG state; separate from main Playground keys</li>
+                <li><strong>API key</strong> — stored locally per provider in RAG state; separate from main Chat keys</li>
                 <li><strong>Model</strong> — e.g. <code>text-embedding-3-small</code>, <code>mistral-embed</code>, <code>voyage-3</code></li>
                 <li><strong>Verify</strong> — tests the key against the provider API</li>
               </ul>
@@ -421,7 +421,7 @@ export class RagHelpUI {
                 for this site removes all RAG Sandbox state. Export collections regularly if you need backups.
               </p>
               <p>
-                API keys in RAG Sandbox are separate from AI Playground keys, even when using the same provider.
+                API keys in RAG Sandbox are separate from Agent Sandbox keys, even when using the same provider.
               </p>
             </section>
 
@@ -440,7 +440,7 @@ export class RagHelpUI {
                 </table>
               </div>
               <p class="help-doc-note">
-                Main AI Playground shortcuts (<kbd>${mod}</kbd><kbd>,</kbd> for settings, etc.) apply to the shared shell patterns where panels are open.
+                Main Agent Sandbox shortcuts (<kbd>${mod}</kbd><kbd>,</kbd> for settings, etc.) apply to the shared shell patterns where panels are open.
               </p>
             </section>
 
@@ -454,13 +454,13 @@ export class RagHelpUI {
                 <dt>No relevant answers / empty retrieval</dt>
                 <dd>Lower similarity threshold, increase Top K, or reindex with smaller chunks. Ensure documents finished indexing.</dd>
                 <dt>Chat verify fails</dt>
-                <dd>Confirm chat provider key and model. Refresh model list. For Anthropic in-browser, a CORS proxy may be required (same limitation as main Playground).</dd>
+                <dd>Confirm chat provider key and model. Refresh model list. For Anthropic in-browser, a CORS proxy may be required (same limitation as Chat).</dd>
                 <dt>PDF or DOCX parse issues</dt>
                 <dd>Scanned PDFs without text layers may extract poorly. Complex DOCX layouts may lose formatting (text only is preserved).</dd>
                 <dt>Reindex after settings change</dt>
                 <dd>Chunk size, overlap, strategy, or embedding model changes require <strong>Reindex</strong> to apply to existing documents.</dd>
                 <dt>Data lost after browser cleanup</dt>
-                <dd>Export collections regularly. RAG state is not synced to the main Playground app.</dd>
+                <dd>Export collections regularly. RAG state is not synced to the Chat view.</dd>
                 <dt>High cost during indexing</dt>
                 <dd>Large files produce many chunks; each chunk is embedded. Start with smaller test documents when tuning settings.</dd>
               </dl>

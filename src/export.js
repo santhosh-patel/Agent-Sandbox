@@ -1,4 +1,5 @@
 import { state } from './state.js';
+import { APP_NAME } from './shared/branding.js';
 
 function escapeMd(text) {
   return String(text || '').replace(/([\\`*_{}[\]()#+\-.!|>])/g, '\\$1');
@@ -89,7 +90,7 @@ export function buildShareHtml(chat) {
   <h1>${escapeHtml(chat.title || 'Shared Chat')}</h1>
   <p class="meta">Read-only export · ${new Date().toLocaleString()}</p>
   ${body}
-  <p class="footer">Exported from AI Playground</p>
+  <p class="footer">Exported from ${APP_NAME}</p>
 </body>
 </html>`;
 }

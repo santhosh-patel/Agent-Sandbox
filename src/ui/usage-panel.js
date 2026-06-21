@@ -3,11 +3,12 @@ import {
   exportUsageJson,
   resetUsageStats,
 } from '../usage/usage-data.js';
+import { CHAT_LABEL } from '../shared/branding.js';
 import { showToast } from './toast.js';
 
 const TABS = [
   { id: 'all', label: 'All' },
-  { id: 'playground', label: 'Playground' },
+  { id: 'playground', label: CHAT_LABEL },
   { id: 'rag', label: 'RAG' },
 ];
 
@@ -76,14 +77,14 @@ class UsagePanelUI {
           <div class="usage-panel-actions">
             <button type="button" class="btn btn-ghost btn-sm usage-refresh-btn" data-tip="Reload stats from local storage">Refresh</button>
             <button type="button" class="btn btn-ghost btn-sm usage-export-btn" data-tip="Download usage data as JSON">Export JSON</button>
-            <button type="button" class="btn btn-danger btn-sm usage-reset-btn" data-tip="Clear usage stats — choose Playground, RAG, or all">Reset…</button>
+            <button type="button" class="btn btn-danger btn-sm usage-reset-btn" data-tip="Clear usage stats — choose Chat, RAG, or all">Reset…</button>
             <button type="button" class="btn-text usage-close-btn" aria-label="Close usage dashboard" data-tip="Close (Esc)">Close</button>
           </div>
         </header>
         <nav class="usage-tabs" aria-label="Usage sections">
           ${TABS.map(t => `
             <button type="button" class="usage-tab${t.id === this.activeTab ? ' usage-tab--active' : ''}" data-tab="${t.id}"
-              data-tip="${t.id === 'all' ? 'Combined Playground and RAG stats' : t.id === 'playground' ? 'Chat token usage and costs' : 'RAG embedding and chat usage'}">${t.label}</button>
+              data-tip="${t.id === 'all' ? 'Combined Chat and RAG stats' : t.id === 'playground' ? 'Chat token usage and costs' : 'RAG embedding and chat usage'}">${t.label}</button>
           `).join('')}
         </nav>
         <div class="usage-panel-body usage-panel-body--visible" id="usage-panel-body"></div>
@@ -166,7 +167,7 @@ class UsagePanelUI {
           <p class="modal-message">Choose which stats to clear. This cannot be undone.</p>
           <div class="modal-actions modal-actions--stack">
             <button type="button" class="btn btn-danger" data-scope="all">Reset all</button>
-            <button type="button" class="btn btn-ghost" data-scope="playground">Playground only</button>
+            <button type="button" class="btn btn-ghost" data-scope="playground">${CHAT_LABEL} only</button>
             <button type="button" class="btn btn-ghost" data-scope="rag">RAG only</button>
             <button type="button" class="btn btn-ghost modal-cancel">Cancel</button>
           </div>

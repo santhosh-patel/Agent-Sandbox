@@ -1,7 +1,7 @@
 {
-  "name": "AI Playground",
-  "short_name": "Playground",
-  "description": "Test any LLM with your own API keys. Client-side only.",
+  "name": "Agent Sandbox",
+  "short_name": "Agent Sandbox",
+  "description": "Experiment with models, agents, and knowledge systems.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#faf6ed",
@@ -19,7 +19,7 @@
     {
       "name": "Chat",
       "url": "/",
-      "description": "Open AI Playground chat"
+      "description": "Open Agent Sandbox chat"
     },
     {
       "name": "RAG Sandbox",

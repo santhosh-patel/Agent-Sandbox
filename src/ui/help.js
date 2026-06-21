@@ -1,3 +1,4 @@
+import { APP_NAME, APP_TAGLINE } from '../shared/branding.js';
 import { modKeyLabel } from './icons.js';
 
 const DOC_SECTIONS = [
@@ -41,8 +42,8 @@ export class HelpUI {
         <header class="help-docs-header">
           <div class="help-docs-header-text">
             <p class="help-docs-eyebrow">Documentation</p>
-            <h2 id="help-panel-title">AI Playground</h2>
-            <p class="help-docs-lead">Test any LLM with your own API keys — private, client-side, no signup.</p>
+            <h2 id="help-panel-title">${APP_NAME}</h2>
+            <p class="help-docs-lead">${APP_TAGLINE}</p>
           </div>
           <button type="button" class="btn-text help-close" aria-label="Close documentation">Close</button>
         </header>
@@ -58,7 +59,7 @@ export class HelpUI {
             <section class="help-doc-section" id="help-overview">
               <h3>Overview</h3>
               <p>
-                AI Playground is a browser-based workspace for experimenting with large language models.
+                ${APP_NAME} is a browser-based workspace for experimenting with large language models, agents, and knowledge systems.
                 Bring your own provider API keys, switch models instantly, compare outputs, and keep a local
                 history of conversations — all without creating an account or sending data through a backend server.
               </p>

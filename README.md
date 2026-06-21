@@ -1,4 +1,6 @@
-# AI Playground
+# Agent Sandbox
+
+Experiment with models, agents, and knowledge systems.
 
 A client-side LLM testing lab with multi-provider chat, model comparison, prompt library, and an integrated RAG sandbox.
 
@@ -15,7 +17,7 @@ Open `http://localhost:5173/` for chat or `http://localhost:5173/rag` for RAG.
 
 | Route | Description |
 |-------|-------------|
-| `/` | AI Playground chat |
+| `/` | Chat |
 | `/rag` | RAG Sandbox (lazy-loaded) |
 | Usage (top nav / settings) | In-app usage dashboard modal |
 | `/share.html` | Read-only shared chat viewer |
@@ -39,7 +41,7 @@ Supports OpenRouter, OpenAI, Anthropic, Gemini, Groq, and DeepSeek. Anthropic ma
 
 ## Features
 
-### AI Playground
+### Chat
 
 - Multi-provider chat with streaming, image attachments, and compare mode
 - Prompt library with folders, pin/archive, export, and share links
@@ -54,14 +56,14 @@ Supports OpenRouter, OpenAI, Anthropic, Gemini, Groq, and DeepSeek. Anthropic ma
 - End-to-end RAG pipeline testing with chunking, retrieval, and eval mode
 - IndexedDB-backed document storage; default collection name `defaultKB`
 - Collection row menu (⋮) for rename and delete
-- RAG chat matches Playground input layout (model pill, Roll back, Send/Stop)
+- RAG chat matches Chat input layout (model pill, Roll back, Send/Stop)
 - Message rollback after clear or other destructive changes
-- Same resizable sidebar/settings panels as Playground
+- Same resizable sidebar/settings panels as Chat
 
 ### Shared
 
-- Credentials shared across Playground and RAG
-- Usage dashboard modal with Playground/RAG tabs, export, and reset (estimated costs)
+- Credentials shared across Chat and RAG
+- Usage dashboard modal with Chat/RAG tabs, export, and reset (estimated costs)
 - Light/dark theme with Sorin design system
 - Keyboard shortcuts — press `?` in the app for the full list
 
@@ -74,7 +76,7 @@ Supports OpenRouter, OpenAI, Anthropic, Gemini, Groq, and DeepSeek. Anthropic ma
 | `⌘K` / `Ctrl+K` | Focus chat search |
 | `⌘,` / `Ctrl+,` | Toggle settings panel |
 | `⌘⇧N` / `Ctrl+Shift+N` | New chat |
-| `⌘Z` / `Ctrl+Z` | Roll back last change (Playground) |
+| `⌘Z` / `Ctrl+Z` | Roll back last change (Chat) |
 | `⌘Enter` / `Ctrl+Enter` | Send message |
 | `Esc` | Close panels / cancel |
 
@@ -82,7 +84,7 @@ Supports OpenRouter, OpenAI, Anthropic, Gemini, Groq, and DeepSeek. Anthropic ma
 
 ```
 src/
-  playground-app.js   # Playground bootstrap
+  playground-app.js   # Chat view bootstrap
   app.js              # Router + shared shell
   state.js            # Chat state + undo stack
   ui/                 # Chat, sidebar, settings, tooltips, modals, usage panel

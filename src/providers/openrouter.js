@@ -3,6 +3,7 @@
 // ========================================
 
 import { OpenAIProvider } from './openai.js';
+import { APP_NAME } from '../shared/branding.js';
 
 export class OpenRouterProvider extends OpenAIProvider {
   constructor(config = {}) {
@@ -13,7 +14,7 @@ export class OpenRouterProvider extends OpenAIProvider {
     return {
       ...super.getHeaders(),
       'HTTP-Referer': window.location.origin,
-      'X-Title': 'AI Playground',
+      'X-Title': APP_NAME,
     };
   }
 

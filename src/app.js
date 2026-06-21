@@ -1,3 +1,4 @@
+import { APP_NAME, RAG_LABEL } from './shared/branding.js';
 import { initRouter, registerRoute, navigate, onRoute } from './router.js';
 import { PlaygroundApp } from './playground-app.js';
 import { registerPWA } from './pwa.js';
@@ -42,7 +43,7 @@ function syncLayoutBodyClasses(view) {
 
 async function mountPlayground() {
   setView('playground');
-  document.title = 'AI Playground';
+  document.title = APP_NAME;
   if (!playgroundApp) {
     playgroundApp = new PlaygroundApp();
     playgroundApp.init();
@@ -53,7 +54,7 @@ async function mountPlayground() {
 
 async function mountRag() {
   setView('rag');
-  document.title = 'RAG Sandbox';
+  document.title = `${RAG_LABEL} · ${APP_NAME}`;
   if (!ragModule) {
     const [{ RagSandboxUI }, { RagHelpUI }] = await Promise.all([
       import('./ui/rag-sandbox.js'),

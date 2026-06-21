@@ -1,3 +1,5 @@
+import { CHAT_LABEL } from '../shared/branding.js';
+
 const PLAYGROUND_KEY = 'ai-playground-state';
 const RAG_KEY = 'rag-sandbox-state';
 
@@ -103,7 +105,7 @@ export function renderPlaygroundSection(pg) {
 
   return `
     <section class="usage-stats">
-      <h2>AI Playground</h2>
+      <h2>${CHAT_LABEL}</h2>
       <div class="usage-row usage-row--header"><span>Period</span><span>Requests</span><span>Tokens</span><span>Cost</span></div>
       <div class="usage-row"><span>Today</span><span>${todayStats.requests}</span><span>${todayStats.tokens.toLocaleString()}</span><span>$${todayStats.cost.toFixed(4)}</span></div>
       <div class="usage-row"><span>7 days</span><span>${weekStats.requests}</span><span>${weekStats.tokens.toLocaleString()}</span><span>$${weekStats.cost.toFixed(4)}</span></div>

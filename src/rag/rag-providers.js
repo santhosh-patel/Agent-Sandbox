@@ -2,6 +2,8 @@
 // RAG Provider Configurations
 // ========================================
 
+import { APP_NAME, RAG_LABEL } from '../shared/branding.js';
+
 export const RAG_PROVIDERS = {
   openai: {
     name: 'OpenAI',
@@ -81,7 +83,7 @@ export const RAG_PROVIDERS = {
     authHeader: (key) => ({
       Authorization: `Bearer ${key}`,
       'HTTP-Referer': window.location.origin,
-      'X-Title': 'AI Playground RAG',
+      'X-Title': `${APP_NAME} ${RAG_LABEL}`,
     }),
     embeddingEndpoint: '/embeddings',
     modelsEndpoint: '/models',
