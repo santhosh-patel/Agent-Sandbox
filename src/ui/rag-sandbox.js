@@ -14,6 +14,7 @@ import { RagEvalUI } from './rag-eval.js';
 import { estimateStorageBytes, formatBytes } from '../rag/rag-db.js';
 import { credentials } from '../shared/credentials.js';
 import { openUsageWindow } from './help-base.js';
+import { setTip } from './tooltip.js';
 import { bindThemeToggle } from '../shared/theme.js';
 
 export class RagSandboxUI {
@@ -393,13 +394,13 @@ export class RagSandboxUI {
     const activeId = ragState.getActiveCollection()?.id;
     list.innerHTML = ragState.collections.map(c => `
       <div class="rag-collection-row${c.id === activeId ? ' active' : ''}" data-id="${c.id}">
-        <button type="button" class="rag-collection-item" data-id="${c.id}">
+        <button type="button" class="rag-collection-item" data-id="${c.id}" data-tip="${c.id === activeId ? 'Active knowledge base' : 'Switch to this knowledge base'}">
           <span class="rag-collection-name">${this.escape(c.name)}</span>
           <span class="rag-collection-meta">${c.documents.length} docs</span>
         </button>
         <div class="rag-collection-actions">
-          <button type="button" class="btn-icon rag-collection-rename" data-id="${c.id}" title="Rename" aria-label="Rename collection">✎</button>
-          <button type="button" class="btn-icon rag-collection-delete" data-id="${c.id}" title="Delete" aria-label="Delete collection">×</button>
+          <button type="button" class="btn-icon rag-collection-rename" data-id="${c.id}" aria-label="Rename collection" data-tip="Rename this knowledge base">✎</button>
+          <button type="button" class="btn-icon rag-collection-delete" data-id="${c.id}" aria-label="Delete collection" data-tip="Delete collection and all its documents">×</button>
         </div>
       </div>
     `).join('');
@@ -445,7 +446,7 @@ export class RagSandboxUI {
           <span class="rag-document-meta">${doc.chunks.length} chunks · ${this.formatSize(doc.size)}</span>
         </div>
         <span class="rag-doc-status rag-doc-status--${doc.status}">${doc.status}</span>
-        <button type="button" class="rag-doc-delete" data-id="${doc.id}" aria-label="Delete document">${iconHtml('x', { size: 14, className: 'icon' })}</button>
+        <button type="button" class="rag-doc-delete" data-id="${doc.id}" aria-label="Delete document" data-tip="Remove document and all its chunks">${iconHtml('x', { size: 14, className: 'icon' })}</button>
       </div>
     `).join('');
 
@@ -722,7 +723,7 @@ export class RagSandboxUI {
       ? (usage.latency.reduce((a, b) => a + b, 0) / usage.latency.length).toFixed(2)
       : '—';
     el.className = 'rag-settings-usage-summary rag-usage-stats--clickable';
-    el.title = 'Open usage dashboard';
+    setTip(el, 'Click to open usage dashboard — requests, tokens, cost, and latency');
     el.onclick = () => openUsageWindow();
     el.innerHTML = `
       <span class="settings-status-item">${usage.requests} requests</span>
@@ -743,7 +744,7 @@ export class RagSandboxUI {
       ? (usage.latency.reduce((a, b) => a + b, 0) / usage.latency.length).toFixed(2)
       : '—';
     el.className = 'rag-usage-stats rag-usage-stats--clickable';
-    el.title = 'Open usage dashboard';
+    setTip(el, 'Session stats — click to open full usage dashboard');
     el.innerHTML = `
       <span>${usage.requests} requests</span>
       <span>${usage.tokens.toLocaleString()} tokens</span>

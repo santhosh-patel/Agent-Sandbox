@@ -2878,3 +2878,9 @@ textarea[data-tip] {
 .compare-mode-badge[data-tip] {
   cursor: default;
 }
+
+.toggle-label-text[data-tip],
+.session-badge[data-tip],
+.settings-label[data-tip] {
+  cursor: default;
+}

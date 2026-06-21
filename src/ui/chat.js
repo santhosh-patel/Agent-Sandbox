@@ -7,6 +7,11 @@ import { messageAvatarHtml } from './icons.js';
 import { showPrompt } from './modal.js';
 import { showToast } from './toast.js';
 import { renderWelcomePrompts } from './prompt-library.js';
+import { setTip } from './tooltip.js';
+
+const QUICK_ACTION_TIPS = {
+  compare: 'Enable compare mode — send one prompt to multiple models',
+};
 
 export class ChatUI {
   constructor(onRegenerate, onRetry, onOpenSettings, onFollowUp, onPickCompare, getModelOptions) {
@@ -151,7 +156,8 @@ export class ChatUI {
     const compareAction = { prompt: '', label: 'Compare models', action: 'compare' };
     const actions = [...QUICK_ACTIONS, compareAction];
     this.quickActionsEl.innerHTML = actions.map(a => `
-      <button class="quick-action" data-prompt="${this.escapeAttr(a.prompt)}" data-action="${a.action || ''}" type="button">
+      <button class="quick-action" data-prompt="${this.escapeAttr(a.prompt)}" data-action="${a.action || ''}" type="button"
+        data-tip="${this.escapeAttr(a.action === 'compare' ? QUICK_ACTION_TIPS.compare : `Try: ${a.label}`)}">
         <span>${a.label}</span>
       </button>
     `).join('');
@@ -194,6 +200,8 @@ export class ChatUI {
     if (providerInfo) {
       this.headerProviderName.textContent = providerInfo.name;
       this.headerModel.textContent = settings.model || 'Select model';
+      setTip(this.headerProviderName, 'Active API provider for this chat');
+      setTip(this.headerModel, settings.model || 'No model selected — open settings');
 
       if (this.mobileProvider) this.mobileProvider.textContent = providerInfo.name;
       if (this.mobileModel) this.mobileModel.textContent = settings.model || 'Select model';
@@ -208,8 +216,10 @@ export class ChatUI {
     if (cost > 0) {
       this.sessionCostEl.textContent = `$${cost.toFixed(4)}`;
       this.sessionCostEl.hidden = false;
+      setTip(this.sessionCostEl, 'Estimated total cost for this chat session');
     } else {
       this.sessionCostEl.hidden = true;
+      setTip(this.sessionCostEl, '');
     }
 
     const hasMessages = chat && chat.messages.length > 0;
@@ -659,7 +669,7 @@ export class ChatUI {
           ${msg.isError ? this.renderError(msg.content) : (msg.isStreaming ? this.renderStreaming(msg.content) : renderMarkdown(msg.content))}
         </div>
         <div class="compare-column-footer">
-          ${!msg.isStreaming && !msg.isError ? `<button type="button" class="btn btn-ghost btn-sm compare-use-btn" data-model="${this.escapeAttr(modelName)}">Use this response</button>` : ''}
+          ${!msg.isStreaming && !msg.isError ? `<button type="button" class="btn btn-ghost btn-sm compare-use-btn" data-model="${this.escapeAttr(modelName)}" data-tip="Continue the chat using this model's response">Use this response</button>` : ''}
         </div>
       `;
 
@@ -716,13 +726,13 @@ export class ChatUI {
 
     const actionsHtml = `
       <div class="message-actions">
-        <button type="button" class="msg-action-btn copy-msg-btn">Copy</button>
+        <button type="button" class="msg-action-btn copy-msg-btn" data-tip="Copy message to clipboard">Copy</button>
         ${msg.role === 'user'
-          ? '<button type="button" class="msg-action-btn edit-msg-btn">Edit</button>'
+          ? '<button type="button" class="msg-action-btn edit-msg-btn" data-tip="Edit and resend this message">Edit</button>'
           : `<span class="regen-actions">
-              <button type="button" class="msg-action-btn regen-msg-btn">Regenerate</button>
-              <button type="button" class="msg-action-btn regen-as-msg-btn" aria-label="Regenerate as" title="Regenerate as…">▾</button>
-              <button type="button" class="msg-action-btn inspect-msg-btn">Inspect</button>
+              <button type="button" class="msg-action-btn regen-msg-btn" data-tip="Regenerate this response">Regenerate</button>
+              <button type="button" class="msg-action-btn regen-as-msg-btn" aria-label="Regenerate as" data-tip="Regenerate with a different model or style">▾</button>
+              <button type="button" class="msg-action-btn inspect-msg-btn" data-tip="View tokens, latency, cost, and model details">Inspect</button>
             </span>`}
       </div>
     `;

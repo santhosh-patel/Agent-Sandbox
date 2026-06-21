@@ -1,6 +1,7 @@
 import { state } from '../state.js';
 import { estimateCost } from '../providers/registry.js';
 import { PROVIDERS } from '../providers/registry.js';
+import { setTip } from './tooltip.js';
 
 export class InputUI {
   constructor(onSend, onStop) {
@@ -77,15 +78,16 @@ export class InputUI {
 
   updateModelPill() {
     if (!this.modelPill) return;
+    const settingsBtn = document.getElementById('input-settings-btn');
     const s = state.settings;
     const provider = PROVIDERS[s.provider];
     if (provider && s.model) {
       const short = s.model.split('/').pop().split('-').slice(0, 2).join('-');
       this.modelPill.textContent = short.length > 18 ? short.slice(0, 16) + '…' : short;
-      this.modelPill.title = `${provider.name} · ${s.model}`;
+      setTip(settingsBtn, `${provider.name} · ${s.model} — click to change`);
     } else {
       this.modelPill.textContent = 'No model';
-      this.modelPill.title = 'Open settings to choose a model';
+      setTip(settingsBtn, 'Open settings to choose a provider and model');
     }
   }
 
@@ -106,12 +108,14 @@ export class InputUI {
     const hasAttachments = this.getAttachments?.()?.length > 0;
     const configured = state.isConfigured();
     this.sendBtn.disabled = (!val && !hasAttachments) || !configured;
-    this.sendBtn.title = configured ? 'Send message' : state.getSetupIssues().join(' · ');
+    setTip(this.sendBtn, configured ? 'Send message — press Enter' : state.getSetupIssues().join(' · '));
 
     if (this.textarea.value.length > 500) {
       this.charCount.textContent = `${this.textarea.value.length} chars`;
+      setTip(this.charCount, 'Character count for your message');
     } else {
       this.charCount.textContent = '';
+      setTip(this.charCount, '');
     }
 
     this.updateCostEstimate();
@@ -137,8 +141,10 @@ export class InputUI {
     if (cost) {
       this.costEstimate.textContent = `Est. ~$${cost.toFixed(4)} for this prompt`;
       this.costEstimate.hidden = false;
+      setTip(this.costEstimate, 'Estimated cost based on prompt length and model pricing');
     } else {
       this.costEstimate.hidden = true;
+      setTip(this.costEstimate, '');
     }
   }
 

@@ -5,6 +5,7 @@ import { downloadMarkdown, copyShareLink, downloadShareHtml, buildShareLink, dow
 import { showToast } from './toast.js';
 import { PROVIDERS } from '../providers/registry.js';
 import { openUsageWindow } from './help-base.js';
+import { setTip } from './tooltip.js';
 
 export class SidebarUI {
   constructor() {
@@ -35,7 +36,12 @@ export class SidebarUI {
     document.getElementById('search-scope-btn')?.addEventListener('click', () => {
       this.searchScope = this.searchScope === 'full' ? 'title' : 'full';
       const btn = document.getElementById('search-scope-btn');
-      if (btn) btn.textContent = this.searchScope === 'full' ? 'All' : 'Title';
+      if (btn) {
+        btn.textContent = this.searchScope === 'full' ? 'All' : 'Title';
+        setTip(btn, this.searchScope === 'full'
+          ? 'Searching titles and message content — click for titles only'
+          : 'Searching chat titles only — click to include messages');
+      }
       this.render();
     });
 

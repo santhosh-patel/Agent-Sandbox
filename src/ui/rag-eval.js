@@ -39,18 +39,18 @@ export class RagEvalUI {
 
     this.root.innerHTML = `
       <div class="rag-eval-toolbar">
-        <button type="button" class="btn-text btn-sm" id="rag-eval-add-q">+ Question</button>
-        <button type="button" class="btn-text btn-sm" id="rag-eval-import">Import</button>
-        <button type="button" class="btn-text btn-sm" id="rag-eval-run" ${this.running ? 'disabled' : ''}>Run batch</button>
-        <button type="button" class="btn-text btn-sm" id="rag-eval-export">JSON</button>
-        <button type="button" class="btn-text btn-sm" id="rag-eval-export-md">Report</button>
+        <button type="button" class="btn-text btn-sm" id="rag-eval-add-q" data-tip="Add a test question for retrieval">+ Question</button>
+        <button type="button" class="btn-text btn-sm" id="rag-eval-import" data-tip="Import questions from a JSON eval set">Import</button>
+        <button type="button" class="btn-text btn-sm" id="rag-eval-run" ${this.running ? 'disabled' : ''} data-tip="Run retrieval on all questions without calling the chat model">Run batch</button>
+        <button type="button" class="btn-text btn-sm" id="rag-eval-export" data-tip="Export eval sets and run history as JSON">JSON</button>
+        <button type="button" class="btn-text btn-sm" id="rag-eval-export-md" data-tip="Download a Markdown report of the latest run">Report</button>
       </div>
       <div class="rag-eval-questions">
         ${evalSet.questions.length ? evalSet.questions.map(q => `
           <div class="rag-eval-q" data-id="${q.id}">
             <div class="rag-eval-q-text">${escapeHtml(q.query)}</div>
             ${q.expectedKeywords ? `<div class="rag-eval-q-kw">Keywords: ${escapeHtml(q.expectedKeywords)}</div>` : ''}
-            <button type="button" class="btn-text btn-sm rag-eval-del" data-id="${q.id}">Remove</button>
+            <button type="button" class="btn-text btn-sm rag-eval-del" data-id="${q.id}" data-tip="Remove this eval question">Remove</button>
           </div>
         `).join('') : '<p class="settings-hint">Add test questions to evaluate retrieval quality.</p>'}
       </div>

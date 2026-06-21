@@ -74,15 +74,16 @@ class UsagePanelUI {
             <h2 id="usage-panel-title">Usage Dashboard</h2>
           </div>
           <div class="usage-panel-actions">
-            <button type="button" class="btn btn-ghost btn-sm usage-refresh-btn">Refresh</button>
-            <button type="button" class="btn btn-ghost btn-sm usage-export-btn">Export JSON</button>
-            <button type="button" class="btn btn-danger btn-sm usage-reset-btn">Reset…</button>
-            <button type="button" class="btn-text usage-close-btn" aria-label="Close usage dashboard">Close</button>
+            <button type="button" class="btn btn-ghost btn-sm usage-refresh-btn" data-tip="Reload stats from local storage">Refresh</button>
+            <button type="button" class="btn btn-ghost btn-sm usage-export-btn" data-tip="Download usage data as JSON">Export JSON</button>
+            <button type="button" class="btn btn-danger btn-sm usage-reset-btn" data-tip="Clear usage stats — choose Playground, RAG, or all">Reset…</button>
+            <button type="button" class="btn-text usage-close-btn" aria-label="Close usage dashboard" data-tip="Close (Esc)">Close</button>
           </div>
         </header>
         <nav class="usage-tabs" aria-label="Usage sections">
           ${TABS.map(t => `
-            <button type="button" class="usage-tab${t.id === this.activeTab ? ' usage-tab--active' : ''}" data-tab="${t.id}">${t.label}</button>
+            <button type="button" class="usage-tab${t.id === this.activeTab ? ' usage-tab--active' : ''}" data-tab="${t.id}"
+              data-tip="${t.id === 'all' ? 'Combined Playground and RAG stats' : t.id === 'playground' ? 'Chat token usage and costs' : 'RAG embedding and chat usage'}">${t.label}</button>
           `).join('')}
         </nav>
         <div class="usage-panel-body usage-panel-body--visible" id="usage-panel-body"></div>

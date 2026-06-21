@@ -182,8 +182,8 @@ export class PromptLibraryUI {
             ${tags ? `<div class="prompt-library-tags">${tags}</div>` : ''}
           </div>
           <div class="prompt-library-card-menu">
-            <button type="button" class="btn-icon btn-sm prompt-edit-btn" data-id="${p.id}" title="Edit" aria-label="Edit prompt">${iconHtml('pencil', { size: 15, className: 'icon' })}</button>
-            <button type="button" class="btn-icon btn-sm prompt-delete-btn" data-id="${p.id}" title="Delete" aria-label="Delete prompt">${iconHtml('trash', { size: 15, className: 'icon' })}</button>
+            <button type="button" class="btn-icon btn-sm prompt-edit-btn" data-id="${p.id}" data-tip="Edit this prompt" aria-label="Edit prompt">${iconHtml('pencil', { size: 15, className: 'icon' })}</button>
+            <button type="button" class="btn-icon btn-sm prompt-delete-btn" data-id="${p.id}" data-tip="Delete this prompt" aria-label="Delete prompt">${iconHtml('trash', { size: 15, className: 'icon' })}</button>
           </div>
         </div>
         <p class="prompt-library-preview">${this.escape(preview)}</p>

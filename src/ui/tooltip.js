@@ -65,6 +65,10 @@ const ELEMENT_TIPS = {
   'rag-refresh-chat-models-btn': 'Refresh chat models from provider',
   'rag-retrieval-scope-all': 'Search all indexed documents',
   'inspector-close-btn': 'Close message inspector',
+  'rag-send-btn': 'Send question through the RAG pipeline',
+  'rag-stop-btn': 'Stop answer generation',
+  'chat-title-btn': 'Rename this chat',
+  'input-model-pill': 'Active model — click to open settings',
 };
 
 const LABEL_TIPS = [
@@ -267,6 +271,21 @@ export function applyDefaultTooltips() {
     const tip = PROVIDER_TIPS[btn.dataset.provider];
     if (tip && !btn.hasAttribute('data-tip')) setTip(btn, tip, 'top');
   });
+
+  document.querySelectorAll('.toggle-row input[id]').forEach(input => {
+    const match = LABEL_TIPS.find(([id]) => id === input.id);
+    const label = input.closest('.toggle-row')?.querySelector('.toggle-label-text');
+    if (match && label && !label.hasAttribute('data-tip')) setTip(label, match[1]);
+  });
+
+  document.querySelectorAll('.session-badge').forEach(el => {
+    if (!el.hasAttribute('data-tip')) setTip(el, 'All data stays in your browser — nothing sent to our servers');
+  });
+
+  document.getElementById('search-scope-btn') && setTip(
+    document.getElementById('search-scope-btn'),
+    'Searching titles and message content — click for titles only',
+  );
 
   document.querySelectorAll('[title]').forEach(el => {
     if (el.hasAttribute('data-tip')) el.removeAttribute('title');

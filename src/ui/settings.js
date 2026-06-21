@@ -7,6 +7,7 @@ import { showToast } from './toast.js';
 import { isMobile, isTablet, onViewportChange, closeMobileSidebar } from './breakpoints.js';
 import { iconHtml } from './icons.js';
 import { openUsageWindow } from './help-base.js';
+import { setTip } from './tooltip.js';
 
 const MAX_COMPARE_MODELS = 3;
 
@@ -70,7 +71,7 @@ export class SettingsUI {
     });
     this.settingsStatus?.classList.add('settings-status--clickable');
     this.settingsStatus?.addEventListener('click', () => openUsageWindow());
-    this.settingsStatus?.setAttribute('title', 'Open usage dashboard');
+    setTip(this.settingsStatus, 'Click for usage dashboard — provider, model, key status, and today\'s cost');
     this.refreshModelsBtn.addEventListener('click', () => this.fetchModels(true));
     this.modelSelect.addEventListener('change', () => {
       this.patchSettings({ model: this.modelSelect.value });
@@ -287,6 +288,9 @@ export class SettingsUI {
     const on = state.settings.compareMode && (state.settings.compareModels?.length || 0) > 0;
     badge.hidden = !on;
     badge.textContent = on ? `Compare · ${state.settings.compareModels.length}` : 'Compare';
+    setTip(badge, on
+      ? `Compare mode — next message runs on ${state.settings.compareModels.length} model(s)`
+      : '');
   }
 
   loadStateValues() {
@@ -322,6 +326,7 @@ export class SettingsUI {
       this.settingsStatus.innerHTML = `
         <span class="settings-status-item settings-status-item--warn">${issues.join(' · ')}</span>
       `;
+      setTip(this.settingsStatus, 'Setup incomplete — click to view usage or open settings to fix');
       return;
     }
 
@@ -344,6 +349,7 @@ export class SettingsUI {
       <span class="settings-status-sep" aria-hidden="true">·</span>
       <span class="settings-status-item">${costLabel} (est.)</span>
     `;
+    setTip(this.settingsStatus, 'Click to open usage dashboard — tokens, costs, and charts');
   }
 
   syncPerChatToggle() {
@@ -359,8 +365,9 @@ export class SettingsUI {
     const isFavorite = (state.settings.favoriteModels || []).includes(modelId);
     this.favoriteModelBtn.classList.toggle('is-favorite', isFavorite);
     this.favoriteModelBtn.disabled = !modelId;
-    this.favoriteModelBtn.title = isFavorite ? 'Remove from favorites' : 'Add to favorites';
-    this.favoriteModelBtn.setAttribute('aria-label', this.favoriteModelBtn.title);
+    const tip = isFavorite ? 'Remove from favorites' : 'Add to favorites';
+    this.favoriteModelBtn.setAttribute('aria-label', tip);
+    setTip(this.favoriteModelBtn, tip);
   }
 
   renderModelQuickPicks() {
@@ -382,7 +389,7 @@ export class SettingsUI {
 
     this.modelQuickPicks.hidden = false;
     this.modelQuickPicks.innerHTML = chips.map(chip => `
-      <button type="button" class="model-quick-chip model-quick-chip--${chip.kind}" data-model-id="${chip.id}" title="${chip.id}">
+      <button type="button" class="model-quick-chip model-quick-chip--${chip.kind}" data-model-id="${chip.id}" data-tip="${chip.id}">
         ${chip.kind === 'favorite' ? iconHtml('star', { size: 12, className: 'icon model-quick-chip-icon' }) : ''}
         <span>${chip.label}</span>
       </button>
