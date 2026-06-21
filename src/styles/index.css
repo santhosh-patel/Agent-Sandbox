@@ -3118,38 +3118,31 @@ body.panel-resizing #rag-app .edge-toggle-right {
 /* ---- Custom tooltips ---- */
 .ui-tooltip {
   position: fixed;
-  z-index: 9999;
-  max-width: min(280px, calc(100vw - 24px));
-  padding: 7px 11px;
-  border-radius: var(--radius-md);
-  background: var(--text-primary);
-  color: var(--bg-primary);
-  font-size: 0.75rem;
+  z-index: 10050;
+  max-width: min(220px, calc(100vw - 20px));
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  font-size: 0.6875rem;
   font-weight: 500;
-  line-height: 1.45;
-  letter-spacing: 0.01em;
-  box-shadow: var(--shadow-lg);
+  line-height: 1.35;
+  letter-spacing: 0;
+  box-shadow: var(--shadow-md);
   pointer-events: none;
+  user-select: none;
   opacity: 0;
-  transform: translateY(4px);
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition: opacity 0.12s ease;
+  white-space: normal;
 }
 
 .ui-tooltip.visible {
   opacity: 1;
-  transform: translateY(0);
-}
-
-.ui-tooltip--bottom {
-  transform: translateY(-4px);
-}
-
-.ui-tooltip--bottom.visible {
-  transform: translateY(0);
 }
 
 [data-tip] {
-  cursor: help;
+  cursor: inherit;
 }
 
 button[data-tip],
@@ -3163,21 +3156,17 @@ a[data-tip],
 .btn-stop[data-tip],
 .msg-action-btn[data-tip],
 .rag-collection-item[data-tip],
-.compare-mode-badge[data-tip],
+.panel-collapse-btn[data-tip],
+.rag-collection-menu-btn[data-tip],
+.edge-toggle[data-tip],
 .settings-status[data-tip] {
   cursor: pointer;
 }
 
 select[data-tip],
 input[data-tip],
-textarea[data-tip] {
-  cursor: default;
-}
-
-.compare-mode-badge[data-tip] {
-  cursor: default;
-}
-
+textarea[data-tip],
+.compare-mode-badge[data-tip],
 .toggle-label-text[data-tip],
 .session-badge[data-tip],
 .settings-label[data-tip] {

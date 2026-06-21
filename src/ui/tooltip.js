@@ -1,5 +1,7 @@
-const SHOW_DELAY = 420;
-const HIDE_DELAY = 80;
+const SHOW_DELAY = 320;
+const HIDE_DELAY = 60;
+const TIP_GAP = 10;
+const VIEW_PAD = 8;
 
 let tipEl = null;
 let showTimer = null;
@@ -144,35 +146,74 @@ function hideTip() {
   tipEl.hidden = true;
 }
 
+function defaultTipPosition(target) {
+  if (target.matches('label, .settings-label, .toggle-label-text, .sidebar-section-label')) {
+    return 'top';
+  }
+  return 'bottom';
+}
+
+function getTipSize() {
+  return tipEl.getBoundingClientRect();
+}
+
+function placeTipAt(target, pos, tipW, tipH) {
+  const rect = target.getBoundingClientRect();
+  let left;
+  let top;
+
+  switch (pos) {
+    case 'bottom':
+      left = rect.left + rect.width / 2 - tipW / 2;
+      top = rect.bottom + TIP_GAP;
+      break;
+    case 'left':
+      left = rect.left - tipW - TIP_GAP;
+      top = rect.top + rect.height / 2 - tipH / 2;
+      break;
+    case 'right':
+      left = rect.right + TIP_GAP;
+      top = rect.top + rect.height / 2 - tipH / 2;
+      break;
+    default:
+      left = rect.left + rect.width / 2 - tipW / 2;
+      top = rect.top - tipH - TIP_GAP;
+  }
+
+  left = Math.max(VIEW_PAD, Math.min(left, window.innerWidth - tipW - VIEW_PAD));
+  top = Math.max(VIEW_PAD, Math.min(top, window.innerHeight - tipH - VIEW_PAD));
+
+  return { left, top };
+}
+
+function overlapsRect(a, b, margin = 4) {
+  return !(
+    a.right + margin < b.left
+    || a.left - margin > b.right
+    || a.bottom + margin < b.top
+    || a.top - margin > b.bottom
+  );
+}
+
 function positionTip(target) {
   if (!tipEl || tipEl.hidden) return;
 
-  const rect = target.getBoundingClientRect();
-  const pos = target.getAttribute('data-tip-pos') || 'top';
-  const gap = 8;
-  const pad = 10;
-  tipEl.style.left = '0';
-  tipEl.style.top = '0';
-  tipEl.classList.remove('ui-tooltip--bottom', 'ui-tooltip--left', 'ui-tooltip--right');
-  if (pos !== 'top') tipEl.classList.add(`ui-tooltip--${pos}`);
+  const targetRect = target.getBoundingClientRect();
+  const preferred = target.getAttribute('data-tip-pos') || defaultTipPosition(target);
+  const fallbacks = [...new Set([preferred, 'bottom', 'top', 'right', 'left'])];
+  const { width: tipW, height: tipH } = getTipSize();
 
-  const tipRect = tipEl.getBoundingClientRect();
-  let left = rect.left + rect.width / 2 - tipRect.width / 2;
-  let top = rect.top - tipRect.height - gap;
-
-  if (pos === 'bottom') top = rect.bottom + gap;
-  if (pos === 'left') {
-    left = rect.left - tipRect.width - gap;
-    top = rect.top + rect.height / 2 - tipRect.height / 2;
-  }
-  if (pos === 'right') {
-    left = rect.right + gap;
-    top = rect.top + rect.height / 2 - tipRect.height / 2;
+  for (const pos of fallbacks) {
+    const { left, top } = placeTipAt(target, pos, tipW, tipH);
+    const tipRect = { left, top, right: left + tipW, bottom: top + tipH };
+    if (!overlapsRect(tipRect, targetRect)) {
+      tipEl.style.left = `${Math.round(left)}px`;
+      tipEl.style.top = `${Math.round(top)}px`;
+      return;
+    }
   }
 
-  left = Math.max(pad, Math.min(left, window.innerWidth - tipRect.width - pad));
-  top = Math.max(pad, Math.min(top, window.innerHeight - tipRect.height - pad));
-
+  const { left, top } = placeTipAt(target, preferred, tipW, tipH);
   tipEl.style.left = `${Math.round(left)}px`;
   tipEl.style.top = `${Math.round(top)}px`;
 }
@@ -186,9 +227,12 @@ function showTip(target) {
   const el = ensureTipEl();
   el.textContent = text;
   el.hidden = false;
+  el.classList.remove('visible');
+  el.style.visibility = 'hidden';
   requestAnimationFrame(() => {
-    el.classList.add('visible');
     positionTip(target);
+    el.style.visibility = '';
+    el.classList.add('visible');
   });
 }
 
@@ -241,6 +285,10 @@ function onScroll() {
   }
 }
 
+function onPointerDown() {
+  hideTip();
+}
+
 export function setTip(el, text, pos) {
   if (!el) return;
   if (text) {
@@ -262,7 +310,7 @@ export function applyDefaultTooltips() {
 
   for (const [id, text] of Object.entries(LABEL_TIPS)) {
     const el = document.getElementById(id);
-    if (el && !el.hasAttribute('data-tip')) setTip(el, text, 'top');
+    if (el && !el.hasAttribute('data-tip')) setTip(el, text, 'right');
   }
 
   document.querySelectorAll('.filter-tab[data-filter]').forEach(btn => {
@@ -272,7 +320,7 @@ export function applyDefaultTooltips() {
 
   document.querySelectorAll('.provider-chip[data-provider]').forEach(btn => {
     const tip = PROVIDER_TIPS[btn.dataset.provider];
-    if (tip && !btn.hasAttribute('data-tip')) setTip(btn, tip, 'top');
+    if (tip && !btn.hasAttribute('data-tip')) setTip(btn, tip, 'bottom');
   });
 
   document.querySelectorAll('.toggle-row input[id]').forEach(input => {
@@ -310,6 +358,10 @@ export function initTooltips() {
   document.addEventListener('mouseout', onPointerOut);
   document.addEventListener('focusin', onFocusIn);
   document.addEventListener('focusout', onFocusOut);
+  document.addEventListener('mousedown', onPointerDown, true);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') hideTip();
+  });
   window.addEventListener('scroll', onScroll, true);
   window.addEventListener('resize', onScroll);
 
