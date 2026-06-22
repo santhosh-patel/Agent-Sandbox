@@ -3,6 +3,7 @@
 // ========================================
 
 import { APP_NAME, RAG_LABEL } from '../shared/branding.js';
+import { OPENAI_DEFAULT_CHAT_MODELS, mapOpenAIModels } from '../providers/openai-models.js';
 
 export const RAG_PROVIDERS = {
   openai: {
@@ -17,11 +18,7 @@ export const RAG_PROVIDERS = {
       { id: 'text-embedding-3-large', name: 'text-embedding-3-large' },
       { id: 'text-embedding-ada-002', name: 'text-embedding-ada-002' },
     ],
-    defaultChatModels: [
-      { id: 'gpt-4o-mini', name: 'GPT-4o Mini' },
-      { id: 'gpt-4o', name: 'GPT-4o' },
-      { id: 'gpt-4-turbo', name: 'GPT-4 Turbo' },
-    ],
+    defaultChatModels: OPENAI_DEFAULT_CHAT_MODELS,
     authHeader: (key) => ({ Authorization: `Bearer ${key}` }),
     embeddingEndpoint: '/embeddings',
     modelsEndpoint: '/models',

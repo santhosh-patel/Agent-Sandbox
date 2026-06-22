@@ -3,6 +3,7 @@
 // ========================================
 
 import { RAG_PROVIDERS, EMBEDDING_PRICING } from './rag-providers.js';
+import { mapOpenAIModels } from '../providers/openai-models.js';
 
 function buildUrl(providerId, path, corsProxy = '') {
   const config = RAG_PROVIDERS[providerId];
@@ -183,7 +184,9 @@ export async function listChatModels(providerId, apiKey, corsProxy = '') {
       const res = await fetch(url, { headers: getHeaders(providerId, apiKey) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      return (data.data || data.models || [])
+      const raw = data.data || data.models || [];
+      if (providerId === 'openai') return mapOpenAIModels(raw);
+      return raw
         .map(m => ({ id: m.id || m.name, name: m.name || m.id }))
         .sort((a, b) => a.id.localeCompare(b.id));
     }
