@@ -3503,3 +3503,22 @@
   }
 }
 
+.rag-sidebar-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.rag-sidebar-body .rag-sidebar-docs {
+  flex: none;
+  overflow: visible;
+}
+
+.rag-sidebar-body .rag-documents-list {
+  flex: none;
+  overflow-y: visible;
+}
+

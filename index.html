@@ -452,31 +452,33 @@
         </button>
       </div>
 
-      <div class="rag-sidebar-section-head">
-        <div class="sidebar-section-label">Knowledge Bases</div>
-        <button type="button" class="btn-icon rag-icon-btn" id="rag-new-collection-btn" title="New collection" aria-label="New collection">
-          <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-        </button>
-      </div>
-      <div class="rag-collections-list" id="rag-collections-list"></div>
-
-      <div class="sidebar-section-label">Evaluation</div>
-      <div class="rag-eval-panel" id="rag-eval-panel"></div>
-      <div class="sidebar-section-label">Docs</div>
-      <div class="rag-doc-actions">
-        <button type="button" class="btn-text btn-sm" id="rag-import-collection-btn">Import</button>
-        <button type="button" class="btn-text btn-sm" id="rag-export-collection-btn">Export</button>
-        <button type="button" class="btn-text btn-sm" id="rag-reindex-btn">Reindex</button>
-      </div>
-      <div class="rag-sidebar-docs">
-        <div class="rag-upload-zone" id="rag-upload-zone">
-          <input type="file" id="rag-file-input" accept=".pdf,.docx,.txt,.md,.markdown" multiple hidden />
-          <button type="button" class="rag-upload-btn" id="rag-upload-btn">
-            <span>Upload documents</span>
-            <span class="rag-upload-hint">PDF, DOCX, TXT, Markdown</span>
+      <div class="rag-sidebar-body">
+        <div class="rag-sidebar-section-head">
+          <div class="sidebar-section-label">Knowledge Bases</div>
+          <button type="button" class="btn-icon rag-icon-btn" id="rag-new-collection-btn" title="New collection" aria-label="New collection">
+            <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
           </button>
         </div>
-        <div class="rag-documents-list" id="rag-documents-list"></div>
+        <div class="rag-collections-list" id="rag-collections-list"></div>
+
+        <div class="sidebar-section-label">Evaluation</div>
+        <div class="rag-eval-panel" id="rag-eval-panel"></div>
+        <div class="sidebar-section-label">Docs</div>
+        <div class="rag-doc-actions">
+          <button type="button" class="btn-text btn-sm" id="rag-import-collection-btn">Import</button>
+          <button type="button" class="btn-text btn-sm" id="rag-export-collection-btn">Export</button>
+          <button type="button" class="btn-text btn-sm" id="rag-reindex-btn">Reindex</button>
+        </div>
+        <div class="rag-sidebar-docs">
+          <div class="rag-upload-zone" id="rag-upload-zone">
+            <input type="file" id="rag-file-input" accept=".pdf,.docx,.txt,.md,.markdown" multiple hidden />
+            <button type="button" class="rag-upload-btn" id="rag-upload-btn">
+              <span>Upload documents</span>
+              <span class="rag-upload-hint">PDF, DOCX, TXT, Markdown</span>
+            </button>
+          </div>
+          <div class="rag-documents-list" id="rag-documents-list"></div>
+        </div>
       </div>
 
       <div class="rag-storage-meter" id="rag-storage-meter"></div>
