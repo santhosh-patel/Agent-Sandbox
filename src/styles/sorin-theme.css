@@ -3269,6 +3269,27 @@
   background: var(--error-soft);
 }
 
+.rag-doc-retry {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition), background var(--transition);
+}
+
+.rag-doc-retry:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+
 .rag-welcome {
   text-align: center;
   padding: 48px 24px;
