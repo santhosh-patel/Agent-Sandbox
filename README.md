@@ -1,71 +1,96 @@
 # Agent Sandbox
 
-Experiment with models, agents, and knowledge systems.
+**Experiment with models, agents, and knowledge systems.**
 
-A client-side LLM testing lab with multi-provider chat, model comparison, prompt library, and an integrated RAG sandbox.
+Agent Sandbox is a browser-based workspace for testing large language models and retrieval-augmented generation (RAG) pipelines. Bring your own API keys, keep your data local, and iterate quickly without standing up a backend.
 
-## Quick start
+**Repository:** [github.com/santhosh-patel/Agent-Sandbox](https://github.com/santhosh-patel/Agent-Sandbox)
+
+---
+
+## Why I built this
+
+Most LLM tools are tied to a single provider, require an account, or route your conversations through a server you do not control. That makes it harder to compare models fairly, tune prompts, or prototype RAG setups in a private environment.
+
+I created Agent Sandbox to solve that for myself and for others who want a practical, hands-on lab:
+
+- **Compare providers and models** in one place — switch between OpenRouter, OpenAI, Anthropic, Gemini, Groq, and DeepSeek without losing your workflow.
+- **Test RAG end to end** — upload documents, chunk and embed them, tune retrieval, and chat against your knowledge base, all in the browser.
+- **Stay in control of your data** — API keys, chats, and documents live in your browser (`localStorage` / IndexedDB). There is no Agent Sandbox backend; requests go only to the providers you configure.
+- **Move fast while experimenting** — streaming responses, compare mode, prompt library, undo/rollback, usage tracking, and export/share when you want to save or show your work.
+
+It is intentionally a sandbox: a place to try ideas, break things safely, and learn how models and knowledge systems behave before you ship them elsewhere.
+
+---
+
+## How to use it
+
+### 1. Run the app
+
+**Local development**
 
 ```bash
+git clone https://github.com/santhosh-patel/Agent-Sandbox.git
+cd Agent-Sandbox
 npm install
 npm run dev
 ```
 
-Open `http://localhost:5173/` for chat or `http://localhost:5173/rag` for RAG.
+Open [http://localhost:5173/](http://localhost:5173/) for Chat, or [http://localhost:5173/rag](http://localhost:5173/rag) for the RAG Sandbox.
 
-## Routes
+**Production build**
 
-| Route | Description |
-|-------|-------------|
-| `/` | Chat |
-| `/rag` | RAG Sandbox (lazy-loaded) |
-| Usage (top nav / settings) | In-app usage dashboard modal |
-| `/share.html` | Read-only shared chat viewer |
+```bash
+npm run build
+npm run preview
+```
 
-## Privacy
+Serve the `dist/` folder with any static host if you want a deployed copy.
 
-All API keys and chat data stay in your browser (`localStorage` / `IndexedDB`). Nothing is sent to a backend except direct calls to your chosen LLM providers.
+### 2. Set up Chat
 
-## Providers
+1. Open **Settings** (top nav or sidebar).
+2. Choose a **provider** and paste your **API key**, then click **Verify**.
+3. Select a **model** from the dropdown.
+4. Type a message in the composer and press **Send** (or `⌘Enter` / `Ctrl+Enter`).
 
-Supports OpenRouter, OpenAI, Anthropic, Gemini, Groq, and DeepSeek. Anthropic may require a CORS proxy in the browser — OpenRouter is recommended for in-browser use.
+From there you can attach images, run **compare mode** across models, save prompts to the library, export chats, and share read-only links.
 
-## Scripts
+### 3. Set up RAG Sandbox
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Development server |
-| `npm run build` | Production build |
-| `npm run preview` | Preview production build |
-| `npm test` | Run Vitest unit tests |
+1. Navigate to **RAG Sandbox** from the top bar (or go to `/rag`).
+2. Create or select a **knowledge base** (default collection: `defaultKB`).
+3. **Upload documents** (PDF, DOCX, TXT, Markdown) and wait for indexing.
+4. Adjust **retrieval settings** in the settings panel as needed.
+5. Ask questions in the RAG chat — responses are grounded on your uploaded content.
 
-## Features
+Chat and RAG share the same shell and theme. Credentials for each area are stored separately per provider.
 
-### Chat
+### 4. Learn as you go
 
-- Multi-provider chat with streaming, image attachments, and compare mode
-- Prompt library with folders, pin/archive, export, and share links
-- Confirmation dialogs before destructive actions (regenerate, clear chat, compare pick, retry, etc.)
-- Roll back / undo for chat changes — **Roll back** button in the input bar or `⌘Z` / `Ctrl+Z`
-- Drag-to-resize sidebar and settings panel (up to 50% wider than default)
-- Floating glass input composer with model pill and cost estimate
-- Contextual tooltips on toolbar and settings controls
+Press **`?`** inside the app for keyboard shortcuts and built-in help. Tooltips on controls explain common actions without blocking the UI.
 
-### RAG Sandbox
+---
 
-- End-to-end RAG pipeline testing with chunking, retrieval, and eval mode
-- IndexedDB-backed document storage; default collection name `defaultKB`
-- Collection row menu (⋮) for rename and delete
-- RAG chat matches Chat input layout (model pill, Roll back, Send/Stop)
-- Message rollback after clear or other destructive changes
-- Same resizable sidebar/settings panels as Chat
+## What’s included
 
-### Shared
+| Area | Highlights |
+|------|------------|
+| **Chat** | Streaming, images, compare mode, prompt library, folders, pin/archive, export & share |
+| **RAG Sandbox** | Document upload, chunking, embeddings, retrieval tuning, eval mode, collection management |
+| **Safety & UX** | Confirmations before destructive actions, undo / roll back (`⌘Z` / `Ctrl+Z`), resizable panels |
+| **Usage** | In-app dashboard with estimated token usage and costs (Chat / RAG tabs) |
+| **Privacy** | Client-side only — no signup, no Agent Sandbox server |
 
-- Credentials shared across Chat and RAG
-- Usage dashboard modal with Chat/RAG tabs, export, and reset (estimated costs)
-- Light/dark theme with Sorin design system
-- Keyboard shortcuts — press `?` in the app for the full list
+---
+
+## Supported providers
+
+OpenRouter, OpenAI, Anthropic, Gemini, Groq, and DeepSeek.
+
+OpenRouter is recommended for in-browser use. Anthropic may require a CORS proxy when calling the API directly from the browser.
+
+---
 
 ## Keyboard shortcuts
 
@@ -80,31 +105,41 @@ Supports OpenRouter, OpenAI, Anthropic, Gemini, Groq, and DeepSeek. Anthropic ma
 | `⌘Enter` / `Ctrl+Enter` | Send message |
 | `Esc` | Close panels / cancel |
 
-## Project layout
+---
+
+## Development
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start the Vite dev server |
+| `npm run build` | Production build to `dist/` |
+| `npm run preview` | Preview the production build |
+| `npm test` | Run Vitest unit tests |
 
 ```
 src/
-  playground-app.js   # Chat view bootstrap
-  app.js              # Router + shared shell
-  state.js            # Chat state + undo stack
-  ui/                 # Chat, sidebar, settings, tooltips, modals, usage panel
-  rag/                # RAG state, chunker, retriever, providers
-  usage/              # Usage data load/render/export
-  providers/          # LLM provider registry
-  styles/             # index.css + sorin-theme.css
+  app.js              Router and shared shell
+  playground-app.js     Chat view bootstrap
+  state.js              Chat state and undo stack
+  ui/                   Chat, sidebar, settings, tooltips, modals, usage panel
+  rag/                  RAG state, chunker, retriever, providers
+  usage/                Usage data load, render, export
+  providers/            LLM provider registry
+  shared/               Branding and shared utilities
+  styles/               index.css, sorin-theme.css
 ```
+
+---
 
 ## Contributing
 
-Contributions are welcome. This project lives at [github.com/santhosh-patel/Agent-Sandbox](https://github.com/santhosh-patel/Agent-Sandbox).
+Contributions are welcome.
 
-1. **Fork** the repo and clone your fork locally.
-2. **Install** dependencies and run the dev server (`npm install` && `npm run dev`).
-3. **Create a branch** for your change (`git checkout -b feat/my-change`).
-4. **Make your changes** — keep diffs focused and match existing code style.
-5. **Run tests** before opening a PR: `npm test` (and `npm run build` if you touched UI or build config).
-6. **Open a pull request** against `main` with a short summary and test plan.
+1. [Fork](https://github.com/santhosh-patel/Agent-Sandbox/fork) the repository and clone your fork.
+2. Create a branch: `git checkout -b feat/my-change`
+3. Make focused changes and run `npm test` (and `npm run build` if UI or build config changed).
+4. Open a pull request against `main` with a clear summary and test plan.
 
-**Bug reports & ideas:** open an [issue](https://github.com/santhosh-patel/Agent-Sandbox/issues) with steps to reproduce, expected vs actual behavior, and browser/OS if relevant.
+Report bugs or suggest features via [GitHub Issues](https://github.com/santhosh-patel/Agent-Sandbox/issues). Include steps to reproduce, expected vs. actual behavior, and browser/OS when relevant.
 
-**Scope notes:** Agent Sandbox is fully client-side — avoid backend dependencies unless there is a clear reason. Do not commit API keys, `.env` files, or personal chat exports.
+Please keep the project client-side by default, and never commit API keys, `.env` files, or personal chat exports.

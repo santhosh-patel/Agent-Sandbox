@@ -5,6 +5,11 @@
 import { BaseProvider } from './base.js';
 
 import { formatMessagesForOpenAI } from './message-format.js';
+import {
+  OPENAI_DEFAULT_CHAT_MODELS,
+  mapOpenAIModels,
+  isOpenAIReasoningModel,
+} from './openai-models.js';
 
 export class OpenAIProvider extends BaseProvider {
   constructor(config = {}) {
@@ -31,10 +36,7 @@ export class OpenAIProvider extends BaseProvider {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      return (data.data || [])
-        .filter(m => m.id.includes('gpt') || m.id.includes('o1') || m.id.includes('o3') || m.id.includes('o4'))
-        .map(m => ({ id: m.id, name: m.id }))
-        .sort((a, b) => a.id.localeCompare(b.id));
+      return mapOpenAIModels(data.data);
     } catch (e) {
       console.error('Failed to list OpenAI models:', e);
       return this.getDefaultModels();
@@ -42,17 +44,7 @@ export class OpenAIProvider extends BaseProvider {
   }
 
   getDefaultModels() {
-    return [
-      { id: 'gpt-4o', name: 'GPT-4o' },
-      { id: 'gpt-4o-mini', name: 'GPT-4o Mini' },
-      { id: 'gpt-4-turbo', name: 'GPT-4 Turbo' },
-      { id: 'gpt-4', name: 'GPT-4' },
-      { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo' },
-      { id: 'o1', name: 'o1' },
-      { id: 'o1-mini', name: 'o1 Mini' },
-      { id: 'o3-mini', name: 'o3 Mini' },
-      { id: 'o4-mini', name: 'o4 Mini' },
-    ];
+    return OPENAI_DEFAULT_CHAT_MODELS;
   }
 
   buildRequestBody(messages, settings) {
@@ -71,7 +63,7 @@ export class OpenAIProvider extends BaseProvider {
     body.messages.push(...formatMessagesForOpenAI(messages));
 
     // o-series models use reasoning_effort, not temperature
-    const isReasoningModel = /^(o1|o3|o4)/.test(settings.model);
+    const isReasoningModel = isOpenAIReasoningModel(settings.model);
 
     if (isReasoningModel) {
       if (settings.reasoningMode && settings.reasoningEffort) {

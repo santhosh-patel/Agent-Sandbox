@@ -14,7 +14,7 @@ export const PROVIDERS = {
     name: 'OpenAI',
     class: OpenAIProvider,
     color: '#10a37f',
-    description: 'GPT-4o, o1, o3, o4 and more',
+    description: 'GPT-5.5, GPT-4.1, o-series, and more',
     docsUrl: 'https://platform.openai.com/api-keys',
   },
   anthropic: {

@@ -589,9 +589,20 @@ export class RagSandboxUI {
           <span class="rag-document-meta">${doc.chunks.length} chunks · ${this.formatSize(doc.size)}</span>
         </div>
         <span class="rag-doc-status rag-doc-status--${doc.status}">${doc.status}</span>
+        ${doc.status === 'error' ? `
+          <button type="button" class="rag-doc-retry" data-id="${doc.id}" aria-label="Retry indexing" data-tip="Retry indexing this document">
+            ${iconHtml('refresh', { size: 14, className: 'icon' })}
+          </button>
+        ` : ''}
         <button type="button" class="rag-doc-delete" data-id="${doc.id}" aria-label="Delete document" data-tip="Remove document and all its chunks">${iconHtml('x', { size: 14, className: 'icon' })}</button>
       </div>
     `).join('');
+
+    list.querySelectorAll('.rag-doc-retry').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.indexDocument(collection.id, btn.dataset.id);
+      });
+    });
 
     list.querySelectorAll('.rag-doc-delete').forEach(btn => {
       btn.addEventListener('click', async () => {
