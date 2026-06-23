@@ -588,7 +588,12 @@ export class RagSandboxUI {
           <span class="rag-document-name">${this.escape(doc.name)}</span>
           <span class="rag-document-meta">${doc.chunks.length} chunks · ${this.formatSize(doc.size)}</span>
         </div>
-        <span class="rag-doc-status rag-doc-status--${doc.status}">${doc.status}</span>
+        <span class="rag-doc-status rag-doc-status--${doc.status}" data-tip="${
+          doc.status === 'indexed' ? 'Document content split and embedded into vector storage' :
+          doc.status === 'indexing' ? 'Generating vector embeddings...' :
+          doc.status === 'pending' ? 'Waiting to be processed' :
+          'An error occurred during vector ingestion'
+        }">${doc.status === 'indexed' ? 'ingested' : doc.status}</span>
         ${doc.status === 'error' ? `
           <button type="button" class="rag-doc-retry" data-id="${doc.id}" aria-label="Retry indexing" data-tip="Retry indexing this document">
             ${iconHtml('refresh', { size: 14, className: 'icon' })}
@@ -660,7 +665,7 @@ export class RagSandboxUI {
     root.innerHTML = collection.documents.map(doc => `
       <label class="rag-scope-check">
         <input type="checkbox" value="${doc.id}" ${!selected.size || selected.has(doc.id) ? 'checked' : ''} ${doc.status !== 'indexed' ? 'disabled' : ''} />
-        <span>${this.escape(doc.name)}${doc.status !== 'indexed' ? ' (not indexed)' : ''}</span>
+        <span>${this.escape(doc.name)}${doc.status !== 'indexed' ? ' (not ingested)' : ''}</span>
       </label>
     `).join('');
     root.querySelectorAll('input').forEach(input => {
