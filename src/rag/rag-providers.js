@@ -51,7 +51,6 @@ export const RAG_PROVIDERS = {
     supportsChat: true,
     embeddingModels: [
       { id: 'text-embedding-004', name: 'text-embedding-004' },
-      { id: 'embedding-001', name: 'embedding-001' },
     ],
     defaultChatModels: [
       { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash' },

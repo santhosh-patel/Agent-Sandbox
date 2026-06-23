@@ -355,7 +355,7 @@ export class RagHelpUI {
                   </thead>
                   <tbody>
                     <tr><td><strong>OpenAI</strong></td><td>text-embedding-3-small, text-embedding-3-large</td></tr>
-                    <tr><td><strong>Google Gemini</strong></td><td>text-embedding-004, embedding-001</td></tr>
+                    <tr><td><strong>Google Gemini</strong></td><td>text-embedding-004</td></tr>
                     <tr><td><strong>OpenRouter</strong></td><td>OpenAI embedding models via one key</td></tr>
                     <tr><td><strong>Mistral</strong></td><td>mistral-embed</td></tr>
                     <tr><td><strong>Cohere</strong></td><td>embed-english-v3.0, embed-multilingual-v3.0</td></tr>
