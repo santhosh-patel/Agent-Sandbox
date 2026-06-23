@@ -584,24 +584,50 @@ export class RagSandboxUI {
 
     list.innerHTML = collection.documents.map(doc => `
       <div class="rag-document-item" data-id="${doc.id}">
-        <div class="rag-document-info">
-          <span class="rag-document-name">${this.escape(doc.name)}</span>
-          <span class="rag-document-meta">${doc.chunks.length} chunks · ${this.formatSize(doc.size)}</span>
+        <div class="rag-document-header" data-id="${doc.id}">
+          <div class="rag-document-info">
+            <span class="rag-document-name">${this.escape(doc.name)}</span>
+            <span class="rag-document-meta">${doc.chunks.length} chunks · ${this.formatSize(doc.size)}</span>
+          </div>
+          <span class="rag-doc-status rag-doc-status--${doc.status}" data-tip="${
+            doc.status === 'indexed' ? 'Document content split and embedded into vector storage' :
+            doc.status === 'indexing' ? 'Generating vector embeddings...' :
+            doc.status === 'pending' ? 'Waiting to be processed' :
+            'An error occurred during vector ingestion'
+          }">${doc.status === 'indexed' ? 'ingested' : doc.status}</span>
+          ${doc.status === 'error' ? `
+            <button type="button" class="rag-doc-retry" data-id="${doc.id}" aria-label="Retry indexing" data-tip="Retry indexing this document">
+              ${iconHtml('refresh', { size: 14, className: 'icon' })}
+            </button>
+          ` : ''}
+          <button type="button" class="rag-doc-delete" data-id="${doc.id}" aria-label="Delete document" data-tip="Remove document and all its chunks">${iconHtml('x', { size: 14, className: 'icon' })}</button>
         </div>
-        <span class="rag-doc-status rag-doc-status--${doc.status}" data-tip="${
-          doc.status === 'indexed' ? 'Document content split and embedded into vector storage' :
-          doc.status === 'indexing' ? 'Generating vector embeddings...' :
-          doc.status === 'pending' ? 'Waiting to be processed' :
-          'An error occurred during vector ingestion'
-        }">${doc.status === 'indexed' ? 'ingested' : doc.status}</span>
-        ${doc.status === 'error' ? `
-          <button type="button" class="rag-doc-retry" data-id="${doc.id}" aria-label="Retry indexing" data-tip="Retry indexing this document">
-            ${iconHtml('refresh', { size: 14, className: 'icon' })}
-          </button>
-        ` : ''}
-        <button type="button" class="rag-doc-delete" data-id="${doc.id}" aria-label="Delete document" data-tip="Remove document and all its chunks">${iconHtml('x', { size: 14, className: 'icon' })}</button>
+        <div class="rag-document-chunks" id="chunks-${doc.id}" style="display: none;">
+          <div class="rag-chunks-summary">Chunks (${doc.chunks.length})</div>
+          <div class="rag-chunks-list">
+            ${doc.chunks.length ? doc.chunks.map((chunk, index) => `
+              <div class="rag-chunk-detail">
+                <span class="rag-chunk-badge">Chunk #${index + 1}</span>
+                <p class="rag-chunk-text">${this.escape(chunk.text)}</p>
+              </div>
+            `).join('') : `<p class="rag-empty-chunks">No chunks generated yet.</p>`}
+          </div>
+        </div>
       </div>
     `).join('');
+
+    list.querySelectorAll('.rag-document-header').forEach(header => {
+      header.addEventListener('click', (e) => {
+        if (e.target.closest('button')) return;
+        const docId = header.dataset.id;
+        const chunksEl = document.getElementById(`chunks-${docId}`);
+        if (chunksEl) {
+          const isHidden = chunksEl.style.display === 'none';
+          chunksEl.style.display = isHidden ? 'block' : 'none';
+          header.classList.toggle('expanded', isHidden);
+        }
+      });
+    });
 
     list.querySelectorAll('.rag-doc-retry').forEach(btn => {
       btn.addEventListener('click', () => {

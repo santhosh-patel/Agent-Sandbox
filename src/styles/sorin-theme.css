@@ -3192,13 +3192,81 @@
 
 .rag-document-item {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
+  flex-direction: column;
   border-radius: var(--radius-md);
   margin-bottom: 6px;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
+  padding: 0;
+  overflow: hidden;
+}
+
+.rag-document-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  width: 100%;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.rag-document-header:hover {
+  background: var(--surface-hover);
+}
+
+.rag-document-chunks {
+  border-top: 1px solid var(--border);
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  width: 100%;
+}
+
+.rag-chunks-summary {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.rag-chunks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.rag-chunk-detail {
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  margin-bottom: 2px;
+}
+
+.rag-chunk-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--accent);
+  display: inline-block;
+  margin-bottom: 4px;
+}
+
+.rag-chunk-text {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+.rag-empty-chunks {
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  margin: 0;
 }
 
 .rag-document-info {
@@ -3492,7 +3560,7 @@
     flex-shrink: 0;
   }
 
-  .rag-document-item {
+  .rag-document-header {
     align-items: flex-start;
   }
 }
