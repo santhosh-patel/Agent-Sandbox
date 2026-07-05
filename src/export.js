@@ -149,28 +149,74 @@ export function copyShareLink(chat) {
 }
 
 function chatToCompareMarkdown(chat) {
-  const groups = new Map();
-  for (const msg of chat.messages) {
-    if (!msg.compareId) continue;
-    if (!groups.has(msg.compareId)) groups.set(msg.compareId, []);
-    groups.get(msg.compareId).push(msg);
-  }
-  if (!groups.size) return null;
+  const lines = [`# ${chat.title || 'Chat'} — Model Comparison Matrix`, '', `*Exported ${new Date().toLocaleString()}*`, ''];
 
-  const lines = [`# ${chat.title || 'Chat'} — Model comparison`, '', `*Exported ${new Date().toLocaleString()}*`, ''];
-  for (const [, msgs] of groups) {
-    lines.push('## Comparison', '');
-    msgs.forEach(msg => {
-      lines.push(`### ${msg.compareModel || msg.model || 'Model'}`, '', msg.content || '_(empty)_', '');
-      if (msg.latency || msg.cost != null) {
-        const meta = [];
-        if (msg.latency) meta.push(`${msg.latency}s`);
-        if (msg.cost != null) meta.push(`$${msg.cost.toFixed(5)}`);
-        lines.push(`*${meta.join(' · ')}*`, '');
+  const segments = [];
+  let currentGroup = null;
+
+  for (let i = 0; i < chat.messages.length; i++) {
+    const msg = chat.messages[i];
+    if (msg.compareId) {
+      if (!currentGroup || currentGroup.compareId !== msg.compareId) {
+        let userPrompt = '_(Prior Context)_';
+        for (let j = segments.length - 1; j >= 0; j--) {
+          if (segments[j].role === 'user' && !segments[j].compareId) {
+            userPrompt = segments[j].content || '';
+            segments.splice(j, 1);
+            break;
+          }
+        }
+        currentGroup = {
+          compareId: msg.compareId,
+          prompt: userPrompt,
+          responses: []
+        };
+        segments.push(currentGroup);
       }
-    });
-    lines.push('---', '');
+      currentGroup.responses.push(msg);
+    } else {
+      segments.push(msg);
+      currentGroup = null;
+    }
   }
+
+  for (const seg of segments) {
+    if (seg.compareId) {
+      const models = seg.responses.map(r => r.compareModel || r.model || 'Model');
+      
+      lines.push('### Prompt', '', `> ${seg.prompt.replace(/\n/g, '\n> ')}`, '');
+      
+      lines.push('| ' + models.join(' | ') + ' |');
+      lines.push('| ' + models.map(() => '---').join(' | ') + ' |');
+      
+      const formatCell = (text) => {
+        return String(text || '')
+          .replace(/\|/g, '\\|')
+          .replace(/\n/g, '<br>');
+      };
+      
+      const cells = seg.responses.map(r => formatCell(r.content));
+      lines.push('| ' + cells.join(' | ') + ' |');
+      
+      const metaCells = seg.responses.map(r => {
+        const parts = [];
+        if (r.latency) parts.push(`${r.latency}s`);
+        if (r.cost != null) parts.push(`$${r.cost.toFixed(5)}`);
+        return parts.join(' · ') || '-';
+      });
+      lines.push('| ' + metaCells.map(m => `*${m}*`).join(' | ') + ' |');
+      lines.push('');
+    } else {
+      const role = roleLabel(seg.role);
+      lines.push(`## ${role}${seg.model ? ` (${seg.model})` : ''}`, '');
+      if (seg.thinking) {
+        lines.push('<details><summary>Reasoning</summary>', '', seg.thinking, '', '</details>', '');
+      }
+      lines.push(seg.content || '', '');
+      lines.push('---', '');
+    }
+  }
+
   return lines.join('\n');
 }
 

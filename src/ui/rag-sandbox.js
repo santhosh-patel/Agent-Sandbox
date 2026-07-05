@@ -887,6 +887,20 @@ export class RagSandboxUI {
       });
     });
 
+    // Bind document inspect button clicks
+    container.querySelectorAll('.rag-chunk-inspect-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const msgId = btn.dataset.msgId;
+        const chunkIndex = parseInt(btn.dataset.chunkIndex, 10);
+        const msg = ragState.messages.find(m => m.id === msgId);
+        const retrieved = msg?.retrieved?.[chunkIndex];
+        if (!retrieved) return;
+
+        this.inspectDocumentChunk(retrieved.chunk.docId, retrieved.chunk.charStart, retrieved.chunk.charEnd);
+      });
+    });
+
     container.scrollTop = container.scrollHeight;
     this.updateRollbackButton();
   }
@@ -905,7 +919,10 @@ export class RagSandboxUI {
           ${msg.retrieved.map((r, i) => `
             <div class="rag-chunk-card" data-msg-id="${msg.id}" data-chunk-index="${i}">
               <div class="rag-chunk-header">
-                <span class="rag-chunk-source">${iconHtml('fileText', { size: 12, className: 'icon' })} ${this.escape(r.chunk.docName || 'doc')} #${r.chunk.index + 1}</span>
+                <div class="rag-chunk-source-row">
+                  <span class="rag-chunk-source">${iconHtml('fileText', { size: 12, className: 'icon' })} ${this.escape(r.chunk.docName || 'doc')} #${r.chunk.index + 1}</span>
+                  <button type="button" class="btn-text btn-xs rag-chunk-inspect-btn" data-msg-id="${msg.id}" data-chunk-index="${i}">Inspect</button>
+                </div>
                 <span class="rag-chunk-score">score: ${r.score.toFixed(3)}</span>
               </div>
               <div class="rag-chunk-text" style="display: none;">${this.escape(r.chunk.text)}</div>
@@ -1589,5 +1606,48 @@ export class RagSandboxUI {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  inspectDocumentChunk(docId, charStart, charEnd) {
+    const collection = ragState.getActiveCollection();
+    const doc = collection?.documents.find(d => d.id === docId);
+    if (!doc) {
+      showToast('Document source content not found.', { isError: true });
+      return;
+    }
+
+    this.openDocumentVisualizer(doc.name, doc.content || '', charStart, charEnd);
+  }
+
+  openDocumentVisualizer(title, content, charStart, charEnd) {
+    document.getElementById('rag-doc-visualizer')?.remove();
+
+    const drawer = document.createElement('div');
+    drawer.id = 'rag-doc-visualizer';
+    drawer.className = 'rag-doc-visualizer';
+
+    const before = content.slice(0, charStart);
+    const highlighted = content.slice(charStart, charEnd);
+    const after = content.slice(charEnd);
+
+    drawer.innerHTML = `
+      <div class="rag-visualizer-header">
+        <h3>${this.escape(title)}</h3>
+        <button type="button" class="btn-text" id="rag-visualizer-close">Close</button>
+      </div>
+      <div class="rag-visualizer-content">
+        <pre class="rag-visualizer-pre">${this.escape(before)}<mark class="rag-visualizer-highlight" id="rag-chunk-mark">${this.escape(highlighted)}</mark>${this.escape(after)}</pre>
+      </div>
+    `;
+
+    document.body.appendChild(drawer);
+
+    document.getElementById('rag-visualizer-close')?.addEventListener('click', () => {
+      drawer.remove();
+    });
+
+    setTimeout(() => {
+      document.getElementById('rag-chunk-mark')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
   }
 }
