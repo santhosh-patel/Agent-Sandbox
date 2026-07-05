@@ -585,6 +585,7 @@ export class RagSandboxUI {
     list.innerHTML = collection.documents.map(doc => `
       <div class="rag-document-item" data-id="${doc.id}">
         <div class="rag-document-header" data-id="${doc.id}">
+          <span class="rag-doc-chevron">${iconHtml('chevronRight', { size: 14, className: 'icon' })}</span>
           <div class="rag-document-info">
             <span class="rag-document-name">${this.escape(doc.name)}</span>
             <span class="rag-document-meta">${doc.chunks.length} chunks · ${this.formatSize(doc.size)}</span>
@@ -858,6 +859,26 @@ export class RagSandboxUI {
       container.appendChild(el);
     });
 
+    // Bind click events to chunk cards
+    container.querySelectorAll('.rag-chunk-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const msgId = card.dataset.msgId;
+        const chunkIndex = parseInt(card.dataset.chunkIndex, 10);
+        const msg = ragState.messages.find(m => m.id === msgId);
+        const retrieved = msg?.retrieved?.[chunkIndex];
+        if (!retrieved) return;
+
+        const textEl = card.querySelector('.rag-chunk-text');
+        if (textEl) {
+          const fullText = retrieved.chunk.text;
+          const truncatedText = fullText.slice(0, 300) + (fullText.length > 300 ? '…' : '');
+          const isTruncated = textEl.textContent.endsWith('…') || textEl.textContent === truncatedText;
+          textEl.textContent = isTruncated ? fullText : truncatedText;
+          card.classList.toggle('expanded', isTruncated);
+        }
+      });
+    });
+
     container.scrollTop = container.scrollHeight;
     this.updateRollbackButton();
   }
@@ -873,7 +894,7 @@ export class RagSandboxUI {
       html += `<div class="rag-retrieval-panel">
         <div class="rag-retrieval-header">Retrieved chunks (${msg.retrieved.length})</div>
         ${msg.retrieved.map((r, i) => `
-          <div class="rag-chunk-card">
+          <div class="rag-chunk-card" data-msg-id="${msg.id}" data-chunk-index="${i}">
             <div class="rag-chunk-header">
               <span class="rag-chunk-source">${this.escape(r.chunk.docName || 'doc')} #${r.chunk.index + 1}</span>
               <span class="rag-chunk-score">${r.score.toFixed(3)}</span>
@@ -1223,6 +1244,7 @@ export class RagSandboxUI {
     const streamSettings = {
       ...settings,
       provider: providerId,
+      model: settings.chatModel,
       systemPrompt: settings.systemPrompt,
       maxTokens: settings.maxTokens,
       temperature: settings.temperature,

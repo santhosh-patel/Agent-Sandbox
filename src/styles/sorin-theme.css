@@ -3211,6 +3211,19 @@
   transition: background var(--transition);
 }
 
+.rag-doc-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  transition: transform var(--transition);
+  flex-shrink: 0;
+}
+
+.rag-document-header.expanded .rag-doc-chevron {
+  transform: rotate(90deg);
+}
+
 .rag-document-header:hover {
   background: var(--surface-hover);
 }
@@ -3481,6 +3494,17 @@
 .rag-chunk-card {
   padding: 10px 12px;
   border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.rag-chunk-card:hover {
+  background: var(--surface-hover);
+}
+
+.rag-chunk-card.expanded {
+  background: var(--surface-hover);
+  border-left: 2px solid var(--accent);
 }
 
 .rag-chunk-card:last-child {
