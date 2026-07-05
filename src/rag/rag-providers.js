@@ -198,6 +198,7 @@ export const DEFAULT_RAG_SETTINGS = {
   retrievalDocIds: [],
   maxTokens: 4096,
   temperature: 0.3,
+  streamResponses: true,
 };
 
 export const EMBEDDING_PRICING = {

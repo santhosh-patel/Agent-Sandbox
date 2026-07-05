@@ -3482,13 +3482,39 @@
   overflow: hidden;
 }
 
-.rag-retrieval-header {
-  padding: 8px 12px;
+summary.rag-retrieval-header {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-tertiary);
-  border-bottom: 1px solid var(--border);
+  padding: 8px 12px;
+  cursor: pointer;
   background: var(--bg-elevated);
+  user-select: none;
+  outline: none;
+}
+
+summary.rag-retrieval-header::-webkit-details-marker {
+  display: none;
+}
+
+summary.rag-retrieval-header::before {
+  content: '▶';
+  font-size: 0.65rem;
+  transition: transform var(--transition);
+  display: inline-block;
+  color: var(--text-tertiary);
+}
+
+details[open] summary.rag-retrieval-header::before {
+  transform: rotate(90deg);
+}
+
+details[open] summary.rag-retrieval-header {
+  border-bottom: 1px solid var(--border);
 }
 
 .rag-chunk-card {
