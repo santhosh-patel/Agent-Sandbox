@@ -309,7 +309,7 @@ export function setTip(el, text, pos) {
   }
 }
 
-export function applyDefaultTooltips() {
+function applyDefaultTooltips() {
   for (const [id, text] of Object.entries(ELEMENT_TIPS)) {
     const el = document.getElementById(id);
     if (el && !el.hasAttribute('data-tip')) setTip(el, text);

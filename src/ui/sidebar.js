@@ -469,7 +469,7 @@ export class SidebarUI {
   }
 }
 
-export function closeMobileSidebar() {
+function closeMobileSidebar() {
   document.getElementById('sidebar')?.classList.remove('open');
   document.getElementById('sidebar-overlay')?.classList.remove('visible');
 }

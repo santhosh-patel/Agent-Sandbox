@@ -3,7 +3,7 @@ import { CHAT_LABEL } from '../shared/branding.js';
 const PLAYGROUND_KEY = 'ai-playground-state';
 const RAG_KEY = 'rag-sandbox-state';
 
-export function loadPlaygroundUsage() {
+function loadPlaygroundUsage() {
   try {
     const raw = localStorage.getItem(PLAYGROUND_KEY);
     if (raw) return JSON.parse(raw).usage || null;
@@ -11,7 +11,7 @@ export function loadPlaygroundUsage() {
   return null;
 }
 
-export function loadRagUsage() {
+function loadRagUsage() {
   try {
     const raw = localStorage.getItem(RAG_KEY);
     if (raw) return JSON.parse(raw).usage || null;
@@ -19,7 +19,7 @@ export function loadRagUsage() {
   return null;
 }
 
-export function loadTopChats() {
+function loadTopChats() {
   try {
     const raw = localStorage.getItem(PLAYGROUND_KEY);
     if (!raw) return [];
@@ -82,7 +82,7 @@ function renderProviderRows(byProvider) {
   `).join('');
 }
 
-export function renderChart(series, metric = 'cost') {
+function renderChart(series, metric = 'cost') {
   const max = Math.max(...series.map(d => d[metric] || 0), 0.0001);
   return `
     <div class="usage-chart" role="img" aria-label="7-day ${metric} chart">
@@ -96,7 +96,7 @@ export function renderChart(series, metric = 'cost') {
   `;
 }
 
-export function renderPlaygroundSection(pg) {
+function renderPlaygroundSection(pg) {
   const today = new Date().toISOString().slice(0, 10);
   const todayStats = pg.daily[today] || { requests: 0, tokens: 0, cost: 0, byProvider: {} };
   const weekStats = sumLastDays(pg.daily, 7);
@@ -127,7 +127,7 @@ export function renderPlaygroundSection(pg) {
   `;
 }
 
-export function renderRagSection(rag) {
+function renderRagSection(rag) {
   const avgLatency = rag.latency?.length
     ? (rag.latency.reduce((a, b) => a + b, 0) / rag.latency.length).toFixed(2)
     : '—';

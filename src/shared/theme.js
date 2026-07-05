@@ -3,21 +3,21 @@ import { setMarkdownTheme } from '../ui/markdown.js';
 import { iconHtml } from '../ui/icons.js';
 import { setTip } from '../ui/tooltip.js';
 
-export function resolveTheme(theme) {
+function resolveTheme(theme) {
   if (theme === 'system') {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
   return theme === 'dark' ? 'dark' : 'light';
 }
 
-export function applyTheme(theme) {
+function applyTheme(theme) {
   const active = resolveTheme(theme);
   document.documentElement.setAttribute('data-theme', active);
   setMarkdownTheme(active);
   return active;
 }
 
-export function updateThemeToggleButton(theme, btnId = 'topnav-theme-btn', iconId = 'topnav-theme-icon') {
+function updateThemeToggleButton(theme, btnId = 'topnav-theme-btn', iconId = 'topnav-theme-icon') {
   const btn = document.getElementById(btnId);
   if (!btn) return;
   const active = resolveTheme(theme);
@@ -32,7 +32,7 @@ export function updateThemeToggleButton(theme, btnId = 'topnav-theme-btn', iconI
   }
 }
 
-export function toggleTheme() {
+function toggleTheme() {
   const current = state.settings.theme || 'light';
   const resolved = current === 'system' ? resolveTheme('system') : current;
   const next = resolved === 'dark' ? 'light' : 'dark';

@@ -91,7 +91,7 @@ export function showPrompt({ title, message = '', defaultValue = '', confirmText
   });
 }
 
-export function closeModal() {
+function closeModal() {
   if (activeModal) {
     activeModal.remove();
     activeModal = null;

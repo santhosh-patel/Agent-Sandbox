@@ -2,7 +2,7 @@
  * Excel-style drag handles for resizable side panels.
  */
 
-export const PANEL_SIZE_DEFAULTS = {
+const PANEL_SIZE_DEFAULTS = {
   sidebar: { base: 260, maxRatio: 1.5 },
   settings: { base: 360, maxRatio: 1.5 },
 };
@@ -49,7 +49,7 @@ export function initAppPanelResize({
   });
 }
 
-export function initPanelResize({ root, panels, enabled = () => true }) {
+function initPanelResize({ root, panels, enabled = () => true }) {
   const cleanups = [];
 
   panels.forEach((config) => {
