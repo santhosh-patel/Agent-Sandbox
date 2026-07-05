@@ -949,7 +949,8 @@ export class RagSandboxUI {
 
     if (msg.meta) {
       html += `<div class="rag-message-meta">
-        ${msg.meta.latency ? `<span>${msg.meta.latency}s</span>` : ''}
+        ${msg.meta.ttft ? `<span>TTFT: ${msg.meta.ttft}s</span>` : ''}
+        ${msg.meta.latency ? `<span>Total: ${msg.meta.latency}s</span>` : ''}
         ${msg.meta.tokens ? `<span>${msg.meta.tokens.total_tokens || 0} tokens</span>` : ''}
         ${msg.meta.cost ? `<span>$${msg.meta.cost.toFixed(4)}</span>` : ''}
       </div>`;
@@ -1289,13 +1290,17 @@ export class RagSandboxUI {
 
     const isStreamingEnabled = settings.streamResponses !== false;
     let fullText = '';
+    let ttft = null;
     const stream = provider.streamChat(messages, streamSettings, this.abortController.signal);
 
     for await (const chunk of stream) {
       if (chunk.type === 'text') {
+        if (ttft === null && chunk.content) {
+          ttft = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
+        }
         fullText += chunk.content;
         if (isStreamingEnabled) {
-          ragState.updateLastMessage({ content: fullText, isStreaming: true });
+          ragState.updateLastMessage({ content: fullText, isStreaming: true, meta: { ttft } });
           this.renderMessages();
         }
       } else if (chunk.type === 'usage') {
@@ -1306,7 +1311,7 @@ export class RagSandboxUI {
         ragState.updateLastMessage({
           content: fullText,
           isStreaming: false,
-          meta: { latency, tokens: chunk.usage, cost: totalCost },
+          meta: { latency, tokens: chunk.usage, cost: totalCost, ttft },
         });
         ragState.recordUsage(totalTokens, totalCost, latency);
         this.renderUsage();
@@ -1314,7 +1319,7 @@ export class RagSandboxUI {
     }
 
     const latency = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
-    ragState.updateLastMessage({ content: fullText || '(No response)', isStreaming: false });
+    ragState.updateLastMessage({ content: fullText || '(No response)', isStreaming: false, meta: { latency, cost: embedCost, ttft } });
     if (!ragState.messages[ragState.messages.length - 1]?.meta) {
       ragState.recordUsage(embedTokens, embedCost, latency);
     }
@@ -1343,6 +1348,7 @@ export class RagSandboxUI {
 
     const isStreamingEnabled = settings.streamResponses !== false;
     let fullText = '';
+    let ttft = null;
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -1359,9 +1365,12 @@ export class RagSandboxUI {
           const data = JSON.parse(line.slice(6));
           const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
           if (text) {
+            if (ttft === null) {
+              ttft = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
+            }
             fullText += text;
             if (isStreamingEnabled) {
-              ragState.updateLastMessage({ content: fullText, isStreaming: true });
+              ragState.updateLastMessage({ content: fullText, isStreaming: true, meta: { ttft } });
               this.renderMessages();
             }
           }
@@ -1373,7 +1382,7 @@ export class RagSandboxUI {
     ragState.updateLastMessage({
       content: fullText || '(No response)',
       isStreaming: false,
-      meta: { latency, cost: embedCost },
+      meta: { latency, cost: embedCost, ttft },
     });
     ragState.recordUsage(embedTokens, embedCost, latency);
     this.renderUsage();
@@ -1411,6 +1420,7 @@ export class RagSandboxUI {
 
     const isStreamingEnabled = settings.streamResponses !== false;
     let fullText = '';
+    let ttft = null;
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -1426,9 +1436,12 @@ export class RagSandboxUI {
         try {
           const data = JSON.parse(line.slice(6));
           if (data.type === 'content_block_delta' && data.delta?.text) {
+            if (ttft === null) {
+              ttft = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
+            }
             fullText += data.delta.text;
             if (isStreamingEnabled) {
-              ragState.updateLastMessage({ content: fullText, isStreaming: true });
+              ragState.updateLastMessage({ content: fullText, isStreaming: true, meta: { ttft } });
               this.renderMessages();
             }
           }
@@ -1440,7 +1453,7 @@ export class RagSandboxUI {
     ragState.updateLastMessage({
       content: fullText || '(No response)',
       isStreaming: false,
-      meta: { latency, cost: embedCost },
+      meta: { latency, cost: embedCost, ttft },
     });
     ragState.recordUsage(embedTokens, embedCost, latency);
     this.renderUsage();
@@ -1474,6 +1487,7 @@ export class RagSandboxUI {
 
     const isStreamingEnabled = settings.streamResponses !== false;
     let fullText = '';
+    let ttft = null;
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -1490,9 +1504,12 @@ export class RagSandboxUI {
           const data = JSON.parse(line.slice(6));
           const text = data.delta?.message?.content?.text || data.message?.content?.text || '';
           if (text) {
+            if (ttft === null) {
+              ttft = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
+            }
             fullText += text;
             if (isStreamingEnabled) {
-              ragState.updateLastMessage({ content: fullText, isStreaming: true });
+              ragState.updateLastMessage({ content: fullText, isStreaming: true, meta: { ttft } });
               this.renderMessages();
             }
           }
@@ -1504,7 +1521,7 @@ export class RagSandboxUI {
     ragState.updateLastMessage({
       content: fullText || '(No response)',
       isStreaming: false,
-      meta: { latency, cost: embedCost },
+      meta: { latency, cost: embedCost, ttft },
     });
     ragState.recordUsage(embedTokens, embedCost, latency);
     this.renderUsage();
@@ -1544,6 +1561,7 @@ export class RagSandboxUI {
 
     const isStreamingEnabled = settings.streamResponses !== false;
     let fullText = '';
+    let ttft = null;
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -1562,9 +1580,12 @@ export class RagSandboxUI {
           const data = JSON.parse(trimmed.slice(6));
           const text = data.choices?.[0]?.delta?.content || '';
           if (text) {
+            if (ttft === null) {
+              ttft = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
+            }
             fullText += text;
             if (isStreamingEnabled) {
-              ragState.updateLastMessage({ content: fullText, isStreaming: true });
+              ragState.updateLastMessage({ content: fullText, isStreaming: true, meta: { ttft } });
               this.renderMessages();
             }
           }
@@ -1575,7 +1596,7 @@ export class RagSandboxUI {
             ragState.updateLastMessage({
               content: fullText,
               isStreaming: false,
-              meta: { latency, tokens: data.usage, cost: totalCost },
+              meta: { latency, tokens: data.usage, cost: totalCost, ttft },
             });
             ragState.recordUsage(embedTokens + data.usage.total_tokens, totalCost, latency);
             this.renderUsage();
@@ -1585,7 +1606,7 @@ export class RagSandboxUI {
     }
 
     const latency = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
-    ragState.updateLastMessage({ content: fullText || '(No response)', isStreaming: false });
+    ragState.updateLastMessage({ content: fullText || '(No response)', isStreaming: false, meta: { latency, cost: embedCost, ttft } });
     if (!ragState.messages[ragState.messages.length - 1]?.meta) {
       ragState.recordUsage(embedTokens, embedCost, latency);
     }
