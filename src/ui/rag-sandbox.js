@@ -453,6 +453,9 @@ export class RagSandboxUI {
     bind('rag-max-context-chars', () => {
       ragState.updateSettings({ maxContextChars: parseInt(document.getElementById('rag-max-context-chars').value, 10) });
     });
+    bind('rag-stream-responses', () => {
+      ragState.updateSettings({ streamResponses: document.getElementById('rag-stream-responses').checked });
+    });
     bind('rag-cors-proxy-url', () => {
       ragState.updateSettings({ corsProxyUrl: document.getElementById('rag-cors-proxy-url').value.trim() });
     });
@@ -687,6 +690,8 @@ export class RagSandboxUI {
     if (tempVal) tempVal.textContent = s.temperature.toFixed(1);
     const topkVal = document.getElementById('rag-top-k-value');
     if (topkVal) topkVal.textContent = s.topK;
+    const streamCheckbox = document.getElementById('rag-stream-responses');
+    if (streamCheckbox) streamCheckbox.checked = s.streamResponses !== false;
 
     this.syncKeyFields();
     this.renderRetrievalScope();
@@ -875,11 +880,9 @@ export class RagSandboxUI {
 
         const textEl = card.querySelector('.rag-chunk-text');
         if (textEl) {
-          const fullText = retrieved.chunk.text;
-          const truncatedText = fullText.slice(0, 300) + (fullText.length > 300 ? '…' : '');
-          const isTruncated = textEl.textContent.endsWith('…') || textEl.textContent === truncatedText;
-          textEl.textContent = isTruncated ? fullText : truncatedText;
-          card.classList.toggle('expanded', isTruncated);
+          const isHidden = textEl.style.display === 'none';
+          textEl.style.display = isHidden ? 'block' : 'none';
+          card.classList.toggle('expanded', isHidden);
         }
       });
     });
@@ -896,18 +899,20 @@ export class RagSandboxUI {
     let html = `<div class="rag-message-content">${msg.isStreaming ? renderMarkdown(msg.content || '…') : renderMarkdown(msg.content || '')}</div>`;
 
     if (msg.retrieved?.length) {
-      html += `<div class="rag-retrieval-panel">
-        <div class="rag-retrieval-header">Retrieved chunks (${msg.retrieved.length})</div>
-        ${msg.retrieved.map((r, i) => `
-          <div class="rag-chunk-card" data-msg-id="${msg.id}" data-chunk-index="${i}">
-            <div class="rag-chunk-header">
-              <span class="rag-chunk-source">${this.escape(r.chunk.docName || 'doc')} #${r.chunk.index + 1}</span>
-              <span class="rag-chunk-score">${r.score.toFixed(3)}</span>
+      html += `<details class="rag-retrieval-panel">
+        <summary class="rag-retrieval-header">Retrieved chunks (${msg.retrieved.length})</summary>
+        <div class="rag-chunks-cards-list">
+          ${msg.retrieved.map((r, i) => `
+            <div class="rag-chunk-card" data-msg-id="${msg.id}" data-chunk-index="${i}">
+              <div class="rag-chunk-header">
+                <span class="rag-chunk-source">${iconHtml('fileText', { size: 12, className: 'icon' })} ${this.escape(r.chunk.docName || 'doc')} #${r.chunk.index + 1}</span>
+                <span class="rag-chunk-score">score: ${r.score.toFixed(3)}</span>
+              </div>
+              <div class="rag-chunk-text" style="display: none;">${this.escape(r.chunk.text)}</div>
             </div>
-            <div class="rag-chunk-text">${this.escape(r.chunk.text.slice(0, 300))}${r.chunk.text.length > 300 ? '…' : ''}</div>
-          </div>
-        `).join('')}
-      </div>`;
+          `).join('')}
+        </div>
+      </details>`;
     }
 
     if (msg.context) {
@@ -1255,14 +1260,17 @@ export class RagSandboxUI {
       temperature: settings.temperature,
     };
 
+    const isStreamingEnabled = settings.streamResponses !== false;
     let fullText = '';
     const stream = provider.streamChat(messages, streamSettings, this.abortController.signal);
 
     for await (const chunk of stream) {
       if (chunk.type === 'text') {
         fullText += chunk.content;
-        ragState.updateLastMessage({ content: fullText, isStreaming: true });
-        this.renderMessages();
+        if (isStreamingEnabled) {
+          ragState.updateLastMessage({ content: fullText, isStreaming: true });
+          this.renderMessages();
+        }
       } else if (chunk.type === 'usage') {
         const latency = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
         const cost = estimateCost(settings.chatModel, chunk.usage.prompt_tokens, chunk.usage.completion_tokens);
@@ -1306,6 +1314,7 @@ export class RagSandboxUI {
       throw new Error(err.error?.message || `HTTP ${res.status}`);
     }
 
+    const isStreamingEnabled = settings.streamResponses !== false;
     let fullText = '';
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -1324,8 +1333,10 @@ export class RagSandboxUI {
           const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
           if (text) {
             fullText += text;
-            ragState.updateLastMessage({ content: fullText, isStreaming: true });
-            this.renderMessages();
+            if (isStreamingEnabled) {
+              ragState.updateLastMessage({ content: fullText, isStreaming: true });
+              this.renderMessages();
+            }
           }
         } catch { /* skip */ }
       }
@@ -1371,6 +1382,7 @@ export class RagSandboxUI {
       throw new Error(err.error?.message || `HTTP ${res.status}`);
     }
 
+    const isStreamingEnabled = settings.streamResponses !== false;
     let fullText = '';
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -1388,8 +1400,10 @@ export class RagSandboxUI {
           const data = JSON.parse(line.slice(6));
           if (data.type === 'content_block_delta' && data.delta?.text) {
             fullText += data.delta.text;
-            ragState.updateLastMessage({ content: fullText, isStreaming: true });
-            this.renderMessages();
+            if (isStreamingEnabled) {
+              ragState.updateLastMessage({ content: fullText, isStreaming: true });
+              this.renderMessages();
+            }
           }
         } catch { /* skip */ }
       }
@@ -1431,6 +1445,7 @@ export class RagSandboxUI {
       throw new Error(err.message || `HTTP ${res.status}`);
     }
 
+    const isStreamingEnabled = settings.streamResponses !== false;
     let fullText = '';
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -1449,8 +1464,10 @@ export class RagSandboxUI {
           const text = data.delta?.message?.content?.text || data.message?.content?.text || '';
           if (text) {
             fullText += text;
-            ragState.updateLastMessage({ content: fullText, isStreaming: true });
-            this.renderMessages();
+            if (isStreamingEnabled) {
+              ragState.updateLastMessage({ content: fullText, isStreaming: true });
+              this.renderMessages();
+            }
           }
         } catch { /* skip */ }
       }
@@ -1498,6 +1515,7 @@ export class RagSandboxUI {
       throw new Error(err.error?.message || `HTTP ${res.status}`);
     }
 
+    const isStreamingEnabled = settings.streamResponses !== false;
     let fullText = '';
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -1518,8 +1536,10 @@ export class RagSandboxUI {
           const text = data.choices?.[0]?.delta?.content || '';
           if (text) {
             fullText += text;
-            ragState.updateLastMessage({ content: fullText, isStreaming: true });
-            this.renderMessages();
+            if (isStreamingEnabled) {
+              ragState.updateLastMessage({ content: fullText, isStreaming: true });
+              this.renderMessages();
+            }
           }
           if (data.usage) {
             const latency = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
