@@ -423,7 +423,10 @@ export class RagSandboxUI {
       ragState.updateSettings({ chunkStrategy: document.getElementById('rag-chunk-strategy').value });
     });
     bind('rag-top-k', () => {
-      ragState.updateSettings({ topK: parseInt(document.getElementById('rag-top-k').value, 10) });
+      const val = parseInt(document.getElementById('rag-top-k').value, 10);
+      ragState.updateSettings({ topK: val });
+      const span = document.getElementById('rag-top-k-value');
+      if (span) span.textContent = val;
     });
     bind('rag-similarity-threshold', () => {
       const val = parseFloat(document.getElementById('rag-similarity-threshold').value);
@@ -682,6 +685,8 @@ export class RagSandboxUI {
     if (thresholdVal) thresholdVal.textContent = s.similarityThreshold.toFixed(2);
     const tempVal = document.getElementById('rag-temp-value');
     if (tempVal) tempVal.textContent = s.temperature.toFixed(1);
+    const topkVal = document.getElementById('rag-top-k-value');
+    if (topkVal) topkVal.textContent = s.topK;
 
     this.syncKeyFields();
     this.renderRetrievalScope();
