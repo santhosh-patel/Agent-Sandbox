@@ -199,6 +199,7 @@ export const DEFAULT_RAG_SETTINGS = {
   maxTokens: 4096,
   temperature: 0.3,
   streamResponses: true,
+  hybridWeight: 0.0,
 };
 
 export const EMBEDDING_PRICING = {
