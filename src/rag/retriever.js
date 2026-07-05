@@ -28,7 +28,18 @@ function euclideanDistance(a, b) {
   return Math.sqrt(sum);
 }
 
-function computeScore(queryEmbedding, chunkEmbedding, strategy) {
+function cosineSimilarityWithNormA(a, normA, b) {
+  if (!a?.length || !b?.length || a.length !== b.length) return 0;
+  let dot = 0, normB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    normB += b[i] * b[i];
+  }
+  const denom = normA * Math.sqrt(normB);
+  return denom === 0 ? 0 : dot / denom;
+}
+
+function computeScore(queryEmbedding, queryNorm, chunkEmbedding, strategy) {
   switch (strategy) {
     case 'dot':
       return dotProductSimilarity(queryEmbedding, chunkEmbedding);
@@ -37,7 +48,7 @@ function computeScore(queryEmbedding, chunkEmbedding, strategy) {
       return dist === Infinity ? 0 : 1 / (1 + dist);
     case 'cosine':
     default:
-      return cosineSimilarity(queryEmbedding, chunkEmbedding);
+      return cosineSimilarityWithNormA(queryEmbedding, queryNorm, chunkEmbedding);
   }
 }
 
@@ -52,6 +63,15 @@ export function searchChunks(queryEmbedding, chunks, options = {}) {
   let pool = chunks;
   if (docIds?.length) {
     pool = chunks.filter(c => docIds.includes(c.docId));
+  }
+
+  let queryNorm = 0;
+  if (searchStrategy === 'cosine' && queryEmbedding?.length) {
+    let sum = 0;
+    for (let i = 0; i < queryEmbedding.length; i++) {
+      sum += queryEmbedding[i] * queryEmbedding[i];
+    }
+    queryNorm = Math.sqrt(sum);
   }
 
   let dimensionWarningLogged = false;
@@ -70,7 +90,7 @@ export function searchChunks(queryEmbedding, chunks, options = {}) {
     })
     .map(chunk => ({
       chunk,
-      score: computeScore(queryEmbedding, chunk.embedding, searchStrategy),
+      score: computeScore(queryEmbedding, queryNorm, chunk.embedding, searchStrategy),
     }))
     .filter(r => r.score >= similarityThreshold)
     .sort((a, b) => b.score - a.score)
