@@ -81,7 +81,7 @@ export async function refreshOpenRouterPricing() {
 }
 
 // Pricing per 1M tokens (input / output) in USD
-export const MODEL_PRICING = {
+const MODEL_PRICING = {
   // OpenAI
   'gpt-4o': { input: 2.5, output: 10 },
   'gpt-4o-mini': { input: 0.15, output: 0.6 },

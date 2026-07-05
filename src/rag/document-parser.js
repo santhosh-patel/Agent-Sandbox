@@ -24,7 +24,7 @@ export function isSupportedFile(file) {
   return SUPPORTED_EXTENSIONS.includes(ext) || SUPPORTED_TYPES[file.type];
 }
 
-export function getFileType(file) {
+function getFileType(file) {
   const ext = file.name.split('.').pop()?.toLowerCase();
   if (ext === 'markdown') return 'md';
   if (SUPPORTED_EXTENSIONS.includes(ext)) return ext;
