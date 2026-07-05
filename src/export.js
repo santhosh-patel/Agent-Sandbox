@@ -9,7 +9,7 @@ function roleLabel(role) {
   return role === 'user' ? 'You' : state.getAssistantName();
 }
 
-export function chatToMarkdown(chat) {
+function chatToMarkdown(chat) {
   const lines = [`# ${chat.title || 'Chat'}`, '', `*Exported ${new Date().toLocaleString()}*`, ''];
   for (const msg of chat.messages) {
     if (msg.compareId) continue;
@@ -75,7 +75,7 @@ function renderShareMessage(msg) {
   return `<div class="msg ${msg.role}"><div class="msg-role">${role}${msg.model ? ` · ${msg.model}` : ''}</div>${imgs}<div>${content}</div></div>`;
 }
 
-export function buildShareHtml(chat) {
+function buildShareHtml(chat) {
   const messages = chat.messages.filter(m => !m.compareId);
   const body = messages.map(renderShareMessage).join('\n');
   return `<!DOCTYPE html>
@@ -148,7 +148,7 @@ export function copyShareLink(chat) {
   return { copied: true, downloaded: false, url, strippedImages };
 }
 
-export function chatToCompareMarkdown(chat) {
+function chatToCompareMarkdown(chat) {
   const groups = new Map();
   for (const msg of chat.messages) {
     if (!msg.compareId) continue;

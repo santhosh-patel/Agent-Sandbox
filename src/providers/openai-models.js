@@ -74,7 +74,7 @@ const EXCLUDED_PATTERNS = [
 
 const CHAT_PREFIXES = ['gpt-', 'chatgpt-', 'o1', 'o3', 'o4', 'codex-'];
 
-export function formatOpenAIModelName(id) {
+function formatOpenAIModelName(id) {
   return MODEL_NAMES[id] || id;
 }
 

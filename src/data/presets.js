@@ -1,4 +1,4 @@
-export const PARAMETER_PRESETS = {
+const PARAMETER_PRESETS = {
   creative: {
     label: 'Creative',
     description: 'Higher temperature, more varied output',
@@ -29,7 +29,7 @@ export const PARAMETER_PRESETS = {
   },
 };
 
-export const SYSTEM_PROMPT_PRESETS = {
+const SYSTEM_PROMPT_PRESETS = {
   concise: {
     label: 'Concise',
     description: 'Short, direct answers with no filler',
