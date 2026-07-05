@@ -64,6 +64,7 @@ class StateManager {
       this._state.chats[chat.id] = chat;
       this._state.activeChat = chat.id;
     }
+    this._savePending = false;
   }
 
   _cloneMessages(messages) {
@@ -155,7 +156,20 @@ class StateManager {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this._state));
     } catch (e) {
       console.warn('Failed to save state:', e);
+      if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22) {
+        this._emit('storage-full', { error: e });
+      }
     }
+  }
+
+  _debouncedSave() {
+    if (this._savePending) return;
+    this._savePending = true;
+    const runner = typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame : (cb) => setTimeout(cb, 16);
+    runner(() => {
+      this._saveState();
+      this._savePending = false;
+    });
   }
 
   flushSave() {
@@ -437,7 +451,7 @@ class StateManager {
     } else {
       this._state.drafts[chatId] = value;
     }
-    this._saveState();
+    this._debouncedSave();
   }
 
   getDraft(chatId) {
@@ -535,7 +549,7 @@ class StateManager {
       if (meta.isError) lastMsg.isError = meta.isError;
       if (meta.model) lastMsg.model = meta.model;
       chat.updatedAt = Date.now();
-      if (!meta.skipSave) this._saveState();
+      if (!meta.skipSave) this._debouncedSave();
     }
   }
 
@@ -552,7 +566,7 @@ class StateManager {
       if (meta.isStreaming !== undefined) msg.isStreaming = meta.isStreaming;
       if (meta.isError) msg.isError = meta.isError;
       chat.updatedAt = Date.now();
-      this._saveState();
+      this._debouncedSave();
     }
   }
 
@@ -616,7 +630,7 @@ class StateManager {
     this._state.usage.total.requests += 1;
     this._state.usage.total.tokens += tokens || 0;
     this._state.usage.total.cost += cost || 0;
-    this._saveState();
+    this._debouncedSave();
     this._emit('usage-updated', this._state.usage);
   }
 

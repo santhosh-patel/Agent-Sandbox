@@ -43,6 +43,7 @@ class RagStateManager {
       this._state.activeCollectionId = this._state.collections[0].id;
     }
     this.isDbReady = false;
+    this._savePending = false;
   }
 
   _loadState() {
@@ -143,9 +144,7 @@ class RagStateManager {
 
   async _persistCollectionsToDb() {
     try {
-      for (const col of this._state.collections) {
-        await saveCollectionToDb(col);
-      }
+      await Promise.all(this._state.collections.map(col => saveCollectionToDb(col)));
     } catch (e) {
       console.warn('IDB save failed:', e);
     }
@@ -157,7 +156,20 @@ class RagStateManager {
       this._persistCollectionsToDb();
     } catch (e) {
       console.warn('Failed to save RAG state:', e);
+      if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22) {
+        this._emit('storage-full', { error: e });
+      }
     }
+  }
+
+  _debouncedSave() {
+    if (this._savePending) return;
+    this._savePending = true;
+    const runner = typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame : (cb) => setTimeout(cb, 16);
+    runner(() => {
+      this._saveState();
+      this._savePending = false;
+    });
   }
 
   _emit(event, data) {
@@ -366,7 +378,7 @@ class RagStateManager {
     const last = this._state.messages[this._state.messages.length - 1];
     if (!last) return;
     Object.assign(last, updates);
-    this._saveState();
+    this._debouncedSave();
     this._emit('message-updated');
   }
 
@@ -382,7 +394,7 @@ class RagStateManager {
     this._state.usage.cost += cost || 0;
     this._state.usage.requests += 1;
     if (latency) this._state.usage.latency.push(latency);
-    this._saveState();
+    this._debouncedSave();
     this._emit('usage-changed');
   }
 
