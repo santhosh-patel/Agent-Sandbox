@@ -389,81 +389,82 @@ export class RagSandboxUI {
   }
 
   bindSettingsEvents() {
-    const bind = (id, handler) => {
+    const bindConfirm = (id, key, getValue, updateValueDom, onConfirmSuccess) => {
       const el = document.getElementById(id);
-      if (el) el.addEventListener('change', handler);
-      if (el?.type === 'range' || el?.type === 'number') el?.addEventListener('input', handler);
+      if (!el) return;
+
+      if (el.type === 'range' || el.type === 'number') {
+        el.addEventListener('input', () => {
+          updateValueDom?.(getValue(el));
+        });
+      }
+
+      el.addEventListener('change', () => {
+        const prevVal = ragState.settings[key];
+        const newVal = getValue(el);
+        if (prevVal === newVal) return;
+
+        const label = id.replace('rag-', '').replace(/-/g, ' ');
+        if (confirm(`Are you sure you want to change the "${label}" setting?`)) {
+          ragState.updateSettings({ [key]: newVal });
+          updateValueDom?.(newVal);
+          onConfirmSuccess?.(newVal);
+        } else {
+          if (el.type === 'checkbox') {
+            el.checked = prevVal !== false;
+          } else {
+            el.value = prevVal ?? '';
+          }
+          updateValueDom?.(prevVal);
+        }
+      });
     };
 
-    bind('rag-embedding-provider', () => {
-      const provider = document.getElementById('rag-embedding-provider').value;
-      ragState.updateSettings({ embeddingProvider: provider });
-      this.populateEmbeddingModels(provider);
+    bindConfirm('rag-embedding-provider', 'embeddingProvider', el => el.value, null, val => {
+      this.populateEmbeddingModels(val);
       this.syncEmbedKeyField();
     });
-    bind('rag-embedding-model', () => {
-      ragState.updateSettings({ embeddingModel: document.getElementById('rag-embedding-model').value });
-    });
-    bind('rag-chat-provider', () => {
-      const provider = document.getElementById('rag-chat-provider').value;
-      ragState.updateSettings({ chatProvider: provider });
-      this.populateChatModels(provider);
+    bindConfirm('rag-embedding-model', 'embeddingModel', el => el.value);
+    
+    bindConfirm('rag-chat-provider', 'chatProvider', el => el.value, null, val => {
+      this.populateChatModels(val);
       this.syncChatKeyField();
     });
-    bind('rag-chat-model', () => {
-      ragState.updateSettings({ chatModel: document.getElementById('rag-chat-model').value });
-    });
-    bind('rag-chunk-size', () => {
-      ragState.updateSettings({ chunkSize: parseInt(document.getElementById('rag-chunk-size').value, 10) });
-    });
-    bind('rag-chunk-overlap', () => {
-      ragState.updateSettings({ chunkOverlap: parseInt(document.getElementById('rag-chunk-overlap').value, 10) });
-    });
-    bind('rag-chunk-strategy', () => {
-      ragState.updateSettings({ chunkStrategy: document.getElementById('rag-chunk-strategy').value });
-    });
-    bind('rag-top-k', () => {
-      const val = parseInt(document.getElementById('rag-top-k').value, 10);
-      ragState.updateSettings({ topK: val });
+    bindConfirm('rag-chat-model', 'chatModel', el => el.value);
+
+    bindConfirm('rag-chunk-size', 'chunkSize', el => parseInt(el.value, 10));
+    bindConfirm('rag-chunk-overlap', 'chunkOverlap', el => parseInt(el.value, 10));
+    bindConfirm('rag-chunk-strategy', 'chunkStrategy', el => el.value);
+    
+    bindConfirm('rag-top-k', 'topK', el => parseInt(el.value, 10), val => {
       const span = document.getElementById('rag-top-k-value');
       if (span) span.textContent = val;
     });
-    bind('rag-similarity-threshold', () => {
-      const val = parseFloat(document.getElementById('rag-similarity-threshold').value);
-      ragState.updateSettings({ similarityThreshold: val });
-      document.getElementById('rag-threshold-value').textContent = val.toFixed(2);
+    
+    bindConfirm('rag-similarity-threshold', 'similarityThreshold', el => parseFloat(el.value), val => {
+      const span = document.getElementById('rag-threshold-value');
+      if (span) span.textContent = val.toFixed(2);
     });
-    bind('rag-search-strategy', () => {
-      ragState.updateSettings({ searchStrategy: document.getElementById('rag-search-strategy').value });
+    
+    bindConfirm('rag-search-strategy', 'searchStrategy', el => el.value);
+    bindConfirm('rag-system-prompt', 'systemPrompt', el => el.value);
+    bindConfirm('rag-rag-prompt', 'ragPrompt', el => el.value);
+    
+    bindConfirm('rag-temperature', 'temperature', el => parseFloat(el.value), val => {
+      const span = document.getElementById('rag-temp-value');
+      if (span) span.textContent = val.toFixed(1);
     });
-    bind('rag-system-prompt', () => {
-      ragState.updateSettings({ systemPrompt: document.getElementById('rag-system-prompt').value });
+    
+    bindConfirm('rag-max-tokens', 'maxTokens', el => parseInt(el.value, 10));
+    bindConfirm('rag-max-context-chars', 'maxContextChars', el => parseInt(el.value, 10));
+    bindConfirm('rag-stream-responses', 'streamResponses', el => el.checked);
+    
+    bindConfirm('rag-hybrid-weight', 'hybridWeight', el => parseFloat(el.value), val => {
+      const span = document.getElementById('rag-hybrid-value');
+      if (span) span.textContent = val.toFixed(2);
     });
-    bind('rag-rag-prompt', () => {
-      ragState.updateSettings({ ragPrompt: document.getElementById('rag-rag-prompt').value });
-    });
-    bind('rag-temperature', () => {
-      const val = parseFloat(document.getElementById('rag-temperature').value);
-      ragState.updateSettings({ temperature: val });
-      document.getElementById('rag-temp-value').textContent = val.toFixed(1);
-    });
-    bind('rag-max-tokens', () => {
-      ragState.updateSettings({ maxTokens: parseInt(document.getElementById('rag-max-tokens').value, 10) });
-    });
-    bind('rag-max-context-chars', () => {
-      ragState.updateSettings({ maxContextChars: parseInt(document.getElementById('rag-max-context-chars').value, 10) });
-    });
-    bind('rag-stream-responses', () => {
-      ragState.updateSettings({ streamResponses: document.getElementById('rag-stream-responses').checked });
-    });
-    bind('rag-hybrid-weight', () => {
-      const val = parseFloat(document.getElementById('rag-hybrid-weight').value);
-      ragState.updateSettings({ hybridWeight: val });
-      document.getElementById('rag-hybrid-value').textContent = val.toFixed(2);
-    });
-    bind('rag-cors-proxy-url', () => {
-      ragState.updateSettings({ corsProxyUrl: document.getElementById('rag-cors-proxy-url').value.trim() });
-    });
+    
+    bindConfirm('rag-cors-proxy-url', 'corsProxyUrl', el => el.value.trim());
 
     document.getElementById('rag-test-embed-key-btn')?.addEventListener('click', () => this.testApiKey('embedding'));
     document.getElementById('rag-test-chat-key-btn')?.addEventListener('click', () => this.testApiKey('chat'));
@@ -1126,7 +1127,7 @@ export class RagSandboxUI {
 
       ragState.updateDocumentChunks(collectionId, docId, chunks);
 
-      const cost = estimateEmbeddingCost(s.embeddingModel, tokens);
+      const cost = estimateEmbeddingCost(s.embeddingModel, totalTokens);
       ragState.recordUsage(totalTokens, cost || 0, 0);
     } catch (e) {
       ragState.setDocumentStatus(collectionId, docId, 'error');
