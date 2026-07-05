@@ -32,6 +32,10 @@ function getFileType(file) {
 }
 
 export async function parseDocument(file) {
+  if (file.size > 50 * 1024 * 1024) {
+    throw new Error('File size exceeds 50MB limit');
+  }
+
   const type = getFileType(file);
 
   switch (type) {
@@ -48,18 +52,26 @@ export async function parseDocument(file) {
 }
 
 async function parsePdf(file) {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  const pages = [];
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pages = [];
 
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const text = content.items.map(item => item.str).join(' ');
-    pages.push(text);
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const text = content.items.map(item => item.str).join(' ').trim();
+      if (text) pages.push(text);
+    }
+
+    const resultText = pages.join('\n\n').trim();
+    if (!resultText) {
+      throw new Error('No text content found. The PDF may be scanned, image-only, or encrypted.');
+    }
+    return resultText;
+  } catch (e) {
+    throw new Error(`Could not parse PDF: ${e.message}`);
   }
-
-  return pages.join('\n\n');
 }
 
 async function parseDocx(file) {

@@ -22,7 +22,30 @@ function getHeaders(providerId, apiKey) {
   };
 }
 
-export async function createEmbeddings(providerId, apiKey, model, texts, corsProxy = '') {
+async function fetchWithRetry(url, options, maxRetries = 1, delay = 1000) {
+  let attempt = 0;
+  while (true) {
+    try {
+      const res = await fetch(url, options);
+      if (!res.ok && res.status >= 500 && attempt < maxRetries) {
+        attempt++;
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
+      return res;
+    } catch (e) {
+      if (e.name === 'AbortError') throw e;
+      if (attempt < maxRetries) {
+        attempt++;
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
+      throw e;
+    }
+  }
+}
+
+export async function createEmbeddings(providerId, apiKey, model, texts, corsProxy = '', signal = null) {
   const config = RAG_PROVIDERS[providerId];
   if (!config?.supportsEmbeddings) {
     throw new Error(`${config?.name || providerId} does not support embeddings`);
@@ -32,22 +55,23 @@ export async function createEmbeddings(providerId, apiKey, model, texts, corsPro
 
   switch (providerId) {
     case 'gemini':
-      return await geminiEmbeddings(apiKey, model, inputs, corsProxy);
+      return await geminiEmbeddings(apiKey, model, inputs, corsProxy, signal);
     case 'cohere':
-      return await cohereEmbeddings(apiKey, model, inputs, corsProxy);
+      return await cohereEmbeddings(apiKey, model, inputs, corsProxy, signal);
     default:
-      return await openaiCompatibleEmbeddings(providerId, apiKey, model, inputs, corsProxy);
+      return await openaiCompatibleEmbeddings(providerId, apiKey, model, inputs, corsProxy, signal);
   }
 }
 
-async function openaiCompatibleEmbeddings(providerId, apiKey, model, inputs, corsProxy) {
+async function openaiCompatibleEmbeddings(providerId, apiKey, model, inputs, corsProxy, signal) {
   const config = RAG_PROVIDERS[providerId];
   const url = buildUrl(providerId, config.embeddingEndpoint, corsProxy);
 
-  const res = await fetch(url, {
+  const res = await fetchWithRetry(url, {
     method: 'POST',
     headers: getHeaders(providerId, apiKey),
     body: JSON.stringify({ model, input: inputs }),
+    signal,
   });
 
   if (!res.ok) {
@@ -62,7 +86,7 @@ async function openaiCompatibleEmbeddings(providerId, apiKey, model, inputs, cor
   return { embeddings, tokens };
 }
 
-async function geminiEmbeddings(apiKey, model, inputs, corsProxy) {
+async function geminiEmbeddings(apiKey, model, inputs, corsProxy, signal) {
   const embeddings = [];
   let totalTokens = 0;
   
@@ -77,10 +101,11 @@ async function geminiEmbeddings(apiKey, model, inputs, corsProxy) {
       content: { parts: [{ text }] },
     }));
 
-    const res = await fetch(url, {
+    const res = await fetchWithRetry(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ requests }),
+      signal,
     });
 
     if (!res.ok) {
@@ -101,10 +126,10 @@ async function geminiEmbeddings(apiKey, model, inputs, corsProxy) {
   return { embeddings, tokens: totalTokens };
 }
 
-async function cohereEmbeddings(apiKey, model, inputs, corsProxy) {
+async function cohereEmbeddings(apiKey, model, inputs, corsProxy, signal) {
   const url = buildUrl('cohere', '/embed', corsProxy);
 
-  const res = await fetch(url, {
+  const res = await fetchWithRetry(url, {
     method: 'POST',
     headers: getHeaders('cohere', apiKey),
     body: JSON.stringify({
@@ -113,6 +138,7 @@ async function cohereEmbeddings(apiKey, model, inputs, corsProxy) {
       input_type: 'search_document',
       embedding_types: ['float'],
     }),
+    signal,
   });
 
   if (!res.ok) {
@@ -161,7 +187,7 @@ export async function validateApiKey(providerId, apiKey, corsProxy = '') {
       return { valid: false, message: err.error?.message || `HTTP ${res.status}` };
     }
 
-  if (apiKey.length > 10) return { valid: true, message: 'API key format looks valid' };
+    if (apiKey.length > 10) return { valid: true, message: 'API key format looks valid' };
     return { valid: false, message: 'Could not validate key' };
   } catch (e) {
     return { valid: false, message: e.message };

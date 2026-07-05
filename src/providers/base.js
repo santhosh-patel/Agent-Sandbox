@@ -47,7 +47,17 @@ export class BaseProvider {
 
     try {
       while (true) {
-        const { done, value } = await reader.read();
+        let done, value;
+        try {
+          const res = await reader.read();
+          done = res.done;
+          value = res.value;
+        } catch (e) {
+          if (e.name === 'AbortError' || e.message?.includes('aborted') || e.message?.includes('cancel')) {
+            break;
+          }
+          throw e;
+        }
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
@@ -69,7 +79,11 @@ export class BaseProvider {
         }
       }
     } finally {
-      reader.releaseLock();
+      try {
+        reader.releaseLock();
+      } catch (e) {
+        // ignore if already closed
+      }
     }
   }
 }

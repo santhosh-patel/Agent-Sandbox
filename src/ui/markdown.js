@@ -9,24 +9,43 @@ export function setMarkdownTheme(theme) {
 }
 
 function updateHighlightStylesheet() {
-  let link = document.getElementById('hljs-theme');
-  if (!link) {
-    link = document.createElement('link');
-    link.id = 'hljs-theme';
-    link.rel = 'stylesheet';
-    document.head.appendChild(link);
-  }
-  link.href = currentTheme === 'dark'
-    ? 'https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github-dark.min.css'
-    : 'https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github.min.css';
+  const loadStylesheet = () => {
+    let link = document.getElementById('hljs-theme');
+    if (!link) {
+      link = document.createElement('link');
+      link.id = 'hljs-theme';
+      link.rel = 'stylesheet';
+      document.head.appendChild(link);
+    }
+    link.href = currentTheme === 'dark'
+      ? 'https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github-dark.min.css'
+      : 'https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github.min.css';
+  };
+
+  const schedule = typeof requestIdleCallback !== 'undefined'
+    ? requestIdleCallback
+    : (cb) => setTimeout(cb, 0);
+
+  schedule(loadStylesheet);
 }
 
 updateHighlightStylesheet();
 
 const renderer = new marked.Renderer();
 
-renderer.code = function(code, infostring) {
-  const lang = (infostring || '').match(/\S*/)[0] || 'text';
+renderer.code = function(codeOrObj, infostring) {
+  let code = '';
+  let lang = 'text';
+
+  if (codeOrObj && typeof codeOrObj === 'object') {
+    code = codeOrObj.text || '';
+    const info = codeOrObj.lang || '';
+    lang = info.match(/\S*/)[0] || 'text';
+  } else {
+    code = codeOrObj || '';
+    lang = (infostring || '').match(/\S*/)[0] || 'text';
+  }
+
   const highlighted = lang && hljs.getLanguage(lang)
     ? hljs.highlight(code, { language: lang }).value
     : escapeHtml(code);

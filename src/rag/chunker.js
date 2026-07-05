@@ -1,10 +1,4 @@
-// ========================================
-// Text Chunking Strategies
-// ========================================
-
-function createId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-}
+import { createId } from '../shared/id.js';
 
 function splitBySentences(text) {
   return text.split(/(?<=[.!?])\s+/).filter(s => s.trim());
