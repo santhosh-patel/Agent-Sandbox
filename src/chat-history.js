@@ -1,24 +1,24 @@
-export const API_HISTORY_TOKEN_LIMIT = 512;
-
-export function estimateTokens(text) {
 const API_HISTORY_TOKEN_LIMIT = 512;
 
 function estimateTokens(text) {
-  if (!text) return 0;
-  return Math.ceil(text.length / 4);
+  const trimmed = String(text || '').trim();
+  if (!trimmed) return 0;
+  return Math.ceil(trimmed.split(/\s+/).filter(Boolean).length * 1.3);
 }
 
-export function trimMessageContent(text, tokenLimit = 512) {
-  if (!text) return text;
-  let words = text.split(/\s+/);
-  if (estimateTokens(text) <= tokenLimit) return text;
+function truncateToTokenLimit(text, tokenLimit) {
+  const words = String(text || '').trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return '';
 
-  let candidate = '';
-  for (const word of words) {
-    if (estimateTokens(candidate + ' ' + word) > tokenLimit) break;
-    candidate += (candidate ? ' ' : '') + word;
+  let truncated = '';
+  for (let i = 0; i < words.length; i++) {
+    const candidate = words.slice(0, i + 1).join(' ');
+    if (estimateTokens(candidate) > tokenLimit) break;
+    truncated = candidate;
   }
-  return candidate + '…';
+
+  if (truncated) return truncated;
+  return words[0].slice(0, Math.max(1, Math.floor(tokenLimit / 1.3)));
 }
 
 export function buildApiHistory(messages, tokenLimit = API_HISTORY_TOKEN_LIMIT) {
