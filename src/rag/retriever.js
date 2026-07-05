@@ -54,8 +54,20 @@ export function searchChunks(queryEmbedding, chunks, options = {}) {
     pool = chunks.filter(c => docIds.includes(c.docId));
   }
 
+  let dimensionWarningLogged = false;
+
   const scored = pool
-    .filter(c => c.embedding?.length)
+    .filter(c => {
+      if (!c.embedding?.length) return false;
+      if (c.embedding.length !== queryEmbedding.length) {
+        if (!dimensionWarningLogged) {
+          console.warn(`Dimension mismatch: query is ${queryEmbedding.length}, chunk is ${c.embedding.length}. Skipping chunks.`);
+          dimensionWarningLogged = true;
+        }
+        return false;
+      }
+      return true;
+    })
     .map(chunk => ({
       chunk,
       score: computeScore(queryEmbedding, chunk.embedding, searchStrategy),
