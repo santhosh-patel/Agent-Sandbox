@@ -1,4 +1,4 @@
-export const MODEL_HINTS = {
+const MODEL_HINTS = {
   'gpt-4o': 'Best for: general purpose, vision',
   'gpt-4o-mini': 'Best for: fast, cost-effective',
   'o1': 'Best for: complex reasoning',
