@@ -65,18 +65,22 @@ async function openaiCompatibleEmbeddings(providerId, apiKey, model, inputs, cor
 async function geminiEmbeddings(apiKey, model, inputs, corsProxy) {
   const embeddings = [];
   let totalTokens = 0;
-
-  for (const text of inputs) {
-    const path = `/models/${model}:embedContent?key=${apiKey}`;
+  
+  const batchSize = 100;
+  for (let i = 0; i < inputs.length; i += batchSize) {
+    const batch = inputs.slice(i, i + batchSize);
+    const path = `/models/${model}:batchEmbedContents?key=${apiKey}`;
     const url = buildUrl('gemini', path, corsProxy);
+
+    const requests = batch.map(text => ({
+      model: `models/${model}`,
+      content: { parts: [{ text }] },
+    }));
 
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: `models/${model}`,
-        content: { parts: [{ text }] },
-      }),
+      body: JSON.stringify({ requests }),
     });
 
     if (!res.ok) {
@@ -85,8 +89,13 @@ async function geminiEmbeddings(apiKey, model, inputs, corsProxy) {
     }
 
     const data = await res.json();
-    embeddings.push(data.embedding?.values || []);
-    totalTokens += Math.ceil(text.length / 4);
+    const batchEmbeds = data.embeddings || [];
+    for (const em of batchEmbeds) {
+      embeddings.push(em.values || []);
+    }
+    
+    // Fallback if API doesn't return usage
+    totalTokens += batch.reduce((sum, text) => sum + Math.ceil(text.length / 4), 0);
   }
 
   return { embeddings, tokens: totalTokens };
