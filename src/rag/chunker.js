@@ -39,13 +39,19 @@ export function chunkText(text, options = {}) {
       break;
   }
 
-  return rawChunks.map((text, index) => ({
-    id: createId(),
-    text,
-    index,
-    charStart: normalized.indexOf(text),
-    charEnd: normalized.indexOf(text) + text.length,
-  }));
+  let searchStart = 0;
+  return rawChunks.map((text, index) => {
+    let charStart = normalized.indexOf(text, searchStart);
+    if (charStart === -1) charStart = normalized.indexOf(text); // fallback
+    searchStart = charStart + 1;
+    return {
+      id: createId(),
+      text,
+      index,
+      charStart,
+      charEnd: charStart + text.length,
+    };
+  });
 }
 
 function chunkFixed(text, size, overlap) {
