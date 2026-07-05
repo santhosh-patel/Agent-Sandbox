@@ -14,14 +14,14 @@ export function cosineSimilarity(a, b) {
   return denom === 0 ? 0 : dot / denom;
 }
 
-export function dotProductSimilarity(a, b) {
+function dotProductSimilarity(a, b) {
   if (!a?.length || !b?.length || a.length !== b.length) return 0;
   let dot = 0;
   for (let i = 0; i < a.length; i++) dot += a[i] * b[i];
   return dot;
 }
 
-export function euclideanDistance(a, b) {
+function euclideanDistance(a, b) {
   if (!a?.length || !b?.length || a.length !== b.length) return Infinity;
   let sum = 0;
   for (let i = 0; i < a.length; i++) sum += (a[i] - b[i]) ** 2;

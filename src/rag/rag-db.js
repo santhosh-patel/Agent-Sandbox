@@ -30,16 +30,6 @@ export async function saveCollectionToDb(collection) {
   });
 }
 
-export async function loadCollectionFromDb(id) {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readonly');
-    const req = tx.objectStore(STORE).get(id);
-    req.onsuccess = () => resolve(req.result || null);
-    req.onerror = () => reject(req.error);
-  });
-}
-
 export async function loadAllCollectionsFromDb() {
   const db = await openDb();
   return new Promise((resolve, reject) => {
