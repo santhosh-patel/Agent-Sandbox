@@ -456,6 +456,11 @@ export class RagSandboxUI {
     bind('rag-stream-responses', () => {
       ragState.updateSettings({ streamResponses: document.getElementById('rag-stream-responses').checked });
     });
+    bind('rag-hybrid-weight', () => {
+      const val = parseFloat(document.getElementById('rag-hybrid-weight').value);
+      ragState.updateSettings({ hybridWeight: val });
+      document.getElementById('rag-hybrid-value').textContent = val.toFixed(2);
+    });
     bind('rag-cors-proxy-url', () => {
       ragState.updateSettings({ corsProxyUrl: document.getElementById('rag-cors-proxy-url').value.trim() });
     });
@@ -683,6 +688,7 @@ export class RagSandboxUI {
     setVal('rag-max-tokens', s.maxTokens);
     setVal('rag-max-context-chars', s.maxContextChars ?? 8000);
     setVal('rag-cors-proxy-url', s.corsProxyUrl || '');
+    setVal('rag-hybrid-weight', s.hybridWeight ?? 0.0);
 
     const thresholdVal = document.getElementById('rag-threshold-value');
     if (thresholdVal) thresholdVal.textContent = s.similarityThreshold.toFixed(2);
@@ -690,6 +696,8 @@ export class RagSandboxUI {
     if (tempVal) tempVal.textContent = s.temperature.toFixed(1);
     const topkVal = document.getElementById('rag-top-k-value');
     if (topkVal) topkVal.textContent = s.topK;
+    const hybridVal = document.getElementById('rag-hybrid-value');
+    if (hybridVal) hybridVal.textContent = (s.hybridWeight ?? 0.0).toFixed(2);
     const streamCheckbox = document.getElementById('rag-stream-responses');
     if (streamCheckbox) streamCheckbox.checked = s.streamResponses !== false;
 
@@ -1214,6 +1222,8 @@ export class RagSandboxUI {
         similarityThreshold: s.similarityThreshold,
         searchStrategy: s.searchStrategy,
         docIds: s.retrievalDocIds?.length ? s.retrievalDocIds : undefined,
+        queryText: question,
+        hybridWeight: s.hybridWeight ?? 0.0,
       });
 
       const context = buildContext(retrieved, s.maxContextChars ?? 8000);
