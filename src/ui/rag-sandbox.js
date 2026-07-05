@@ -589,18 +589,25 @@ export class RagSandboxUI {
             <span class="rag-document-name">${this.escape(doc.name)}</span>
             <span class="rag-document-meta">${doc.chunks.length} chunks · ${this.formatSize(doc.size)}</span>
           </div>
-          <span class="rag-doc-status rag-doc-status--${doc.status}" data-tip="${
+          <span class="rag-doc-status rag-doc-status--${doc.status.replace(/\s+/g, '-')}" data-tip="${
             doc.status === 'indexed' ? 'Document content split and embedded into vector storage' :
             doc.status === 'indexing' ? 'Generating vector embeddings...' :
             doc.status === 'pending' ? 'Waiting to be processed' :
             'An error occurred during vector ingestion'
-          }">${doc.status === 'indexed' ? 'ingested' : doc.status}</span>
+          }">
+            ${doc.status === 'indexing' ? '<span class="status-pulse"></span>' : ''}
+            ${doc.status === 'indexed' ? 'ingested' : doc.status}
+          </span>
           ${doc.status === 'error' ? `
             <button type="button" class="rag-doc-retry" data-id="${doc.id}" aria-label="Retry indexing" data-tip="Retry indexing this document">
               ${iconHtml('refresh', { size: 14, className: 'icon' })}
             </button>
           ` : ''}
           <button type="button" class="rag-doc-delete" data-id="${doc.id}" aria-label="Delete document" data-tip="Remove document and all its chunks">${iconHtml('x', { size: 14, className: 'icon' })}</button>
+        </div>
+        <div class="rag-doc-progress-container" id="progress-${doc.id}" style="display: none;">
+          <div class="rag-doc-progress-bar" id="progress-bar-${doc.id}"></div>
+          <span class="rag-doc-progress-text" id="progress-text-${doc.id}">0%</span>
         </div>
         <div class="rag-document-chunks" id="chunks-${doc.id}" style="display: none;">
           <div class="rag-chunks-summary">Chunks (${doc.chunks.length})</div>
@@ -860,7 +867,7 @@ export class RagSandboxUI {
       return `<div class="rag-message-content">${this.escape(msg.content)}</div>`;
     }
 
-    let html = `<div class="rag-message-content">${msg.isStreaming ? msg.content || '…' : renderMarkdown(msg.content || '')}</div>`;
+    let html = `<div class="rag-message-content">${msg.isStreaming ? renderMarkdown(msg.content || '…') : renderMarkdown(msg.content || '')}</div>`;
 
     if (msg.retrieved?.length) {
       html += `<div class="rag-retrieval-panel">
@@ -1024,6 +1031,11 @@ export class RagSandboxUI {
 
     ragState.setDocumentStatus(collectionId, docId, 'indexing');
 
+    const progressContainer = document.getElementById(`progress-${docId}`);
+    const progressBar = document.getElementById(`progress-bar-${docId}`);
+    const progressText = document.getElementById(`progress-text-${docId}`);
+    if (progressContainer) progressContainer.style.display = 'flex';
+
     try {
       const rawChunks = chunkText(doc.content, {
         chunkSize: s.chunkSize,
@@ -1031,26 +1043,48 @@ export class RagSandboxUI {
         strategy: s.chunkStrategy,
       });
 
-      const { embeddings, tokens } = await createEmbeddings(
-        s.embeddingProvider, key, s.embeddingModel, rawChunks.map(c => c.text), s.corsProxyUrl
-      );
+      let allEmbeddings = [];
+      let totalTokens = 0;
+      const batchSize = 100;
+      
+      for (let i = 0; i < rawChunks.length; i += batchSize) {
+        const batch = rawChunks.slice(i, i + batchSize);
+        const { embeddings, tokens } = await createEmbeddings(
+          s.embeddingProvider, key, s.embeddingModel, batch.map(c => c.text), s.corsProxyUrl
+        );
+        allEmbeddings.push(...embeddings);
+        totalTokens += tokens;
+        
+        if (progressBar && progressText) {
+          const pct = Math.min(100, Math.round(((i + batch.length) / rawChunks.length) * 100));
+          progressBar.style.width = `${pct}%`;
+          progressText.textContent = `${pct}%`;
+        }
+      }
 
       const chunks = rawChunks.map((chunk, i) => ({
         ...chunk,
-        embedding: embeddings[i] || [],
+        embedding: allEmbeddings[i] || [],
       }));
 
       ragState.updateDocumentChunks(collectionId, docId, chunks);
 
       const cost = estimateEmbeddingCost(s.embeddingModel, tokens);
-      ragState.recordUsage(tokens, cost || 0, 0);
+      ragState.recordUsage(totalTokens, cost || 0, 0);
     } catch (e) {
       ragState.setDocumentStatus(collectionId, docId, 'error');
       showToast(`Indexing failed: ${e.message}`, { isError: true });
+    } finally {
+      if (progressContainer) progressContainer.style.display = 'none';
+      if (progressBar) progressBar.style.width = '0%';
     }
   }
 
   async reindexCollection() {
+    if (!ragState.isDbReady) {
+      showToast('Please wait for database to load', { isError: true });
+      return;
+    }
     const collection = ragState.getActiveCollection();
     if (!collection) return;
     if (this.indexing) return;
