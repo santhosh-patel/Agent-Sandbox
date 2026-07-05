@@ -42,6 +42,7 @@ class RagStateManager {
     if (!this._state.activeCollectionId && this._state.collections.length > 0) {
       this._state.activeCollectionId = this._state.collections[0].id;
     }
+    this.isDbReady = false;
   }
 
   _loadState() {
@@ -96,7 +97,7 @@ class RagStateManager {
           createdAt: d.createdAt,
           updatedAt: d.updatedAt,
           chunks: [],
-          content: '',
+          content: (d.content && d.content.length > 100000) ? '' : (d.content || ''),
         })),
       })),
       activeCollectionId: this._state.activeCollectionId,
@@ -129,10 +130,14 @@ class RagStateManager {
       } else if (hasLegacyFullData) {
         await migrateCollectionsToDb(this._state.collections);
       }
+      this.isDbReady = true;
       this._saveState();
       this._emit('collections-changed');
+      this._emit('db-ready');
     } catch (e) {
       console.warn('IDB init failed:', e);
+      this.isDbReady = true;
+      this._emit('db-ready');
     }
   }
 
