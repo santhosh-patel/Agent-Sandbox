@@ -54,6 +54,30 @@ body.landing-body {
   border-bottom: 1px solid var(--landing-border);
 }
 
+.landing-nav-links {
+  display: none;
+  align-items: center;
+  gap: 24px;
+}
+
+.landing-nav-links a {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--landing-muted);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.landing-nav-links a:hover {
+  color: var(--landing-ink-strong);
+}
+
+@media (min-width: 900px) {
+  .landing-nav-links {
+    display: flex;
+  }
+}
+
 .landing-brand {
   display: flex;
   align-items: center;
@@ -186,6 +210,344 @@ body.landing-body {
 .landing-btn--ghost:hover {
   background: var(--landing-ink-strong);
   color: var(--landing-bg);
+}
+
+.landing-btn--sm {
+  padding: 10px 16px;
+  font-size: 0.8125rem;
+  margin-top: 16px;
+}
+
+/* ---- Badges ---- */
+.landing-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.landing-badge {
+  display: inline-flex;
+  padding: 6px 12px;
+  border: 1px solid var(--landing-border);
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--landing-muted);
+  background: color-mix(in srgb, var(--landing-bg) 80%, white);
+}
+
+/* ---- Code blocks ---- */
+.landing-code-preview {
+  margin-top: 48px;
+  max-width: 520px;
+}
+
+.landing-code-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--landing-muted);
+  margin-bottom: 10px;
+}
+
+.landing-code-block {
+  margin: 0;
+  padding: 20px;
+  border: 1px solid var(--landing-ink-strong);
+  border-radius: 12px;
+  background: var(--landing-ink-strong);
+  color: var(--landing-band);
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+.landing-code-block--sm {
+  padding: 14px 16px;
+  font-size: 0.75rem;
+  margin-top: 12px;
+}
+
+.landing-section--dark .landing-code-block {
+  background: color-mix(in srgb, var(--landing-bg) 8%, black);
+  border-color: color-mix(in srgb, var(--landing-bg) 20%, transparent);
+  color: var(--landing-band);
+}
+
+/* ---- Mode / workspace cards ---- */
+.landing-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-top: 48px;
+}
+
+.landing-mode-card {
+  padding: 28px;
+  border: 1px solid var(--landing-border);
+  background: var(--landing-bg);
+}
+
+.landing-mode-cmd {
+  display: inline-block;
+  margin-bottom: 16px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--landing-ink-strong);
+  color: var(--landing-band);
+  font-family: ui-monospace, monospace;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.landing-mode-card h3 {
+  margin: 0 0 12px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--landing-ink-strong);
+}
+
+.landing-mode-card p {
+  margin: 0 0 8px;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--landing-muted);
+}
+
+.landing-mode-limits {
+  font-size: 0.875rem !important;
+  opacity: 0.85;
+}
+
+/* ---- Capability cards ---- */
+.landing-cap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-top: 48px;
+}
+
+.landing-cap-card {
+  padding: 24px;
+  border: 1px solid color-mix(in srgb, var(--landing-bg) 15%, transparent);
+  background: color-mix(in srgb, var(--landing-bg) 6%, transparent);
+  border-radius: 12px;
+}
+
+.landing-cap-tag {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--landing-cta) 35%, transparent);
+  color: var(--landing-bg);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.landing-cap-card h3 {
+  margin: 0 0 10px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--landing-bg);
+}
+
+.landing-cap-card p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--landing-bg) 72%, transparent);
+}
+
+/* ---- Bullet list ---- */
+.landing-bullet-list {
+  margin: 40px 0 0;
+  padding-left: 1.25rem;
+  max-width: 42rem;
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--landing-muted);
+}
+
+.landing-bullet-list li + li {
+  margin-top: 10px;
+}
+
+/* ---- Tables ---- */
+.landing-table-wrap {
+  margin-top: 48px;
+  overflow-x: auto;
+  border: 1px solid var(--landing-border);
+}
+
+.landing-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.landing-table th,
+.landing-table td {
+  padding: 14px 18px;
+  text-align: left;
+  border-bottom: 1px solid var(--landing-border);
+}
+
+.landing-table th {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--landing-muted);
+  background: color-mix(in srgb, var(--landing-band) 50%, var(--landing-bg));
+}
+
+.landing-table td {
+  color: var(--landing-ink);
+}
+
+.landing-table code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8125rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--landing-band) 60%, transparent);
+}
+
+.landing-section--band .landing-table th {
+  background: color-mix(in srgb, var(--landing-bg) 60%, var(--landing-band));
+}
+
+.landing-check {
+  color: var(--landing-cta);
+  font-weight: 700;
+}
+
+.landing-cross {
+  opacity: 0.45;
+}
+
+/* ---- Use cases ---- */
+.landing-use-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  margin-top: 48px;
+}
+
+.landing-use-card {
+  padding: 24px;
+  background: var(--landing-bg);
+  border: 1px solid var(--landing-border);
+}
+
+.landing-use-card h3 {
+  margin: 0 0 10px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--landing-ink-strong);
+}
+
+.landing-use-card p {
+  margin: 0 0 16px;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--landing-muted);
+}
+
+.landing-use-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.landing-use-tag {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--landing-cta) 18%, transparent);
+  color: var(--landing-ink-strong);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+/* ---- Architecture ---- */
+.landing-arch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  margin-top: 48px;
+}
+
+.landing-arch-card {
+  padding: 24px;
+  border: 1px solid color-mix(in srgb, var(--landing-bg) 15%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--landing-bg) 6%, transparent);
+}
+
+.landing-arch-card h3 {
+  margin: 0 0 10px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--landing-bg);
+}
+
+.landing-arch-card p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--landing-bg) 72%, transparent);
+}
+
+/* ---- FAQ ---- */
+.landing-faq {
+  margin: 48px 0 0;
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--landing-border);
+}
+
+.landing-faq-item {
+  padding: 24px;
+  border-bottom: 1px solid var(--landing-border);
+  background: var(--landing-bg);
+}
+
+.landing-faq-item:last-child {
+  border-bottom: none;
+}
+
+.landing-faq dt {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--landing-ink-strong);
+}
+
+.landing-faq dd {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--landing-muted);
+}
+
+.landing-section--band .landing-faq-item {
+  background: var(--landing-band);
+}
+
+/* ---- Closing ---- */
+.landing-closing-eyebrow {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  color: var(--landing-muted);
 }
 
 /* ---- Marquee ---- */
