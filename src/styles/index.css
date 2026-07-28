@@ -2770,6 +2770,7 @@ a.rag-back-pill {
   }
 }
 
+#landing-view[hidden],
 #playground-view[hidden],
 #rag-view[hidden] {
   display: none !important;

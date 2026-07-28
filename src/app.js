@@ -7,19 +7,23 @@ import { initTooltips } from './ui/tooltip.js';
 
 let playgroundApp = null;
 let ragModule = null;
+let landingModule = null;
 
 function setView(active) {
+  const landing = document.getElementById('landing-view');
   const pg = document.getElementById('playground-view');
   const rag = document.getElementById('rag-view');
+  if (landing) landing.hidden = active !== 'landing';
   if (pg) pg.hidden = active !== 'playground';
   if (rag) rag.hidden = active !== 'rag';
   document.body.classList.toggle('rag-app-body', active === 'rag');
+  document.body.classList.toggle('landing-body', active === 'landing');
 }
 
 function updateNavPills(path) {
   document.querySelectorAll('[data-route]').forEach(el => {
     const route = el.dataset.route;
-    const active = (route === '/' && path === '/') || (route === '/rag' && path === '/rag');
+    const active = (route === '/app' && path === '/app') || (route === '/rag' && path === '/rag');
     el.classList.toggle('topnav-pill--active', active);
   });
 }
@@ -41,7 +45,22 @@ function syncLayoutBodyClasses(view) {
   }
 }
 
+async function mountLanding() {
+  setView('landing');
+  document.title = APP_NAME;
+
+  if (!landingModule) {
+    landingModule = await import('./landing/landing.js');
+  }
+
+  await landingModule.mountLanding({
+    onApp: () => navigate('/app'),
+    onRag: () => navigate('/rag'),
+  });
+}
+
 async function mountPlayground() {
+  landingModule?.unmountLanding?.();
   setView('playground');
   document.title = APP_NAME;
   if (!playgroundApp) {
@@ -49,10 +68,11 @@ async function mountPlayground() {
     playgroundApp.init();
   }
   syncLayoutBodyClasses('playground');
-  updateNavPills('/');
+  updateNavPills('/app');
 }
 
 async function mountRag() {
+  landingModule?.unmountLanding?.();
   setView('rag');
   document.title = `${RAG_LABEL} · ${APP_NAME}`;
   if (!ragModule) {
@@ -65,7 +85,7 @@ async function mountRag() {
     document.getElementById('rag-mobile-help-btn')?.addEventListener('click', () => helpUI.togglePanel());
     document.getElementById('rag-back-pill')?.addEventListener('click', (e) => {
       e.preventDefault();
-      navigate('/');
+      navigate('/app');
     });
     const sandbox = new RagSandboxUI();
     ragModule = { sandbox, helpUI };
@@ -74,7 +94,8 @@ async function mountRag() {
   updateNavPills('/rag');
 }
 
-registerRoute('/', mountPlayground);
+registerRoute('/', mountLanding);
+registerRoute('/app', mountPlayground);
 registerRoute('/rag', mountRag);
 
 window.addEventListener('DOMContentLoaded', () => {
