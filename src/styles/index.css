@@ -2776,6 +2776,12 @@ a.rag-back-pill {
   display: none !important;
 }
 
+body.landing-body {
+  overflow-y: auto;
+  height: auto;
+  min-height: 100dvh;
+}
+
 .sidebar-section-label-row {
   display: flex;
   align-items: center;

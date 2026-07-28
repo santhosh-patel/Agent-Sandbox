@@ -15,6 +15,16 @@ import {
   MARQUEE_ITEMS,
 } from './content.js';
 
+const NAV_SECTIONS = [
+  { href: '#landing-overview', label: 'Overview' },
+  { href: '#landing-workspaces', label: 'Workspaces' },
+  { href: '#landing-capabilities', label: 'Features' },
+  { href: '#landing-rag', label: 'RAG' },
+  { href: '#landing-use-cases', label: 'Use cases' },
+  { href: '#landing-setup', label: 'Setup' },
+  { href: '#landing-faq', label: 'FAQ' },
+];
+
 let teardownFns = [];
 let mounted = false;
 
@@ -66,9 +76,7 @@ function renderLandingHtml() {
           <span class="landing-brand-text">${escapeHtml(appName)}</span>
         </a>
         <nav class="landing-nav-links" aria-label="Page sections">
-          <a href="#landing-capabilities">Features</a>
-          <a href="#landing-rag">RAG</a>
-          <a href="#landing-faq">FAQ</a>
+          ${NAV_SECTIONS.map((s) => `<a href="${s.href}">${escapeHtml(s.label)}</a>`).join('')}
         </nav>
         <button type="button" class="landing-nav-cta" data-action="app">${escapeHtml(cta.primary)}</button>
       </header>
@@ -136,14 +144,9 @@ ${LANDING.ragLabel} → Upload PDF/DOCX → Ask grounded questions</code></pre>
         </div>
       </section>
 
-      <section class="landing-section landing-section--dark landing-pin landing-reveal" id="landing-capabilities">
-        <div class="landing-section-inner landing-pin-panel" id="landing-pin-panel">
+      <section class="landing-section landing-section--dark landing-reveal" id="landing-capabilities">
+        <div class="landing-section-inner">
           ${renderSectionHeader(LANDING.capabilities)}
-          <div class="landing-pin-stack" id="landing-pin-stack">
-            ${CAPABILITIES.slice(0, 6).map((f, i) => `
-              <p class="landing-pin-line${i === 0 ? ' is-active' : ''}" data-pin-index="${i}">${escapeHtml(f.title)}</p>
-            `).join('')}
-          </div>
           <div class="landing-cap-grid">
             ${CAPABILITIES.map((cap) => `
               <article class="landing-cap-card">
@@ -381,6 +384,37 @@ function bindActions(root, onApp, onRag) {
       target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   });
+
+  setupSectionNav(root);
+}
+
+function setupSectionNav(root) {
+  const links = [...root.querySelectorAll('.landing-nav-links a')];
+  const sections = links
+    .map((link) => {
+      const id = link.getAttribute('href')?.slice(1);
+      const el = id ? root.querySelector(`#${id}`) : null;
+      return el ? { link, el } : null;
+    })
+    .filter(Boolean);
+
+  if (!sections.length) return;
+
+  const updateActive = () => {
+    const offset = 100;
+    let current = sections[0];
+    for (const section of sections) {
+      if (section.el.getBoundingClientRect().top <= offset) {
+        current = section;
+      }
+    }
+    links.forEach((link) => link.classList.remove('is-active'));
+    current.link.classList.add('is-active');
+  };
+
+  updateActive();
+  window.addEventListener('scroll', updateActive, { passive: true });
+  teardownFns.push(() => window.removeEventListener('scroll', updateActive));
 }
 
 function prefersReducedMotion() {
@@ -388,13 +422,10 @@ function prefersReducedMotion() {
 }
 
 async function initAnimations(root) {
-  if (prefersReducedMotion()) {
-    root.querySelectorAll('.landing-reveal').forEach((el) => {
-      el.style.opacity = '1';
-      el.style.transform = 'none';
-    });
-    return;
-  }
+  const reveals = root.querySelectorAll('.landing-reveal');
+  if (prefersReducedMotion()) return;
+
+  reveals.forEach((el) => el.classList.add('is-animating'));
 
   const [{ gsap }, { ScrollTrigger }] = await Promise.all([
     import('gsap'),
@@ -430,46 +461,19 @@ async function initAnimations(root) {
     }
   }
 
-  root.querySelectorAll('.landing-reveal').forEach((section) => {
+  reveals.forEach((section) => {
     gsap.to(section, {
       opacity: 1,
       y: 0,
-      duration: 0.9,
+      duration: 0.7,
       ease: 'power2.out',
       scrollTrigger: {
         trigger: section,
-        start: 'top 82%',
+        start: 'top 88%',
         toggleActions: 'play none none none',
+        onEnter: () => section.classList.remove('is-animating'),
       },
     });
-  });
-
-  const pinPanel = root.querySelector('#landing-pin-panel');
-  const pinLines = root.querySelectorAll('.landing-pin-line');
-  if (pinPanel && pinLines.length) {
-    ScrollTrigger.create({
-      trigger: root.querySelector('#landing-capabilities'),
-      start: 'top top',
-      end: '+=100%',
-      pin: pinPanel,
-      pinSpacing: true,
-    });
-
-    pinLines.forEach((line, index) => {
-      ScrollTrigger.create({
-        trigger: root.querySelector('#landing-capabilities'),
-        start: `top+=${index * 16}% top`,
-        end: `top+=${(index + 1) * 16}% top`,
-        onEnter: () => setActivePinLine(pinLines, index),
-        onEnterBack: () => setActivePinLine(pinLines, index),
-      });
-    });
-  }
-}
-
-function setActivePinLine(lines, activeIndex) {
-  lines.forEach((line, i) => {
-    line.classList.toggle('is-active', i === activeIndex);
   });
 }
 
